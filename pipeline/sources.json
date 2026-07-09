@@ -1,0 +1,44 @@
+{
+  "sources": [
+    {
+      "id": "open_georgia",
+      "name": "Open Georgia (state transparency portal)",
+      "url": "https://open.ga.gov/",
+      "provides": "State employee salaries & travel; payments, obligations, and professional-services expenditures of state organizations",
+      "cadence": "annual",
+      "level": "state"
+    },
+    {
+      "id": "gdac_budget",
+      "name": "Georgia Data Analytics Center — Budget",
+      "url": "https://gdac.georgia.gov/budget",
+      "provides": "State of Georgia revenues and expenditures dashboards",
+      "cadence": "annual",
+      "level": "state"
+    },
+    {
+      "id": "dca_rlgf",
+      "name": "DCA — Report of Local Government Finances",
+      "url": "https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf",
+      "provides": "County and municipal revenues, expenditures, debt, and assets (required annual filing)",
+      "cadence": "rolling; due 6 months after each government's fiscal year end",
+      "level": "county"
+    },
+    {
+      "id": "ted_portal",
+      "name": "Tax & Expenditure Data Center (UGA Carl Vinson Institute)",
+      "url": "https://ted.cviog.uga.edu/",
+      "provides": "Downloadable RLGF datasets and local government budget documents",
+      "cadence": "rolling / annual",
+      "level": "county"
+    },
+    {
+      "id": "georgiadata_financial",
+      "name": "GeorgiaData.org — Local Government Financial Portal",
+      "url": "https://georgiadata.org/financialdata",
+      "provides": "Searchable county, municipal, and school-system financial data",
+      "cadence": "annual",
+      "level": "county"
+    }
+  ]
+}

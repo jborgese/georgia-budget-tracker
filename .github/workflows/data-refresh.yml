@@ -1,0 +1,42 @@
+name: Data refresh
+
+on:
+  schedule:
+    # Daily at 09:17 UTC (~4:17 AM Eastern) — after typical business-hours publishing.
+    - cron: "17 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  check-and-refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Detect upstream changes
+        id: detect
+        run: python pipeline/check_sources.py
+
+      - name: Run ETL (placeholder)
+        if: steps.detect.outputs.changed == 'true'
+        run: |
+          echo "Sources changed: ${{ steps.detect.outputs.changed_sources }}"
+          echo "TODO: pip install -r pipeline/requirements.txt && run transforms"
+
+      - name: Commit updated data
+        run: |
+          git config user.name "data-refresh-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Nothing to commit."
+          else
+            git commit -m "data: refresh source state ($(date -u +%F))"
+            git push
+          fi
