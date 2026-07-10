@@ -313,6 +313,8 @@ def parse_revenues(pdf: pdfplumber.PDF, source: str) -> list[dict]:
             if not labels or labels[0]["x0"] > 200:
                 continue
             name = " ".join(w["text"] for w in labels)
+            if "Governor's Budget Report" in name:
+                continue
             x0 = labels[0]["x0"]
             while stack and stack[-1][1] >= x0:
                 stack.pop()
@@ -351,7 +353,9 @@ def parse_expenditures(pdf: pdfplumber.PDF, source: str, fund_scope: str,
             if not labels or labels[0]["x0"] > 200 or labels[0]["x0"] < 20:
                 continue
             name = " ".join(w["text"] for w in labels)
-            if name in (title, "Amended"):
+            if (name in (title, "Amended")
+                    or name.startswith("Departments/Agencies")
+                    or "Governor's Budget Report" in name):
                 continue
             is_header = (is_bold(labels[0]) or name.endswith(":")
                          or name == name.upper())

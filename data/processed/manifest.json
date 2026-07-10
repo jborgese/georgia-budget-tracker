@@ -1,0 +1,185 @@
+{
+ "sources": {
+  "ted_rlgf_county_workbook": {
+   "vintage": {
+    "fingerprint": {
+     "etag": "\"2f34ed9e63cedc1:0\"",
+     "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
+    },
+    "checked_at": "2026-07-10T03:15:23+00:00"
+   },
+   "fiscal_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "records": 628152,
+   "counties_present": 151,
+   "counties_missing": {
+    "BIBB": "Macon-Bibb consolidated government; separate TED government type",
+    "CHATTAHOOCHEE": "Cusseta-Chattahoochee consolidated government; separate TED government type",
+    "CLARKE": "Athens-Clarke unified government; separate TED government type",
+    "ECHOLS": "Statenville-Echols consolidated government; separate TED government type",
+    "MUSCOGEE": "Columbus-Muscogee consolidated government; separate TED government type",
+    "QUITMAN": "Georgetown-Quitman unified government; separate TED government type",
+    "RICHMOND": "Augusta-Richmond consolidated government; separate TED government type",
+    "WEBSTER": "Webster County unified government; separate TED government type"
+   }
+  },
+  "open_georgia_poa": {
+   "vintage": {
+    "fingerprint": {
+     "years": {
+      "obligation": [
+       "2015",
+       "2016",
+       "2017",
+       "2018",
+       "2019",
+       "2020",
+       "2021",
+       "2022",
+       "2023",
+       "2024",
+       "2025"
+      ],
+      "payment": [
+       "2015",
+       "2016",
+       "2017",
+       "2018",
+       "2019",
+       "2020",
+       "2021",
+       "2022",
+       "2023",
+       "2024",
+       "2025"
+      ],
+      "perdiem": [
+       "2015",
+       "2016",
+       "2017",
+       "2018",
+       "2019",
+       "2020",
+       "2021",
+       "2022",
+       "2023",
+       "2024",
+       "2025"
+      ]
+     }
+    },
+    "checked_at": "2026-07-10T03:15:22+00:00"
+   },
+   "fiscal_years": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+   ],
+   "records": 12909,
+   "sections": [
+    "obligations",
+    "payments",
+    "professional_services"
+   ],
+   "organizations": 181,
+   "in_normalized_table": false,
+   "note": "cash-basis vendor payments; excluded from the normalized table to avoid double-counting OPB budgetary expenditures"
+  },
+  "opb_governors_budget_report_fy2026": {
+   "vintage": {
+    "fingerprint": {
+     "etag": null,
+     "last_modified": "Thu, 16 Jan 2025 16:18:29 GMT"
+    },
+    "checked_at": "2026-07-10T03:15:22+00:00"
+   },
+   "fiscal_years_by_basis": {
+    "actual": [
+     2023,
+     2024
+    ],
+    "amended_budget": [
+     2025
+    ],
+    "budget": [
+     2026
+    ],
+    "estimated": [
+     2025,
+     2026
+    ],
+    "reported": [
+     2022,
+     2023,
+     2024
+    ]
+   },
+   "records": 763,
+   "note": "the published PDF prints 'Other DOR Interest, Fees, and Sales' twice with different amounts; the copy excluded from the report's own subtotals surfaces in the reconciliation adjustment"
+  }
+ },
+ "normalized": {
+  "records": 44279,
+  "entities": 152,
+  "fiscal_years": [
+   2016,
+   2017,
+   2018,
+   2019,
+   2020,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025,
+   2026
+  ],
+  "categories": [
+   "charges_and_fees",
+   "community_and_economic_development",
+   "culture_and_recreation",
+   "debt_service",
+   "education",
+   "enterprise_operations",
+   "enterprise_revenue",
+   "general_government",
+   "health_and_welfare",
+   "intergovernmental_expenditure",
+   "intergovernmental_revenue",
+   "judicial",
+   "natural_resources",
+   "other_expenditure",
+   "other_revenue",
+   "public_safety",
+   "public_works",
+   "taxes"
+  ],
+  "tolerance": {
+   "relative": 0.01,
+   "absolute": 5.0
+  },
+  "reconciliation": {
+   "totals_checked": 2425,
+   "max_absolute_deviation": 0.0,
+   "max_relative_deviation": 0.0,
+   "synthetic_rows": 2661,
+   "synthetic_amount_absolute_sum": 10709482661.0
+  }
+ }
+}

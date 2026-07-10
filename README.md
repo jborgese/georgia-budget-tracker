@@ -58,6 +58,14 @@ pip install -r requirements.txt
 python check_sources.py        # change detection only (stdlib, no deps needed)
 python etl_rlgf.py             # download + transform RLGF county data (needs deps)
 python etl_state.py            # download + transform state-level data (needs deps)
+python normalize.py            # validate the data contract, build normalized.parquet
+```
+
+Tests and lint (from the repo root):
+
+```bash
+pip install -r pipeline/requirements.txt -r pipeline/requirements-dev.txt
+pytest && ruff check pipeline
 ```
 
 ## Status

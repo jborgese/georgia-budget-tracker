@@ -40,6 +40,13 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report')
         run: python pipeline/etl_state.py ${{ steps.detect.outputs.changed_sources }}
 
+      - name: Validate contract and normalize
+        if: |
+          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook') ||
+          contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
+          contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report')
+        run: python pipeline/normalize.py
+
       - name: Commit updated data
         run: |
           git config user.name "data-refresh-bot"
