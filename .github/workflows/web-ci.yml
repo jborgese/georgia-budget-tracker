@@ -1,0 +1,46 @@
+# Gates every pull request that touches the frontend (or the data it is
+# built from) on lint, typecheck, and the production build. `npm run build`
+# is the exact command a deploy of this static-export site uses — it emits
+# web/out/. To make this blocking, mark the "web" check as required in the
+# repository's branch-protection settings.
+name: Web CI
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - "data/processed/**"
+      - ".github/workflows/web-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - "data/processed/**"
+      - ".github/workflows/web-ci.yml"
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
