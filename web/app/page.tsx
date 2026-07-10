@@ -1,10 +1,13 @@
-import { loadCountyMetrics, loadDashboardData } from "@/lib/data";
+import { loadCountyMetrics, loadDashboardData, loadStateCategories } from "@/lib/data";
 import { georgiaCountyFeatures } from "@/lib/geo";
 import { BASIS_LABELS, fiscalYearLabel, formatBillions, formatDollars } from "@/lib/format";
 import { CountyChoropleth } from "@/components/CountyChoropleth";
 import { INK, MUTED, PAPER, RULE, SERIES, SPRUCE, GOLD, segmentColors } from "@/lib/theme";
 import type { CategorySeries } from "@/lib/types";
+import { spendingSlices, stateSpendingNodes } from "@/lib/spending";
+import { SpendingTable } from "@/components/SpendingTable";
 import { CategoryStackChart } from "@/components/CategoryStackChart";
+import { SpendingPie } from "@/components/SpendingPie";
 import { ChartLegend } from "@/components/ChartLegend";
 import { DataTable } from "@/components/DataTable";
 import { RevenueExpenditureChart } from "@/components/RevenueExpenditureChart";
@@ -38,6 +41,9 @@ export default function Home() {
   const expenditureTable = stackTable(data.expenditureCategories);
   const countyMetrics = loadCountyMetrics();
   const countyFeatures = georgiaCountyFeatures();
+  const stateSpendingSlices = spendingSlices(
+    stateSpendingNodes(loadStateCategories(), data.lastReportedYear),
+  );
   const latestCountyYear = String(countyMetrics.fiscal_years.at(-1));
   const countyTableRows = countyMetrics.counties
     .filter((entry) => entry.included)
@@ -103,6 +109,31 @@ export default function Home() {
             label="County ledgers"
             value={`${data.headline.countiesCovered} of ${data.headline.countiesTotal}`}
             detail="Consolidated governments pending"
+          />
+        </section>
+
+        <section aria-label="Where a state tax dollar goes" className="mt-16">
+          <div className="border-t pb-1 pt-3" style={{ borderColor: INK }}>
+            <h2
+              className="font-mono text-xs uppercase tracking-widest"
+              style={{ color: SPRUCE }}
+            >
+              Where a state tax dollar goes
+            </h2>
+          </div>
+          <p className="mt-3 max-w-prose text-sm leading-relaxed">
+            Every dollar of {fy} state-funds spending, by what it paid for.
+          </p>
+          <SpendingPie
+            slices={stateSpendingSlices}
+            total={data.headline.expenditure}
+            centerLabel={`${fy} spending`}
+            ariaLabel={`Pie chart of Georgia ${fy} state-funds spending by category; exact values, including per-agency detail, are in the table below.`}
+          />
+          <SpendingTable
+            caption={`Georgia ${fy} state-funds spending by category, expandable to agencies`}
+            slices={stateSpendingSlices}
+            total={data.headline.expenditure}
           />
         </section>
 

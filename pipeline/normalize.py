@@ -9,6 +9,9 @@ pandera contract in pipeline/schema.py, and writes:
   category, subcategory, amount)
 - data/processed/state/categories.json  state-level category totals per fiscal
   year and side, plus the basis of each year, for the web frontend
+- data/processed/counties/categories.json  per-county category totals per
+  fiscal year and side (the county analogue of state/categories.json), for
+  the citizen-facing share-of-spending charts
 - data/processed/counties/metrics.json  per-county totals and per-capita
   values by fiscal year (population from data/processed/county_population.json,
   July 1 estimate of the fiscal year's calendar year); counties without an
@@ -207,6 +210,14 @@ def state_categories_document(normalized: pd.DataFrame,
     sides = state_rows.category.map(contract.side)
     totals = (state_rows.groupby([sides.rename("side"), "category",
                                   "fiscal_year"]).amount.sum().reset_index())
+    subtotals = (state_rows.groupby([sides.rename("side"), "category",
+                                     "fiscal_year", "subcategory"])
+                 .amount.sum())
+    subcategories = {
+        key: {sub: round(float(amount), 2)
+              for (*_, sub), amount in group.items()}
+        for key, group in subtotals.groupby(level=[0, 1, 2])
+    }
     opb = state[state.source == OPB_SOURCE]
     basis = {
         side_name: {str(int(row.fiscal_year)): row.basis
@@ -222,7 +233,9 @@ def state_categories_document(normalized: pd.DataFrame,
         "basis_by_year": basis,
         "rows": [{"side": row.side, "category": row.category,
                   "fiscal_year": int(row.fiscal_year),
-                  "amount": round(float(row.amount), 2)}
+                  "amount": round(float(row.amount), 2),
+                  "subcategories": subcategories.get(
+                      (row.side, row.category, row.fiscal_year), {})}
                  for row in totals.itertuples()],
     }
 
@@ -282,6 +295,29 @@ def county_metrics_document(county_expected: dict[tuple, float],
         "sources": [COUNTY_SOURCE, *POPULATION_SOURCES],
         "fiscal_years": [int(year) for year in fiscal_years],
         "counties": counties,
+    }
+
+
+def county_categories_document(normalized: pd.DataFrame) -> dict:
+    county_rows = normalized[normalized.entity_type == "county"].assign(
+        side=lambda f: f.category.map(contract.side))
+    grouped = (county_rows.groupby(
+        ["entity", "fiscal_year", "side", "category", "subcategory"])
+        .amount.sum())
+    counties: dict[str, dict] = {}
+    for (entity, fiscal_year, side_name, category,
+         subcategory), amount in grouped.items():
+        slug = county_slug(entity)
+        years = counties.setdefault(slug, {"county": entity, "years": {}})["years"]
+        year_sides = years.setdefault(str(int(fiscal_year)), {})
+        node = year_sides.setdefault(side_name, {}).setdefault(
+            category, {"total": 0.0, "subcategories": {}})
+        node["total"] = round(node["total"] + float(amount), 2)
+        node["subcategories"][subcategory] = round(float(amount), 2)
+    return {
+        "sources": [COUNTY_SOURCE],
+        "fiscal_years": sorted(int(y) for y in county_rows.fiscal_year.unique()),
+        "counties": dict(sorted(counties.items())),
     }
 
 
@@ -388,6 +424,9 @@ def main() -> int:
     populations = json.loads(POPULATION_FILE.read_text())["populations"]
     metrics = county_metrics_document(county_expected, populations)
     METRICS_FILE.write_text(json.dumps(metrics, indent=1) + "\n")
+    county_categories = county_categories_document(normalized)
+    (METRICS_FILE.parent / "categories.json").write_text(
+        json.dumps(county_categories, indent=1) + "\n")
 
     report = manifest["normalized"]["reconciliation"]
     print(f"Wrote {len(normalized):,} normalized records "

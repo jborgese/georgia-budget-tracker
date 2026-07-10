@@ -8,6 +8,14 @@ on:
 
 permissions:
   contents: write
+  issues: write
+
+# ETL steps use continue-on-error so one failing source cannot block the
+# others: each transform records its own success/failure counters in
+# data/.source-state.json (via pipeline/runlog.py). The normalize step stays
+# a hard gate — its contract failure blocks data/ from being committed — but
+# the fingerprint/failure state is committed regardless, and the report step
+# turns three consecutive failures of any source into a GitHub issue.
 
 jobs:
   check-and-refresh:
@@ -32,20 +40,27 @@ jobs:
         run: pip install -r pipeline/requirements.txt
 
       - name: Run RLGF county ETL
+        id: rlgf
+        continue-on-error: true
         if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook')
         run: python pipeline/etl_rlgf.py
 
       - name: Run state-level ETL
+        id: state
+        continue-on-error: true
         if: |
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report')
         run: python pipeline/etl_state.py ${{ steps.detect.outputs.changed_sources }}
 
       - name: Run census population ETL
+        id: population
+        continue-on-error: true
         if: contains(steps.detect.outputs.changed_sources, 'census_county_pop')
         run: python pipeline/etl_population.py
 
       - name: Validate contract and normalize
+        id: normalize
         if: |
           contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook') ||
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
@@ -54,13 +69,34 @@ jobs:
         run: python pipeline/normalize.py
 
       - name: Commit updated data
+        if: always()
         run: |
           git config user.name "data-refresh-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/
+          git add data/.source-state.json
+          if [ "${{ steps.normalize.outcome }}" != "failure" ]; then
+            git add data/
+          else
+            echo "Contract validation failed; committing fingerprint/failure state only."
+          fi
           if git diff --cached --quiet; then
             echo "Nothing to commit."
           else
             git commit -m "data: refresh source state ($(date -u +%F))"
             git push
           fi
+
+      - name: Report failing sources
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python pipeline/report_failures.py
+
+      - name: Fail the job if a transform failed
+        if: |
+          steps.rlgf.outcome == 'failure' ||
+          steps.state.outcome == 'failure' ||
+          steps.population.outcome == 'failure'
+        run: |
+          echo "One or more transforms failed; see the steps above and the source-failure issue."
+          exit 1

@@ -26,7 +26,13 @@ export interface StateCategoriesDocument {
     category: string;
     fiscal_year: number;
     amount: number;
+    subcategories?: Record<string, number>;
   }[];
+}
+
+export interface CategoryNode {
+  total: number;
+  subcategories: Record<string, number>;
 }
 
 export interface CountiesIndexDocument {
@@ -100,6 +106,24 @@ export interface MedianYear {
   expenditure_per_capita: number | null;
 }
 
+export interface CountyCategoriesDocument {
+  sources: string[];
+  fiscal_years: number[];
+  counties: Record<
+    string,
+    {
+      county: string;
+      years: Record<
+        string,
+        {
+          revenue?: Record<string, CategoryNode>;
+          expenditure?: Record<string, CategoryNode>;
+        }
+      >;
+    }
+  >;
+}
+
 export interface CountyPageData {
   county: string;
   displayName: string;
@@ -112,6 +136,7 @@ export interface CountyPageData {
   medians: Record<string, MedianYear>;
   document: CountyDocument;
   provenance: string;
+  spendingByCategory: Record<string, CategoryNode>;
 }
 
 export interface SourceVintage {

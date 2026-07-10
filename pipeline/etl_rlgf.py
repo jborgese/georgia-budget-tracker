@@ -37,9 +37,11 @@ import sys
 from pathlib import Path
 
 import duckdb
-import httpx
 import openpyxl
 import pandas as pd
+
+import runlog
+from fetching import download_file
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
@@ -67,21 +69,6 @@ def source_url() -> str:
     if not matches:
         raise SystemExit(f"Source {SOURCE_ID!r} not found in {SOURCES_FILE}")
     return matches[0]
-
-
-def download_workbook(url: str, destination: Path) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with httpx.stream(
-        "GET",
-        url,
-        headers={"User-Agent": USER_AGENT},
-        timeout=TIMEOUT_SECONDS,
-        follow_redirects=True,
-    ) as response:
-        response.raise_for_status()
-        with destination.open("wb") as handle:
-            for chunk in response.iter_bytes():
-                handle.write(chunk)
 
 
 def indent_depth(label: str) -> int:
@@ -259,7 +246,8 @@ def write_county_json(connection: duckdb.DuckDBPyConnection) -> int:
     breakdown = county_breakdown(connection)
     COUNTIES_DIR.mkdir(parents=True, exist_ok=True)
     for stale in COUNTIES_DIR.glob("*.json"):
-        stale.unlink()
+        if stale.name not in ("metrics.json", "categories.json"):
+            stale.unlink()
     for county, county_rows in totals.groupby("county"):
         document = county_document(
             county, county_rows, breakdown[breakdown.county == county]
@@ -269,14 +257,15 @@ def write_county_json(connection: duckdb.DuckDBPyConnection) -> int:
     return totals.county.nunique()
 
 
-def main() -> int:
+def run() -> None:
     if len(sys.argv) > 1:
         RAW_FILE.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(sys.argv[1], RAW_FILE)
-        print(f"Copied local workbook {sys.argv[1]} -> {RAW_FILE}")
+        if Path(sys.argv[1]).resolve() != RAW_FILE.resolve():
+            shutil.copyfile(sys.argv[1], RAW_FILE)
+            print(f"Copied local workbook {sys.argv[1]} -> {RAW_FILE}")
     else:
         url = source_url()
-        download_workbook(url, RAW_FILE)
+        download_file(url, RAW_FILE, source=SOURCE_ID)
         print(f"Downloaded {url} -> {RAW_FILE} ({RAW_FILE.stat().st_size:,} bytes)")
 
     records = parse_workbook(RAW_FILE)
@@ -288,12 +277,26 @@ def main() -> int:
     write_parquet(connection)
     county_count = write_county_json(connection)
 
+    runlog.log_event("transformed", SOURCE_ID, records=len(records),
+                     counties=county_count)
     print(
         f"Wrote {len(records):,} records for {county_count} counties "
         f"({records.fiscal_year.min()}-{records.fiscal_year.max()}) to "
         f"{PARQUET_FILE.relative_to(ROOT)} and "
         f"{COUNTIES_DIR.relative_to(ROOT)}/"
     )
+
+
+def main() -> int:
+    try:
+        run()
+    except (Exception, SystemExit) as exc:
+        failures = runlog.record_outcome(SOURCE_ID, ok=False, error=str(exc))
+        runlog.log_event("transform_failed", SOURCE_ID,
+                         consecutive_failures=failures, error=str(exc)[:300])
+        print(f"ERROR {SOURCE_ID}: {exc}", file=sys.stderr)
+        return 1
+    runlog.record_outcome(SOURCE_ID, ok=True)
     return 0
 
 

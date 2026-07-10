@@ -9,8 +9,11 @@ import {
 } from "@/lib/format";
 import { GOLD, INK, MUTED, PAPER, RULE, SERIES, SPRUCE } from "@/lib/theme";
 import type { CountyPageData } from "@/lib/types";
+import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
 import { CountyMedianChart, type MedianRow } from "@/components/CountyMedianChart";
+import { SpendingPie } from "@/components/SpendingPie";
+import { SpendingTable } from "@/components/SpendingTable";
 import { CountyTrendChart, type TrendRow } from "@/components/CountyTrendChart";
 import { DataTable } from "@/components/DataTable";
 import { StatTile } from "@/components/StatTile";
@@ -220,6 +223,37 @@ export default async function CountyPage({
             detail={`Census estimate, ${data.latestFiledYear}`}
           />
         </section>
+
+        {spendingSlices(data.spendingByCategory).length ? (
+          <section
+            aria-label={`Where a ${data.displayName} County tax dollar goes`}
+            className="mt-14"
+          >
+            <div className="border-t pb-1 pt-3" style={{ borderColor: INK }}>
+              <h2
+                className="font-mono text-xs uppercase tracking-widest"
+                style={{ color: SPRUCE }}
+              >
+                Where a {data.displayName} County tax dollar goes
+              </h2>
+            </div>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed">
+              Every dollar the county government spent in {fy}, by what it
+              paid for.
+            </p>
+            <SpendingPie
+              slices={spendingSlices(data.spendingByCategory)}
+              total={latest?.expenditure ?? 0}
+              centerLabel={`${fy} spending`}
+              ariaLabel={`Pie chart of ${data.displayName} County ${fy} spending by category; exact values are in the table below.`}
+            />
+            <SpendingTable
+              caption={`${data.displayName} County ${fy} spending by category, expandable to line items`}
+              slices={spendingSlices(data.spendingByCategory)}
+              total={latest?.expenditure ?? 0}
+            />
+          </section>
+        ) : null}
 
         <section aria-label="Revenues and expenditures over time" className="mt-14">
           <div

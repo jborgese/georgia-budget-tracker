@@ -24,7 +24,8 @@ import shutil
 import sys
 from pathlib import Path
 
-import httpx
+import runlog
+from fetching import download_file
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
@@ -45,16 +46,6 @@ def source_urls() -> dict[str, str]:
     if missing:
         raise SystemExit(f"Sources {missing} not found in {SOURCES_FILE}")
     return {sid: sources[sid] for sid in SOURCE_IDS}
-
-
-def download(url: str, destination: Path) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with httpx.stream("GET", url, headers={"User-Agent": USER_AGENT},
-                      timeout=180, follow_redirects=True) as response:
-        response.raise_for_status()
-        with destination.open("wb") as handle:
-            for chunk in response.iter_bytes():
-                handle.write(chunk)
 
 
 def georgia_populations(csv_text: str) -> dict[str, dict[str, int]]:
@@ -86,16 +77,35 @@ def main() -> int:
     urls = source_urls()
     local_paths = dict(zip(SOURCE_IDS, sys.argv[1:3])) if len(sys.argv) > 2 else {}
     texts: dict[str, str] = {}
+    any_failed = False
     for source_id in SOURCE_IDS:
         raw_file = RAW_DIR / f"{source_id}.csv"
         if source_id in local_paths:
             RAW_DIR.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(local_paths[source_id], raw_file)
             print(f"Copied {local_paths[source_id]} -> {raw_file}")
+            runlog.record_outcome(source_id, ok=True)
         else:
-            download(urls[source_id], raw_file)
-            print(f"Downloaded {urls[source_id]} "
-                  f"({raw_file.stat().st_size:,} bytes)")
+            try:
+                download_file(urls[source_id], raw_file, source=source_id)
+                print(f"Downloaded {urls[source_id]} "
+                      f"({raw_file.stat().st_size:,} bytes)")
+                runlog.record_outcome(source_id, ok=True)
+            except (Exception, SystemExit) as exc:
+                failures = runlog.record_outcome(source_id, ok=False,
+                                                 error=str(exc))
+                runlog.log_event("transform_failed", source_id,
+                                 consecutive_failures=failures,
+                                 error=str(exc)[:300])
+                print(f"ERROR {source_id}: {exc}", file=sys.stderr)
+                any_failed = True
+                if not raw_file.exists():
+                    print(f"No committed copy of {raw_file.name} to fall back "
+                          "on; existing outputs left untouched.",
+                          file=sys.stderr)
+                    return 1
+                runlog.log_event("fallback", source_id,
+                                 reason="using committed raw file")
         texts[source_id] = raw_file.read_text(encoding="latin-1")
 
     by_vintage = [georgia_populations(texts[sid]) for sid in SOURCE_IDS]
@@ -111,9 +121,10 @@ def main() -> int:
     }
     OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT_FILE.write_text(json.dumps(document, indent=1, sort_keys=True) + "\n")
+    runlog.log_event("transformed", "county_population", counties=len(merged))
     print(f"Wrote populations for {len(merged)} counties "
-          f"({years[0]}-{years[-1]}) to {OUTPUT_FILE.relative_to(ROOT)}")
-    return 0
+          f"({years[0]}-{years[-1]}) to {runlog.display_path(OUTPUT_FILE)}")
+    return 1 if any_failed else 0
 
 
 if __name__ == "__main__":

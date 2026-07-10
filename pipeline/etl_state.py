@@ -56,6 +56,9 @@ import httpx
 import pandas as pd
 import pdfplumber
 
+import runlog
+from fetching import TransientDataError, call_with_retries, download_file
+
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
 RAW_DIR = ROOT / "data" / "raw"
@@ -115,9 +118,15 @@ def openga_client() -> httpx.Client:
         timeout=180,
         follow_redirects=True,
     )
-    client.get("/poa")
-    client.post("/poHome/acceptDisclaimer",
-                data={"_action_acceptDisclaimer": "I Understand : Proceed"})
+
+    def accept_disclaimer() -> None:
+        client.get("/poa").raise_for_status()
+        client.post("/poHome/acceptDisclaimer",
+                    data={"_action_acceptDisclaimer": "I Understand : Proceed"}
+                    ).raise_for_status()
+
+    call_with_retries(accept_disclaimer, source=OPENGA_SOURCE,
+                      description="disclaimer session", attempts=3)
     return client
 
 
@@ -131,17 +140,24 @@ def openga_years(client: httpx.Client, app: dict) -> list[int]:
 
 def openga_export(client: httpx.Client, app: dict, year: int) -> str:
     base = {"selectedYear": str(year), "actionPath": "index", **app["search"]}
-    time.sleep(OPENGA_THROTTLE_SECONDS)
-    client.post(f"/{app['form']}", data={**base, "_action_search": "Search"})
-    time.sleep(OPENGA_THROTTLE_SECONDS)
-    response = client.post(
-        f"/{app['form']}",
-        data={**base, app["export_action"]: "CSV", "f": "csv", "extension": "csv"},
-    )
-    response.raise_for_status()
-    if "text/csv" not in response.headers.get("content-type", ""):
-        raise SystemExit(f"Export for {app['index']} {year} did not return CSV.")
-    return response.text
+
+    def search_and_export() -> str:
+        time.sleep(OPENGA_THROTTLE_SECONDS)
+        client.post(f"/{app['form']}",
+                    data={**base, "_action_search": "Search"}).raise_for_status()
+        time.sleep(OPENGA_THROTTLE_SECONDS)
+        response = client.post(
+            f"/{app['form']}",
+            data={**base, app["export_action"]: "CSV", "f": "csv", "extension": "csv"},
+        )
+        response.raise_for_status()
+        if "text/csv" not in response.headers.get("content-type", ""):
+            raise TransientDataError(
+                f"Export for {app['index']} {year} did not return CSV.")
+        return response.text
+
+    return call_with_retries(search_and_export, source=OPENGA_SOURCE,
+                             description=f"{app['index']} FY{year}", attempts=3)
 
 
 def openga_records(section: str, app: dict, year: int, csv_text: str) -> list[dict]:
@@ -200,16 +216,6 @@ def refresh_openga() -> tuple[list[dict], dict]:
             }
     client.close()
     return records, manifest
-
-
-def download_pdf(url: str, destination: Path) -> None:
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    with httpx.stream("GET", url, headers={"User-Agent": USER_AGENT},
-                      timeout=180, follow_redirects=True) as response:
-        response.raise_for_status()
-        with destination.open("wb") as handle:
-            for chunk in response.iter_bytes():
-                handle.write(chunk)
 
 
 def parse_amount(text: str) -> float | None:
@@ -389,21 +395,19 @@ def parse_expenditures(pdf: pdfplumber.PDF, source: str, fund_scope: str,
     return records
 
 
-def refresh_opb(sources: dict) -> list[dict]:
-    records = []
-    for source_id in OPB_REPORTS:
-        destination = RAW_DIR / f"{source_id}.pdf"
-        download_pdf(sources[source_id]["url"], destination)
-        print(f"Downloaded {sources[source_id]['url']} "
-              f"({destination.stat().st_size:,} bytes)")
-        with pdfplumber.open(destination) as pdf:
-            records += parse_revenues(pdf, source_id)
-            records += parse_expenditures(
-                pdf, source_id, "state_funds",
-                "Expenditures and Appropriations: State Funds")
-            records += parse_expenditures(
-                pdf, source_id, "total_funds",
-                "Expenditures and Appropriations: Total Funds")
+def refresh_opb_report(sources: dict, source_id: str) -> list[dict]:
+    destination = RAW_DIR / f"{source_id}.pdf"
+    download_file(sources[source_id]["url"], destination, source=source_id)
+    print(f"Downloaded {sources[source_id]['url']} "
+          f"({destination.stat().st_size:,} bytes)")
+    with pdfplumber.open(destination) as pdf:
+        records = parse_revenues(pdf, source_id)
+        records += parse_expenditures(
+            pdf, source_id, "state_funds",
+            "Expenditures and Appropriations: State Funds")
+        records += parse_expenditures(
+            pdf, source_id, "total_funds",
+            "Expenditures and Appropriations: Total Funds")
     return records
 
 
@@ -495,6 +499,19 @@ def write_state_json(frame: pd.DataFrame) -> None:
         (STATE_DIR / filename).write_text(json.dumps(document, indent=1) + "\n")
 
 
+def refresh_dataset(source_id: str, operation) -> tuple[list[dict], bool]:
+    try:
+        records = operation()
+    except (Exception, SystemExit) as exc:
+        failures = runlog.record_outcome(source_id, ok=False, error=str(exc))
+        runlog.log_event("transform_failed", source_id,
+                         consecutive_failures=failures, error=str(exc)[:300])
+        print(f"ERROR {source_id}: {exc}", file=sys.stderr)
+        return [], True
+    runlog.record_outcome(source_id, ok=True)
+    return records, False
+
+
 def main() -> int:
     requested = set(sys.argv[1:])
     sources = load_sources()
@@ -503,18 +520,37 @@ def main() -> int:
     if requested and not refresh:
         print(f"No state-level sources among {sorted(requested)}; nothing to do.")
         return 0
+    for source_id in sorted(known - refresh):
+        runlog.log_event("skipped", source_id, reason="not among changed sources")
 
     fresh: list[dict] = []
     manifest = None
+    any_failed = False
     if OPENGA_SOURCE in refresh:
-        openga_rows, manifest = refresh_openga()
-        fresh += openga_rows
-    if refresh & set(OPB_REPORTS):
-        fresh += refresh_opb(sources)
+        def refresh_openga_dataset() -> list[dict]:
+            nonlocal manifest
+            records, manifest = refresh_openga()
+            return records
+
+        records, failed = refresh_dataset(OPENGA_SOURCE, refresh_openga_dataset)
+        fresh += records
+        any_failed |= failed
+    for source_id in OPB_REPORTS:
+        if source_id not in refresh:
+            continue
+        records, failed = refresh_dataset(
+            source_id, lambda sid=source_id: refresh_opb_report(sources, sid))
+        fresh += records
+        any_failed |= failed
+
+    if not fresh:
+        if any_failed:
+            print("No datasets refreshed; existing outputs left untouched.",
+                  file=sys.stderr)
+            return 1
+        raise SystemExit("No state records produced — layouts may have changed.")
 
     frame = merge_records(pd.DataFrame.from_records(fresh))
-    if frame.empty:
-        raise SystemExit("No state records produced — layouts may have changed.")
     frame = number_lines(frame)
     write_parquet(frame)
     write_state_json(frame)
@@ -522,10 +558,11 @@ def main() -> int:
         MANIFEST_FILE.parent.mkdir(parents=True, exist_ok=True)
         MANIFEST_FILE.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
 
+    runlog.log_event("transformed", "state_finances", records=int(len(frame)))
     print(f"Wrote {len(frame):,} records "
           f"({frame.fiscal_year.min()}-{frame.fiscal_year.max()}) to "
-          f"{PARQUET_FILE.relative_to(ROOT)} and {STATE_DIR.relative_to(ROOT)}/")
-    return 0
+          f"{runlog.display_path(PARQUET_FILE)} and {runlog.display_path(STATE_DIR)}/")
+    return 1 if any_failed else 0
 
 
 if __name__ == "__main__":

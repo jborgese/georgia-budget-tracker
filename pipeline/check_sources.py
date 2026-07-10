@@ -19,11 +19,14 @@ import json
 import os
 import re
 import sys
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
+
+from runlog import log_event
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
@@ -68,6 +71,21 @@ def openga_years_fingerprint() -> dict:
     return {"years": years}
 
 
+def fingerprint_with_retries(source_id: str, url: str, check: str,
+                             attempts: int = 3, base_delay: float = 2.0) -> dict:
+    for attempt in range(1, attempts + 1):
+        try:
+            return fingerprint(url, check)
+        except (urllib.error.URLError, TimeoutError, OSError) as exc:
+            if attempt == attempts:
+                raise
+            delay = base_delay * 2 ** (attempt - 1)
+            log_event("retry", source_id, attempt=attempt, delay_seconds=delay,
+                      error=str(exc)[:300])
+            time.sleep(delay)
+    raise AssertionError("unreachable")
+
+
 def fingerprint(url: str, check: str = "http") -> dict:
     """Return a fingerprint for the resource at ``url``."""
     if check == "openga_years":
@@ -92,19 +110,28 @@ def main() -> int:
 
     for source in sources:
         source_id, url = source["id"], source["url"]
+        entry = state.setdefault(source_id, {})
         try:
-            current = fingerprint(url, source.get("check", "http"))
+            current = fingerprint_with_retries(source_id, url,
+                                               source.get("check", "http"))
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             errors.append(f"{source_id}: {exc}")
+            failures = int(entry.get("consecutive_failures", 0)) + 1
+            entry["consecutive_failures"] = failures
+            entry["last_error"] = str(exc)[:500]
+            log_event("check_failed", source_id, consecutive_failures=failures,
+                      error=str(exc)[:300])
             continue
 
-        previous = state.get(source_id, {}).get("fingerprint")
+        entry.pop("consecutive_failures", None)
+        entry.pop("last_error", None)
+        previous = entry.get("fingerprint")
         if previous != current:
             changed.append(source_id)
-        state[source_id] = {
-            "fingerprint": current,
-            "checked_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        }
+        log_event("changed" if previous != current else "unchanged", source_id)
+        entry["fingerprint"] = current
+        entry["checked_at"] = datetime.now(timezone.utc).isoformat(
+            timespec="seconds")
 
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n")

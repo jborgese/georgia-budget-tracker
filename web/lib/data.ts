@@ -4,6 +4,7 @@ import type {
   Basis,
   CategorySeries,
   CountiesIndexDocument,
+  CountyCategoriesDocument,
   CountyDocument,
   CountyMetricsDocument,
   CountyPageData,
@@ -191,6 +192,10 @@ export function loadCountyMetrics(): CountyMetricsDocument {
   return readJson<CountyMetricsDocument>("counties", "metrics.json");
 }
 
+export function loadStateCategories(): StateCategoriesDocument {
+  return readJson<StateCategoriesDocument>("state", "categories.json");
+}
+
 export interface CountyOption {
   name: string;
   slug: string;
@@ -281,16 +286,19 @@ export function loadCountyPage(slug: string): CountyPageData | null {
   if (!entry || !entry.included) return null;
   const manifest = readJson<ManifestDocument>("manifest.json");
   const document = readJson<CountyDocument>("counties", `${slug}.json`);
+  const categories = readJson<CountyCategoriesDocument>(
+    "counties", "categories.json");
   const filedYears = metrics.fiscal_years.filter(
     (year) => entry.years[String(year)] != null,
   );
+  const latestFiledYear = filedYears.at(-1) ?? metrics.fiscal_years[0];
   return {
     county: entry.county,
     displayName: countyDisplayName(entry.county),
     fips: entry.fips,
     slug,
     fiscalYears: metrics.fiscal_years,
-    latestFiledYear: filedYears.at(-1) ?? metrics.fiscal_years[0],
+    latestFiledYear,
     missingYears: metrics.fiscal_years.filter(
       (year) => entry.years[String(year)] == null,
     ),
@@ -298,6 +306,9 @@ export function loadCountyPage(slug: string): CountyPageData | null {
     medians: stateMedians(metrics),
     document,
     provenance: countyProvenance(manifest),
+    spendingByCategory:
+      categories.counties[slug]?.years[String(latestFiledYear)]?.expenditure ??
+      {},
   };
 }
 
