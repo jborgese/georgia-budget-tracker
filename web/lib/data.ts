@@ -4,10 +4,13 @@ import type {
   Basis,
   CategorySeries,
   CountiesIndexDocument,
+  CountyDocument,
   CountyMetricsDocument,
+  CountyPageData,
   DashboardData,
   FiscalYearTotals,
   ManifestDocument,
+  MedianYear,
   Side,
   SourceNote,
   StateCategoriesDocument,
@@ -149,6 +152,101 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
 
 export function loadCountyMetrics(): CountyMetricsDocument {
   return readJson<CountyMetricsDocument>("counties", "metrics.json");
+}
+
+const COUNTY_NAME_EXCEPTIONS: Record<string, string> = {
+  DEKALB: "DeKalb",
+  MCDUFFIE: "McDuffie",
+  MCINTOSH: "McIntosh",
+};
+
+export function countyDisplayName(county: string): string {
+  return (
+    COUNTY_NAME_EXCEPTIONS[county] ??
+    county
+      .toLowerCase()
+      .split(" ")
+      .map((word) => word[0].toUpperCase() + word.slice(1))
+      .join(" ")
+  );
+}
+
+function median(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2
+    ? sorted[middle]
+    : (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function stateMedians(metrics: CountyMetricsDocument): Record<string, MedianYear> {
+  const keys = [
+    "revenue",
+    "expenditure",
+    "revenue_per_capita",
+    "expenditure_per_capita",
+  ] as const;
+  const medians: Record<string, MedianYear> = {};
+  for (const year of metrics.fiscal_years) {
+    const filed = metrics.counties
+      .filter((entry) => entry.included)
+      .map((entry) => (entry.included ? entry.years[String(year)] : null))
+      .filter((m): m is NonNullable<typeof m> => m != null);
+    medians[String(year)] = Object.fromEntries(
+      keys.map((key) => [
+        key,
+        median(filed.map((m) => m[key]).filter((v): v is number => v != null)),
+      ]),
+    ) as unknown as MedianYear;
+  }
+  return medians;
+}
+
+function countyProvenance(manifest: ManifestDocument): string {
+  const ted = manifest.sources["ted_rlgf_county_workbook"];
+  const census = manifest.sources["census_county_pop_2020s"];
+  const years = ted?.fiscal_years ?? [];
+  const span = years.length
+    ? `fiscal years ${Math.min(...years)}–${Math.max(...years)}`
+    : "";
+  const tedVintage = formatVintage(manifest, "ted_rlgf_county_workbook");
+  const censusVintage = census ? formatVintage(manifest, "census_county_pop_2020s") : "";
+  return (
+    `Source: DCA Report of Local Government Finances via the UGA Tax & ` +
+    `Expenditure Data Center (${tedVintage}), ${span}. Population ` +
+    `denominators: US Census county estimates (${censusVintage}). ` +
+    `Expenditures are operating plus capital, as filed. A year the county ` +
+    `did not file appears as missing, never as zero.`
+  );
+}
+
+export function loadCountyPage(slug: string): CountyPageData | null {
+  const metrics = loadCountyMetrics();
+  const entry = metrics.counties.find(
+    (candidate) => candidate.included && candidate.slug === slug,
+  );
+  if (!entry || !entry.included) return null;
+  const manifest = readJson<ManifestDocument>("manifest.json");
+  const document = readJson<CountyDocument>("counties", `${slug}.json`);
+  const filedYears = metrics.fiscal_years.filter(
+    (year) => entry.years[String(year)] != null,
+  );
+  return {
+    county: entry.county,
+    displayName: countyDisplayName(entry.county),
+    fips: entry.fips,
+    slug,
+    fiscalYears: metrics.fiscal_years,
+    latestFiledYear: filedYears.at(-1) ?? metrics.fiscal_years[0],
+    missingYears: metrics.fiscal_years.filter(
+      (year) => entry.years[String(year)] == null,
+    ),
+    years: entry.years,
+    medians: stateMedians(metrics),
+    document,
+    provenance: countyProvenance(manifest),
+  };
 }
 
 export function loadDashboardData(): DashboardData {

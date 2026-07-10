@@ -72,6 +72,48 @@ export interface CountyMetricsDocument {
   counties: CountyMetricsEntry[];
 }
 
+export interface CountyDocument {
+  county: string;
+  source: string;
+  fiscal_years: number[];
+  totals: {
+    fiscal_year: number;
+    revenue: number | null;
+    expenditure: number | null;
+    expenditure_operating: number | null;
+    expenditure_capital: number | null;
+  }[];
+  breakdown: {
+    classification: string;
+    category: "revenue" | "expenditure";
+    section: string;
+    depth: number;
+    path: string;
+    amounts: Record<string, number>;
+  }[];
+}
+
+export interface MedianYear {
+  revenue: number | null;
+  expenditure: number | null;
+  revenue_per_capita: number | null;
+  expenditure_per_capita: number | null;
+}
+
+export interface CountyPageData {
+  county: string;
+  displayName: string;
+  fips: string;
+  slug: string;
+  fiscalYears: number[];
+  latestFiledYear: number;
+  missingYears: number[];
+  years: Record<string, CountyYearMetrics | null>;
+  medians: Record<string, MedianYear>;
+  document: CountyDocument;
+  provenance: string;
+}
+
 export interface SourceVintage {
   fingerprint: {
     etag?: string | null;
