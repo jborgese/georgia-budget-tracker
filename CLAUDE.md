@@ -22,7 +22,12 @@ npm install
 npm run dev      # dev server
 npm run build    # static build
 npm run lint     # eslint
+# accessibility scan of the built site (serve out/, then axe via headless Firefox):
+python3 -m http.server 8377 --directory out &
+MOZ_HEADLESS=1 npx axe http://localhost:8377/ --browser firefox
 ```
+
+Accessibility invariants: text colors must hold WCAG AA on paper (`GOLD` was darkened to #856624 for this — don't lighten it), every chart keeps a table twin, the choropleth `svg` must NOT have `role="img"` (it contains focusable county links), and non-filing data renders as explicit "no filing"/gaps, never $0.
 
 Pipeline (`pipeline/`):
 

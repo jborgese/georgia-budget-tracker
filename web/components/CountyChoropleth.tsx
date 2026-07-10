@@ -195,10 +195,12 @@ export function CountyChoropleth({
       <div className="relative mt-4">
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-          role="img"
-          aria-label={`Georgia county map colored by ${metricConfig.label.toLowerCase()}, ${fiscalYearLabel(year)}. Values are in the table below the map.`}
+          aria-label={`Georgia county map colored by ${metricConfig.label.toLowerCase()}, ${fiscalYearLabel(year)}. Every value is also in the table below the map.`}
           className="w-full max-w-xl"
           onPointerLeave={() => setHover(null)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setHover(null);
+          }}
         >
           {features.map((feature) => {
             const entry = byFips.get(feature.fips);
@@ -249,7 +251,12 @@ export function CountyChoropleth({
                 {shape}
               </a>
             ) : (
-              <g key={feature.fips} tabIndex={0} aria-label={`${feature.name} County — ${entry.note}`}>
+              <g
+                key={feature.fips}
+                tabIndex={0}
+                role="img"
+                aria-label={`${feature.name} County — ${entry.note}`}
+              >
                 {shape}
               </g>
             );

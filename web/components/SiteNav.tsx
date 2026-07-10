@@ -64,6 +64,7 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
             ref={inputRef}
             type="text"
             role="combobox"
+            aria-autocomplete="list"
             aria-expanded={open && matches.length > 0}
             aria-controls={listId}
             aria-activedescendant={

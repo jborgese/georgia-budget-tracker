@@ -1,7 +1,7 @@
 export const PAPER = "#F6F5F0";
 export const INK = "#1C1A16";
 export const SPRUCE = "#17402C";
-export const GOLD = "#96742A";
+export const GOLD = "#856624";
 export const RULE = "#D9D5CB";
 export const MUTED = "#6B6558";
 

@@ -16,6 +16,7 @@ import { INK, MUTED, PAPER, RULE, SLOTS, SPRUCE } from "@/lib/theme";
 import { fiscalYearLabel, formatCompactDollars, formatDollars } from "@/lib/format";
 import { ChartTooltipFrame, type TooltipRow } from "./ChartTooltip";
 import { ChartLegend } from "./ChartLegend";
+import { DataTable } from "./DataTable";
 
 const MAX_COUNTIES = 4;
 const METRIC_CHARTS = [
@@ -268,6 +269,17 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
                   metric={chart.key}
                   perCapita={chart.perCapita}
                   title={chart.title}
+                />
+                <DataTable
+                  caption={`${chart.title} by fiscal year for the selected counties`}
+                  columns={["Fiscal year", ...series.map((s) => `${s.name}`)]}
+                  rows={metrics.fiscal_years.map((year) => [
+                    fiscalYearLabel(year),
+                    ...series.map((s) => {
+                      const value = s.entry.years[String(year)]?.[chart.key];
+                      return value != null ? formatDollars(value) : "no filing";
+                    }),
+                  ])}
                 />
               </section>
             ))}

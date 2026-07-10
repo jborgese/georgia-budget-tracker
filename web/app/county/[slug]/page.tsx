@@ -303,6 +303,15 @@ export default async function CountyPage({
             counties in this dataset); consolidated city-county governments are
             not included.
           </p>
+          <DataTable
+            caption={`${data.displayName} County revenue per resident versus the state median, by fiscal year`}
+            columns={["Fiscal year", `${data.displayName} County`, "State median"]}
+            rows={medianRows(data).map((row) => [
+              fiscalYearLabel(row.fiscalYear),
+              row.county != null ? formatDollars(row.county) : "no filing",
+              row.median != null ? formatDollars(row.median) : "—",
+            ])}
+          />
         </section>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-8">
