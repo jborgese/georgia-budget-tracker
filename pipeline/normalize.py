@@ -7,6 +7,8 @@ pandera contract in pipeline/schema.py, and writes:
 
 - data/processed/normalized.parquet   (entity, entity_type, fips, fiscal_year,
   category, subcategory, amount)
+- data/processed/state/categories.json  state-level category totals per fiscal
+  year and side, plus the basis of each year, for the web frontend
 - data/processed/manifest.json        vintage and coverage per source plus
   reconciliation statistics for the normalized table
 
@@ -189,6 +191,32 @@ def normalize_state(frame: pd.DataFrame) -> tuple[list[dict], dict[tuple, float]
     return records, expected
 
 
+def state_categories_document(normalized: pd.DataFrame,
+                              state: pd.DataFrame) -> dict:
+    state_rows = normalized[normalized.entity_type == "state"]
+    sides = state_rows.category.map(contract.side)
+    totals = (state_rows.groupby([sides.rename("side"), "category",
+                                  "fiscal_year"]).amount.sum().reset_index())
+    opb = state[state.source == OPB_SOURCE]
+    basis = {
+        side_name: {str(int(row.fiscal_year)): row.basis
+                    for row in group.drop_duplicates("fiscal_year").itertuples()}
+        for side_name, group in opb[opb.section.isin(
+            OPB_REVENUE_SECTIONS | {"state_funds"})].assign(
+            side=lambda f: f.category.where(f.category == "revenue",
+                                            "expenditure")).groupby("side")
+    }
+    return {
+        "entity": contract.STATE_ENTITY,
+        "sources": [OPB_SOURCE],
+        "basis_by_year": basis,
+        "rows": [{"side": row.side, "category": row.category,
+                  "fiscal_year": int(row.fiscal_year),
+                  "amount": round(float(row.amount), 2)}
+                 for row in totals.itertuples()],
+    }
+
+
 def assemble(records: list[dict]) -> pd.DataFrame:
     frame = pd.DataFrame.from_records(records, columns=contract.NORMALIZED_COLUMNS)
     return frame.sort_values(contract.NORMALIZED_COLUMNS[:6]).reset_index(drop=True)
@@ -277,6 +305,10 @@ def main() -> int:
     )
     manifest = build_manifest(normalized, county, state, expected)
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=1) + "\n")
+    categories = state_categories_document(normalized, state)
+    categories_file = ROOT / "data" / "processed" / "state" / "categories.json"
+    categories_file.parent.mkdir(parents=True, exist_ok=True)
+    categories_file.write_text(json.dumps(categories, indent=1) + "\n")
 
     report = manifest["normalized"]["reconciliation"]
     print(f"Wrote {len(normalized):,} normalized records "

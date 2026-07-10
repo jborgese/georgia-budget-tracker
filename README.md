@@ -84,7 +84,10 @@ The change-detection workflow is live with two ETL transforms:
   display-only (Tableau data export is disabled), so the figures they present
   are sourced from the OPB reports instead.
 
-The visualization layer (charts + county choropleth) is the next milestone.
+The statically generated site in `web/` now leads with a statewide dashboard —
+revenues vs. expenditures, category breakdowns, and per-source data vintage —
+built from the committed JSON at build time. County pages and the county
+choropleth are the next milestone.
 
 ## License
 
