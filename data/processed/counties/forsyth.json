@@ -1,0 +1,822 @@
+{
+ "county": "FORSYTH",
+ "source": "ted_rlgf_county_workbook",
+ "fiscal_years": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023
+ ],
+ "totals": [
+  {
+   "fiscal_year": 2016,
+   "revenue": 382036802,
+   "expenditure": 261322788,
+   "expenditure_operating": 183047971,
+   "expenditure_capital": 78274817
+  },
+  {
+   "fiscal_year": 2017,
+   "revenue": 408629951,
+   "expenditure": 227967303,
+   "expenditure_operating": 183037284,
+   "expenditure_capital": 44930019
+  },
+  {
+   "fiscal_year": 2018,
+   "revenue": 365436904,
+   "expenditure": 245412736,
+   "expenditure_operating": 195561765,
+   "expenditure_capital": 49850971
+  },
+  {
+   "fiscal_year": 2019,
+   "revenue": 509232933,
+   "expenditure": 281142223,
+   "expenditure_operating": 211883727,
+   "expenditure_capital": 69258496
+  },
+  {
+   "fiscal_year": 2020,
+   "revenue": 525158120,
+   "expenditure": 301064648,
+   "expenditure_operating": 233840864,
+   "expenditure_capital": 67223784
+  },
+  {
+   "fiscal_year": 2021,
+   "revenue": 549434600,
+   "expenditure": 329926342,
+   "expenditure_operating": 242890724,
+   "expenditure_capital": 87035618
+  },
+  {
+   "fiscal_year": 2022,
+   "revenue": 551821776,
+   "expenditure": 361463616,
+   "expenditure_operating": 258078524,
+   "expenditure_capital": 103385092
+  },
+  {
+   "fiscal_year": 2023,
+   "revenue": 591465920,
+   "expenditure": 368532089,
+   "expenditure_operating": 284412822,
+   "expenditure_capital": 84119267
+  }
+ ],
+ "breakdown": [
+  {
+   "classification": "TOTAL REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 0,
+   "path": "TOTAL REVENUES",
+   "amounts": {
+    "2016": 382036802,
+    "2017": 408629951,
+    "2018": 365436904,
+    "2019": 509232933,
+    "2020": 525158120,
+    "2021": 549434600,
+    "2022": 551821776,
+    "2023": 591465920
+   }
+  },
+  {
+   "classification": "GENERAL REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 1,
+   "path": "TOTAL REVENUES > GENERAL REVENUES",
+   "amounts": {
+    "2016": 288018205,
+    "2017": 365457950,
+    "2018": 304439075,
+    "2019": 420868988,
+    "2020": 424875605,
+    "2021": 447344051,
+    "2022": 456732584,
+    "2023": 489869083
+   }
+  },
+  {
+   "classification": "PART I TAX REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 2,
+   "path": "TOTAL REVENUES > GENERAL REVENUES > PART I TAX REVENUES",
+   "amounts": {
+    "2016": 178782918,
+    "2017": 187833011,
+    "2018": 202509005,
+    "2019": 215961554,
+    "2020": 238546137,
+    "2021": 265074412,
+    "2022": 284819198,
+    "2023": 303123598
+   }
+  },
+  {
+   "classification": "PART 2 INTERGOVERNMENTAL REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 2,
+   "path": "TOTAL REVENUES > GENERAL REVENUES > PART 2 INTERGOVERNMENTAL REVENUES",
+   "amounts": {
+    "2016": 5380614,
+    "2017": 5274340,
+    "2018": 6394175,
+    "2019": 5685407,
+    "2020": 23291049,
+    "2021": 20722075,
+    "2022": 15473908,
+    "2023": 10898104
+   }
+  },
+  {
+   "classification": "PART 3 SERVICE CHARGES AND OTHER REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 2,
+   "path": "TOTAL REVENUES > GENERAL REVENUES > PART 3 SERVICE CHARGES AND OTHER REVENUES",
+   "amounts": {
+    "2016": 103854673,
+    "2017": 172350599,
+    "2018": 95535895,
+    "2019": 199222027,
+    "2020": 163038419,
+    "2021": 161547564,
+    "2022": 156439478,
+    "2023": 175847381
+   }
+  },
+  {
+   "classification": "ENTERPRISE FUND REVENUES",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 1,
+   "path": "TOTAL REVENUES > ENTERPRISE FUND REVENUES",
+   "amounts": {
+    "2016": 94018597,
+    "2017": 43172001,
+    "2018": 60997829,
+    "2019": 88363945,
+    "2020": 100282515,
+    "2021": 102090549,
+    "2022": 95089192,
+    "2023": 101596837
+   }
+  },
+  {
+   "classification": "Part 4 REVENUES FROM PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS",
+   "category": "revenue",
+   "section": "revenues",
+   "depth": 2,
+   "path": "TOTAL REVENUES > ENTERPRISE FUND REVENUES > Part 4 REVENUES FROM PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS",
+   "amounts": {
+    "2016": 94018597,
+    "2017": 43172001,
+    "2018": 60997829,
+    "2019": 88363945,
+    "2020": 100282515,
+    "2021": 102090549,
+    "2022": 95089192,
+    "2023": 101596837
+   }
+  },
+  {
+   "classification": "TOTAL CURRENT OPERATING EXPENDITURES",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 0,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES",
+   "amounts": {
+    "2016": 183047971,
+    "2017": 183037284,
+    "2018": 195561765,
+    "2019": 211883727,
+    "2020": 233840864,
+    "2021": 242890724,
+    "2022": 258078524,
+    "2023": 284412822
+   }
+  },
+  {
+   "classification": "PART V GENERAL GOVERNMENT EXPENDITURES",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 1,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES",
+   "amounts": {
+    "2016": 136617366,
+    "2017": 138972141,
+    "2018": 150342243,
+    "2019": 158966446,
+    "2020": 177419996,
+    "2021": 183076775,
+    "2022": 192284871,
+    "2023": 217591533
+   }
+  },
+  {
+   "classification": "Section A General Government",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section A General Government",
+   "amounts": {
+    "2016": 28059664,
+    "2017": 30786639,
+    "2018": 35101927,
+    "2019": 32765847,
+    "2020": 41310406,
+    "2021": 43286263,
+    "2022": 101054,
+    "2023": 48922854
+   }
+  },
+  {
+   "classification": "Section B Judicial",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section B Judicial",
+   "amounts": {
+    "2016": 13887364,
+    "2017": 14369635,
+    "2018": 15364041,
+    "2019": 16114709,
+    "2020": 17106522,
+    "2021": 17714728,
+    "2022": 18789944,
+    "2023": 19496226
+   }
+  },
+  {
+   "classification": "Section C Public Safety",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section C Public Safety",
+   "amounts": {
+    "2016": 62738948,
+    "2017": 63646738,
+    "2018": 68397372,
+    "2019": 74035997,
+    "2020": 79814528,
+    "2021": 82546251,
+    "2022": 88497662,
+    "2023": 100580907
+   }
+  },
+  {
+   "classification": "Section D Public Works",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section D Public Works",
+   "amounts": {
+    "2016": 14741911,
+    "2017": 12204735,
+    "2018": 11478737,
+    "2019": 14504240,
+    "2020": 17321149,
+    "2021": 15724794,
+    "2022": 16830633,
+    "2023": 20594078
+   }
+  },
+  {
+   "classification": "Section E Health and Welfare",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section E Health and Welfare",
+   "amounts": {
+    "2016": 3539246,
+    "2017": 3540435,
+    "2018": 4156044,
+    "2019": 4522273,
+    "2020": 4915220,
+    "2021": 5285354,
+    "2022": 5416196,
+    "2023": 6308075
+   }
+  },
+  {
+   "classification": "Section G Housing and Development",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART V GENERAL GOVERNMENT EXPENDITURES > Section G Housing and Development",
+   "amounts": {
+    "2016": 4986028,
+    "2017": 5488228,
+    "2018": 6405402,
+    "2019": 7060314,
+    "2020": 7531423,
+    "2021": 7706670,
+    "2022": 8344666,
+    "2023": 8748856
+   }
+  },
+  {
+   "classification": "PART VI EXPENSES FOR PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 1,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART VI EXPENSES FOR PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS",
+   "amounts": {
+    "2016": 40521985,
+    "2017": 44065143,
+    "2018": 45219522,
+    "2019": 52917281,
+    "2020": 56420868,
+    "2021": 59813949,
+    "2022": 65793653,
+    "2023": 66821289
+   }
+  },
+  {
+   "classification": "Enterprise Fund Current Operations Expense",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART VI EXPENSES FOR PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS > Enterprise Fund Current Operations Expense",
+   "amounts": {
+    "2016": 40521985,
+    "2017": 44065143,
+    "2018": 45219522,
+    "2019": 52917281,
+    "2020": 56420868,
+    "2021": 59813949,
+    "2022": 65793653,
+    "2023": 66821289
+   }
+  },
+  {
+   "classification": "Enterprise Fund Interest Expense",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 2,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART VI EXPENSES FOR PUBLIC UTILITY SYSTEMS AND OTHER ENTERPRISE FUNDS > Enterprise Fund Interest Expense",
+   "amounts": {
+    "2016": 4887974,
+    "2017": 4048005,
+    "2018": 7184608,
+    "2019": 7066190,
+    "2020": 9845702,
+    "2021": 9899754,
+    "2022": 7660702,
+    "2023": 7777144
+   }
+  },
+  {
+   "classification": "PART X INTERGOVERNMENTAL EXPENDITURES",
+   "category": "expenditure",
+   "section": "operating",
+   "depth": 1,
+   "path": "TOTAL CURRENT OPERATING EXPENDITURES > PART X INTERGOVERNMENTAL EXPENDITURES",
+   "amounts": {
+    "2016": 5908620,
+    "2017": 6209323,
+    "2018": 8029699,
+    "2019": 7194146,
+    "2020": 7710085,
+    "2021": 7778651,
+    "2022": 8502195,
+    "2023": 8597386
+   }
+  },
+  {
+   "classification": "PART V CAPITAL EXPENDITURES",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 0,
+   "path": "PART V CAPITAL EXPENDITURES",
+   "amounts": {
+    "2016": 78274817,
+    "2017": 44930019,
+    "2018": 49850971,
+    "2019": 69258496,
+    "2020": 67223784,
+    "2021": 87035618,
+    "2022": 103385092,
+    "2023": 84119267
+   }
+  },
+  {
+   "classification": "Capital Expenditures - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 1,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property",
+   "amounts": {
+    "2016": 71151701,
+    "2017": 39285989,
+    "2018": 42805580,
+    "2019": 58284190,
+    "2020": 56725226,
+    "2021": 78740348,
+    "2022": 94774424,
+    "2023": 75543598
+   }
+  },
+  {
+   "classification": "Section A General Government - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section A General Government - Property",
+   "amounts": {
+    "2016": 56231861,
+    "2017": 37086254,
+    "2018": 33072264,
+    "2019": 17269340,
+    "2020": 48526537,
+    "2021": 66858199,
+    "2022": 0,
+    "2023": 54922854
+   }
+  },
+  {
+   "classification": "Section B Judicial - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section B Judicial - Property",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section C Public Safety - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section C Public Safety - Property",
+   "amounts": {
+    "2016": 1868,
+    "2017": 0,
+    "2018": 560090,
+    "2019": 1744619,
+    "2020": 1056642,
+    "2021": 1434920,
+    "2022": 1703767,
+    "2023": 3617971
+   }
+  },
+  {
+   "classification": "Section D Public Works - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section D Public Works - Property",
+   "amounts": {
+    "2016": 1205342,
+    "2017": 0,
+    "2018": 127286,
+    "2019": 36411960,
+    "2020": 0,
+    "2021": 0,
+    "2022": 129635,
+    "2023": 1572627
+   }
+  },
+  {
+   "classification": "Section E Health and Welfare - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section E Health and Welfare - Property",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 20942,
+    "2019": 156781,
+    "2020": 89239,
+    "2021": 215537,
+    "2022": 547012,
+    "2023": 4403417
+   }
+  },
+  {
+   "classification": "Section F Culture and Recreation - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section F Culture and Recreation - Property",
+   "amounts": {
+    "2016": 13672933,
+    "2017": 2199735,
+    "2018": 8996433,
+    "2019": 2497306,
+    "2020": 7052808,
+    "2021": 10231692,
+    "2022": 19856559,
+    "2023": 11026729
+   }
+  },
+  {
+   "classification": "Section G Housing and Development - Property",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Property > Section G Housing and Development - Property",
+   "amounts": {
+    "2016": 39697,
+    "2017": 0,
+    "2018": 13200,
+    "2019": 204184,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Capital Expenditures - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 1,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment",
+   "amounts": {
+    "2016": 7123116,
+    "2017": 5644030,
+    "2018": 7045391,
+    "2019": 10974306,
+    "2020": 10498558,
+    "2021": 8295270,
+    "2022": 8610668,
+    "2023": 8575669
+   }
+  },
+  {
+   "classification": "Section A General Government Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section A General Government Machinery and Equipment",
+   "amounts": {
+    "2016": 3129921,
+    "2017": 3273906,
+    "2018": 1304115,
+    "2019": 1851488,
+    "2020": 1883539,
+    "2021": 1179985,
+    "2022": 30785,
+    "2023": 1114120
+   }
+  },
+  {
+   "classification": "Section B Judicial - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section B Judicial - Machinery and Equipment",
+   "amounts": {
+    "2016": 22604,
+    "2017": 44015,
+    "2018": 17319,
+    "2019": 221860,
+    "2020": 10883,
+    "2021": 0,
+    "2022": 12482,
+    "2023": 118296
+   }
+  },
+  {
+   "classification": "Section C Public Safety - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section C Public Safety - Machinery and Equipment",
+   "amounts": {
+    "2016": 3076386,
+    "2017": 1203359,
+    "2018": 4193061,
+    "2019": 6515557,
+    "2020": 5878316,
+    "2021": 5565793,
+    "2022": 5037317,
+    "2023": 5445552
+   }
+  },
+  {
+   "classification": "Section D Public Works - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section D Public Works - Machinery and Equipment",
+   "amounts": {
+    "2016": 361497,
+    "2017": 567121,
+    "2018": 726337,
+    "2019": 581040,
+    "2020": 1711856,
+    "2021": 1020839,
+    "2022": 517563,
+    "2023": 1455731
+   }
+  },
+  {
+   "classification": "Section E Health and Welfare - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section E Health and Welfare - Machinery and Equipment",
+   "amounts": {
+    "2016": 104862,
+    "2017": 150541,
+    "2018": 194382,
+    "2019": 357430,
+    "2020": 15332,
+    "2021": 98170,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section F Culture and Recreation - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section F Culture and Recreation - Machinery and Equipment",
+   "amounts": {
+    "2016": 331454,
+    "2017": 327213,
+    "2018": 171673,
+    "2019": 589847,
+    "2020": 718401,
+    "2021": 405257,
+    "2022": 224522,
+    "2023": 371623
+   }
+  },
+  {
+   "classification": "Section G Housing and Development - Machinery and Equipment",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Machinery and Equipment > Section G Housing and Development - Machinery and Equipment",
+   "amounts": {
+    "2016": 96392,
+    "2017": 77875,
+    "2018": 438504,
+    "2019": 857084,
+    "2020": 280231,
+    "2021": 25226,
+    "2022": 33214,
+    "2023": 70346
+   }
+  },
+  {
+   "classification": "Capital Expenditures - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 1,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section A General Government - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section A General Government - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section B Judicial - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section B Judicial - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section C Public Safety - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section C Public Safety - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section D Public Works - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section D Public Works - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section E Health and Welfare _ Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section E Health and Welfare _ Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section F Culture and Recreation - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section F Culture and Recreation - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  },
+  {
+   "classification": "Section G Housing and Development - Intangibles",
+   "category": "expenditure",
+   "section": "capital",
+   "depth": 2,
+   "path": "PART V CAPITAL EXPENDITURES > Capital Expenditures - Intangibles > Section G Housing and Development - Intangibles",
+   "amounts": {
+    "2016": 0,
+    "2017": 0,
+    "2018": 0,
+    "2019": 0,
+    "2020": 0,
+    "2021": 0,
+    "2022": 0,
+    "2023": 0
+   }
+  }
+ ]
+}

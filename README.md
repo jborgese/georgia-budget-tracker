@@ -56,12 +56,17 @@ cd pipeline
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python check_sources.py        # change detection only (stdlib, no deps needed)
+python etl_rlgf.py             # download + transform RLGF county data (needs deps)
 ```
 
 ## Status
 
-Early scaffold. The change-detection workflow is live; ETL transforms and the
-visualization layer (charts + county choropleth) are the next milestones.
+The change-detection workflow is live, and the first ETL transform
+(`pipeline/etl_rlgf.py`) normalizes RLGF county revenues and expenditures
+(FY2016+, 151 county governments) into `data/processed/` — Parquet plus
+per-county JSON under `data/processed/counties/`. The eight consolidated
+city-county governments are published separately by TED and not yet covered.
+The visualization layer (charts + county choropleth) is the next milestone.
 
 ## License
 

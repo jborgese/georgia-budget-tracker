@@ -10,7 +10,7 @@ A static-first civic data project tracking how the State of Georgia (down to the
 2. When a source changes, the Python ETL in `pipeline/` downloads and normalizes data into `data/processed/` (Parquet + pre-aggregated JSON per county/fiscal year).
 3. Data changes are **committed to git** — the revision history of the numbers is intentionally the public audit trail — and a commit triggers a rebuild of the static site in `web/`.
 
-Current status: early scaffold. Change detection is live; the ETL transforms ("Run ETL" workflow step is a placeholder) and visualization layer (charts + county choropleth) are not built yet.
+Current status: change detection and the RLGF county ETL (`pipeline/etl_rlgf.py`) are live; the visualization layer (charts + county choropleth) is not built yet.
 
 ## Commands
 
@@ -31,7 +31,8 @@ cd pipeline
 python check_sources.py    # change detection — stdlib only, no venv/deps needed
 # Full ETL deps (only needed for transforms, not check_sources.py):
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt   # httpx, pandas, duckdb, pdfplumber, pyarrow
+pip install -r requirements.txt   # httpx, openpyxl, pandas, duckdb, pdfplumber, pyarrow
+python etl_rlgf.py                # RLGF county transform; optional arg = local workbook path (skips download)
 ```
 
 There is no test suite yet.
@@ -40,5 +41,6 @@ There is no test suite yet.
 
 - **`pipeline/sources.json`** is the machine-readable source registry (id, url, cadence, level: state|county). Add new upstream sources here — both `check_sources.py` and the README's source table derive from it.
 - **`pipeline/check_sources.py`** fingerprints each source (ETag/Last-Modified headers, falling back to SHA-256 of the body) and compares against `data/.source-state.json`. It is deliberately stdlib-only so the scheduled workflow runs it without installing dependencies — keep it that way. It always exits 0 and communicates changes via stdout and the `changed`/`changed_sources` `GITHUB_OUTPUT` values, which gate the ETL step in the workflow.
+- **`pipeline/etl_rlgf.py`** parses the TED all-counties workbook (source id `ted_rlgf_county_workbook`: one sheet per county, classification rows indented 5 spaces per hierarchy level, fiscal-year columns) into a tidy Parquet file plus per-county JSON aggregates in `data/processed/counties/`. Only the Revenues / Operating Expenditures / Capital Expenditures sections are extracted. Parquet output is byte-deterministic, so data-refresh commits only show real changes. The 8 consolidated city-county governments are a separate TED government type and are not in this dataset.
 - **`data/`** holds `raw/` (files as downloaded) and `processed/` (normalized outputs), plus `.source-state.json` (fingerprint state, committed by the workflow's bot).
 - **`web/`** is Next.js 16 (App Router, TypeScript, Tailwind 4). Per `web/AGENTS.md`: this Next.js version has breaking changes vs. training data — read the relevant guide in `web/node_modules/next/dist/docs/` before writing Next.js code.

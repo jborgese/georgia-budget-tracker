@@ -23,11 +23,11 @@ jobs:
         id: detect
         run: python pipeline/check_sources.py
 
-      - name: Run ETL (placeholder)
-        if: steps.detect.outputs.changed == 'true'
+      - name: Run RLGF county ETL
+        if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook')
         run: |
-          echo "Sources changed: ${{ steps.detect.outputs.changed_sources }}"
-          echo "TODO: pip install -r pipeline/requirements.txt && run transforms"
+          pip install -r pipeline/requirements.txt
+          python pipeline/etl_rlgf.py
 
       - name: Commit updated data
         run: |
