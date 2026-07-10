@@ -4,6 +4,7 @@ import type {
   Basis,
   CategorySeries,
   CountiesIndexDocument,
+  CountyMetricsDocument,
   DashboardData,
   FiscalYearTotals,
   ManifestDocument,
@@ -41,6 +42,7 @@ const SOURCE_NAMES: Record<string, string> = {
   open_georgia_poa: "Open Georgia — payments, obligations, professional services",
   opb_governors_budget_report_fy2026:
     "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
+  census_county_pop_2020s: "US Census — county population estimates",
 };
 
 function readJson<T>(...segments: string[]): T {
@@ -143,6 +145,10 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
       coverage: `${span}${counties}`,
     };
   });
+}
+
+export function loadCountyMetrics(): CountyMetricsDocument {
+  return readJson<CountyMetricsDocument>("counties", "metrics.json");
 }
 
 export function loadDashboardData(): DashboardData {

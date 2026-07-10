@@ -121,7 +121,11 @@ export function RevenueExpenditureChart({
 
   return (
     <div role="img" aria-label="Line chart of Georgia state revenues and expenditures by fiscal year">
-      <ResponsiveContainer width="100%" height={320}>
+      <ResponsiveContainer
+        width="100%"
+        height={320}
+        initialDimension={{ width: 800, height: 320 }}
+      >
         <LineChart data={data} margin={{ top: 24, right: 16, bottom: 4, left: 8 }}>
           <CartesianGrid stroke={RULE} strokeWidth={1} vertical={false} />
           <XAxis

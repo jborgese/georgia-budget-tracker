@@ -1,5 +1,7 @@
-import { loadDashboardData } from "@/lib/data";
+import { loadCountyMetrics, loadDashboardData } from "@/lib/data";
+import { georgiaCountyFeatures } from "@/lib/geo";
 import { BASIS_LABELS, fiscalYearLabel, formatBillions, formatDollars } from "@/lib/format";
+import { CountyChoropleth } from "@/components/CountyChoropleth";
 import { INK, MUTED, PAPER, RULE, SERIES, SPRUCE, GOLD, segmentColors } from "@/lib/theme";
 import type { CategorySeries } from "@/lib/types";
 import { CategoryStackChart } from "@/components/CategoryStackChart";
@@ -34,6 +36,21 @@ export default function Home() {
   const fy = fiscalYearLabel(data.headline.fiscalYear);
   const revenueTable = stackTable(data.revenueCategories);
   const expenditureTable = stackTable(data.expenditureCategories);
+  const countyMetrics = loadCountyMetrics();
+  const countyFeatures = georgiaCountyFeatures();
+  const latestCountyYear = String(countyMetrics.fiscal_years.at(-1));
+  const countyTableRows = countyMetrics.counties
+    .filter((entry) => entry.included)
+    .map((entry) => {
+      const m = entry.included ? entry.years[latestCountyYear] : null;
+      return [
+        entry.county,
+        m?.revenue != null ? formatDollars(m.revenue) : "—",
+        m?.expenditure != null ? formatDollars(m.expenditure) : "—",
+        m?.revenue_per_capita != null ? formatDollars(m.revenue_per_capita) : "—",
+        m?.population != null ? m.population.toLocaleString("en-US") : "—",
+      ];
+    });
 
   return (
     <main
@@ -189,6 +206,28 @@ export default function Home() {
           classifications. {fiscalYearLabel(data.lastReportedYear + 1)} and later
           are budgeted, not actual, figures.
         </p>
+
+        <section aria-label="County ledgers" className="mt-16">
+          <div
+            className="border-t pb-1 pt-3"
+            style={{ borderColor: INK }}
+          >
+            <h2
+              className="font-mono text-xs uppercase tracking-widest"
+              style={{ color: SPRUCE }}
+            >
+              The county ledgers
+            </h2>
+          </div>
+          <div className="mt-4">
+            <CountyChoropleth features={countyFeatures} metrics={countyMetrics} />
+          </div>
+          <DataTable
+            caption={`County finances, ${fiscalYearLabel(Number(latestCountyYear))}`}
+            columns={["County", "Revenues", "Expenditures", "Rev / resident", "Population"]}
+            rows={countyTableRows}
+          />
+        </section>
 
         <section aria-label="Data vintage" className="mt-16">
           <div

@@ -84,10 +84,12 @@ The change-detection workflow is live with two ETL transforms:
   display-only (Tableau data export is disabled), so the figures they present
   are sourced from the OPB reports instead.
 
-The statically generated site in `web/` now leads with a statewide dashboard —
+The statically generated site in `web/` leads with a statewide dashboard —
 revenues vs. expenditures, category breakdowns, and per-source data vintage —
-built from the committed JSON at build time. County pages and the county
-choropleth are the next milestone.
+and an interactive county choropleth (revenues/expenditures, total and per
+resident, by fiscal year, with Census population denominators) that links to
+a ledger page per county. All of it is built from the committed data at
+build time.
 
 ## License
 

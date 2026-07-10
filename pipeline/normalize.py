@@ -9,6 +9,13 @@ pandera contract in pipeline/schema.py, and writes:
   category, subcategory, amount)
 - data/processed/state/categories.json  state-level category totals per fiscal
   year and side, plus the basis of each year, for the web frontend
+- data/processed/counties/metrics.json  per-county totals and per-capita
+  values by fiscal year (population from data/processed/county_population.json,
+  July 1 estimate of the fiscal year's calendar year); counties without an
+  RLGF filing for a year carry an explicit null — including county-years the
+  TED workbook fills with literal zeros, which are non-filings, not $0
+  budgets — and the 8 consolidated governments are listed with
+  included=false rather than omitted
 - data/processed/manifest.json        vintage and coverage per source plus
   reconciliation statistics for the normalized table
 
@@ -46,9 +53,12 @@ NORMALIZED_PARQUET = ROOT / "data" / "processed" / "normalized.parquet"
 MANIFEST_FILE = ROOT / "data" / "processed" / "manifest.json"
 SOURCE_STATE_FILE = ROOT / "data" / ".source-state.json"
 SOURCES_FILE = PIPELINE_DIR / "sources.json"
+POPULATION_FILE = ROOT / "data" / "processed" / "county_population.json"
+METRICS_FILE = ROOT / "data" / "processed" / "counties" / "metrics.json"
 COUNTY_SOURCE = "ted_rlgf_county_workbook"
 OPENGA_SOURCE = "open_georgia_poa"
 OPB_SOURCE = "opb_governors_budget_report_fy2026"
+POPULATION_SOURCES = ["census_county_pop_2010s", "census_county_pop_2020s"]
 RLGF_SIDES = {"revenues": "revenue", "operating": "expenditure",
               "capital": "expenditure"}
 OPB_REVENUE_SECTIONS = {
@@ -217,6 +227,64 @@ def state_categories_document(normalized: pd.DataFrame,
     }
 
 
+def county_slug(county: str) -> str:
+    return county.lower().replace(" ", "-")
+
+
+def county_year_metrics(county: str, fiscal_year: int,
+                        expected: dict[tuple, float],
+                        populations: dict[str, dict[str, int]]) -> dict | None:
+    revenue = expected.get((county, fiscal_year, "revenue"))
+    expenditure = expected.get((county, fiscal_year, "expenditure"))
+    if not revenue and not expenditure:
+        return None
+    population = populations.get(contract.COUNTY_FIPS[county], {}).get(str(fiscal_year))
+    return {
+        "revenue": revenue,
+        "expenditure": expenditure,
+        "population": population,
+        "revenue_per_capita": (
+            round(revenue / population, 2)
+            if revenue is not None and population else None),
+        "expenditure_per_capita": (
+            round(expenditure / population, 2)
+            if expenditure is not None and population else None),
+    }
+
+
+def county_metrics_document(county_expected: dict[tuple, float],
+                            populations: dict[str, dict[str, int]]) -> dict:
+    fiscal_years = sorted({key[1] for key in county_expected})
+    filed = {key[0] for key in county_expected}
+    counties = []
+    for county in sorted(contract.COUNTY_FIPS):
+        if county in filed:
+            counties.append({
+                "county": county,
+                "fips": contract.COUNTY_FIPS[county],
+                "slug": county_slug(county),
+                "included": True,
+                "years": {str(year): county_year_metrics(
+                    county, year, county_expected, populations)
+                    for year in fiscal_years},
+            })
+        else:
+            counties.append({
+                "county": county,
+                "fips": contract.COUNTY_FIPS[county],
+                "slug": None,
+                "included": False,
+                "note": contract.KNOWN_MISSING_COUNTIES.get(
+                    county, "no RLGF county-government filings"),
+                "years": None,
+            })
+    return {
+        "sources": [COUNTY_SOURCE, *POPULATION_SOURCES],
+        "fiscal_years": [int(year) for year in fiscal_years],
+        "counties": counties,
+    }
+
+
 def assemble(records: list[dict]) -> pd.DataFrame:
     frame = pd.DataFrame.from_records(records, columns=contract.NORMALIZED_COLUMNS)
     return frame.sort_values(contract.NORMALIZED_COLUMNS[:6]).reset_index(drop=True)
@@ -255,6 +323,14 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                 "note": ("cash-basis vendor payments; excluded from the "
                          "normalized table to avoid double-counting OPB "
                          "budgetary expenditures"),
+            },
+            POPULATION_SOURCES[0]: {
+                "vintage": vintage(source_state, POPULATION_SOURCES[0]),
+                "note": "county population denominators 2010-2020 (vintage 2020, final)",
+            },
+            POPULATION_SOURCES[1]: {
+                "vintage": vintage(source_state, POPULATION_SOURCES[1]),
+                "note": "county population denominators 2020 onward (latest vintage)",
             },
             OPB_SOURCE: {
                 "vintage": vintage(source_state, OPB_SOURCE),
@@ -309,6 +385,9 @@ def main() -> int:
     categories_file = ROOT / "data" / "processed" / "state" / "categories.json"
     categories_file.parent.mkdir(parents=True, exist_ok=True)
     categories_file.write_text(json.dumps(categories, indent=1) + "\n")
+    populations = json.loads(POPULATION_FILE.read_text())["populations"]
+    metrics = county_metrics_document(county_expected, populations)
+    METRICS_FILE.write_text(json.dumps(metrics, indent=1) + "\n")
 
     report = manifest["normalized"]["reconciliation"]
     print(f"Wrote {len(normalized):,} normalized records "

@@ -43,6 +43,22 @@
       "level": "state"
     },
     {
+      "id": "census_county_pop_2010s",
+      "name": "US Census — county population estimates, vintage 2020 (2010-2020)",
+      "url": "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
+      "provides": "Annual county population estimates 2010-2020 (POPESTIMATE columns); denominator for per-capita metrics",
+      "cadence": "final; no longer revised",
+      "level": "county"
+    },
+    {
+      "id": "census_county_pop_2020s",
+      "name": "US Census — county population estimates, vintage 2024 (2020-2024)",
+      "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv",
+      "provides": "Annual county population estimates 2020-2024 (POPESTIMATE columns); denominator for per-capita metrics",
+      "cadence": "annual (new vintage each spring)",
+      "level": "county"
+    },
+    {
       "id": "dca_rlgf",
       "name": "DCA — Report of Local Government Finances",
       "url": "https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf",

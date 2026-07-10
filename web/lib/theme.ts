@@ -23,6 +23,16 @@ export const SLOTS: string[] = [
   SERIES.plum,
 ];
 
+export const SEQUENTIAL_RAMP: string[] = [
+  "#92B89F",
+  "#6C9D80",
+  "#4A8262",
+  "#2C6746",
+  "#154A2D",
+];
+
+export const NO_DATA_FILL = "#E5E2D9";
+
 export function segmentColors(
   segments: { key: string }[],
 ): Record<string, string> {

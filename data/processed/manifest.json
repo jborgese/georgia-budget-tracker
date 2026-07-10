@@ -6,7 +6,7 @@
      "etag": "\"2f34ed9e63cedc1:0\"",
      "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
     },
-    "checked_at": "2026-07-10T03:15:23+00:00"
+    "checked_at": "2026-07-10T04:25:51+00:00"
    },
    "fiscal_years": [
     2016,
@@ -76,7 +76,7 @@
       ]
      }
     },
-    "checked_at": "2026-07-10T03:15:22+00:00"
+    "checked_at": "2026-07-10T04:25:50+00:00"
    },
    "fiscal_years": [
     2015,
@@ -101,13 +101,33 @@
    "in_normalized_table": false,
    "note": "cash-basis vendor payments; excluded from the normalized table to avoid double-counting OPB budgetary expenditures"
   },
+  "census_county_pop_2010s": {
+   "vintage": {
+    "fingerprint": {
+     "etag": null,
+     "last_modified": "Tue, 04 May 2021 15:42:59 GMT"
+    },
+    "checked_at": "2026-07-10T04:25:51+00:00"
+   },
+   "note": "county population denominators 2010-2020 (vintage 2020, final)"
+  },
+  "census_county_pop_2020s": {
+   "vintage": {
+    "fingerprint": {
+     "etag": null,
+     "last_modified": "Thu, 13 Mar 2025 12:38:39 GMT"
+    },
+    "checked_at": "2026-07-10T04:25:51+00:00"
+   },
+   "note": "county population denominators 2020 onward (latest vintage)"
+  },
   "opb_governors_budget_report_fy2026": {
    "vintage": {
     "fingerprint": {
      "etag": null,
      "last_modified": "Thu, 16 Jan 2025 16:18:29 GMT"
     },
-    "checked_at": "2026-07-10T03:15:22+00:00"
+    "checked_at": "2026-07-10T04:25:50+00:00"
    },
    "fiscal_years_by_basis": {
     "actual": [

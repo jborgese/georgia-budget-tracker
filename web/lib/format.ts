@@ -13,6 +13,13 @@ export function formatAxisTick(value: number): string {
   return `$${Math.round(value / 1e9)}B`;
 }
 
+export function formatCompactDollars(value: number): string {
+  const abs = Math.abs(value);
+  if (abs >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `$${(value / 1e6).toFixed(1)}M`;
+  return `$${Math.round(value).toLocaleString("en-US")}`;
+}
+
 export function fiscalYearLabel(year: number): string {
   return `FY${year}`;
 }

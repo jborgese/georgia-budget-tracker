@@ -69,7 +69,11 @@ export function CategoryStackChart({
 
   return (
     <div role="img" aria-label={ariaLabel}>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer
+        width="100%"
+        height={300}
+        initialDimension={{ width: 480, height: 300 }}
+      >
         <BarChart data={data} margin={{ top: 8, right: 16, bottom: 4, left: 8 }}>
           <CartesianGrid stroke={RULE} strokeWidth={1} vertical={false} />
           <XAxis
