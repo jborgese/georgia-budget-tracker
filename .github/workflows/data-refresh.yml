@@ -23,11 +23,22 @@ jobs:
         id: detect
         run: python pipeline/check_sources.py
 
+      - name: Install ETL dependencies
+        if: |
+          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook') ||
+          contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
+          contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report')
+        run: pip install -r pipeline/requirements.txt
+
       - name: Run RLGF county ETL
         if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook')
-        run: |
-          pip install -r pipeline/requirements.txt
-          python pipeline/etl_rlgf.py
+        run: python pipeline/etl_rlgf.py
+
+      - name: Run state-level ETL
+        if: |
+          contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
+          contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report')
+        run: python pipeline/etl_state.py ${{ steps.detect.outputs.changed_sources }}
 
       - name: Commit updated data
         run: |

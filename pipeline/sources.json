@@ -9,10 +9,36 @@
       "level": "state"
     },
     {
+      "id": "open_georgia_poa",
+      "name": "Open Georgia — payments, obligations, professional services",
+      "url": "https://open.ga.gov/openga/poa",
+      "provides": "Vendor payments, obligations, and professional-services expenditures of state organizations, CSV export per fiscal year (2015+)",
+      "cadence": "annual",
+      "level": "state",
+      "check": "openga_years"
+    },
+    {
       "id": "gdac_budget",
       "name": "Georgia Data Analytics Center — Budget",
       "url": "https://gdac.georgia.gov/budget",
       "provides": "State of Georgia revenues and expenditures dashboards",
+      "cadence": "annual",
+      "level": "state",
+      "note": "Display-only: the Tableau workbooks on prod.insights.georgia.gov disable data export (allow_export_data=false, verified 2026-07). State revenue/expenditure figures are parsed from the OPB Governor's Budget Report instead."
+    },
+    {
+      "id": "opb_budget_reports",
+      "name": "OPB — Governor's Budget Reports listing",
+      "url": "https://opb.georgia.gov/budget-information/budget-documents/governors-budget-reports",
+      "provides": "Index of Governor's Budget Report PDFs; Last-Modified changes when OPB publishes a new report (register the new PDF in sources.json and pipeline/etl_state.py OPB_REPORTS when that happens)",
+      "cadence": "annual",
+      "level": "state"
+    },
+    {
+      "id": "opb_governors_budget_report_fy2026",
+      "name": "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
+      "url": "https://opb.georgia.gov/document/governors-budget-reports/afy-2025-and-fy-2026-governors-budget-report/download",
+      "provides": "State revenues reported/estimated by source (FY2022-FY2026) and expenditures/appropriations by agency (FY2023-FY2026), parsed from PDF tables",
       "cadence": "annual",
       "level": "state"
     },

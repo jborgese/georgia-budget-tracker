@@ -14,10 +14,13 @@ to run the full ETL.
 from __future__ import annotations
 
 import hashlib
+import http.cookiejar
 import json
 import os
+import re
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
@@ -32,8 +35,43 @@ USER_AGENT = (
 TIMEOUT_SECONDS = 30
 
 
-def fingerprint(url: str) -> dict:
+OPENGA_BASE = "https://open.ga.gov/openga"
+OPENGA_INDEXES = ("payment/index", "obligation/index", "perdiem/index")
+
+
+def fetch(opener, url: str, data: dict | None = None) -> str:
+    encoded = urllib.parse.urlencode(data).encode() if data is not None else None
+    request = urllib.request.Request(url, data=encoded,
+                                     headers={"User-Agent": USER_AGENT})
+    with opener.open(request, timeout=TIMEOUT_SECONDS) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+
+def openga_years_fingerprint() -> dict:
+    """Fingerprint the fiscal years offered by the Open Georgia search apps.
+
+    The CSV exports sit behind a disclaimer POST and a session, so header or
+    body fingerprints are meaningless; a new fiscal year appearing in any
+    app's year dropdown is the signal that new data was published.
+    """
+    jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    fetch(opener, f"{OPENGA_BASE}/poa")
+    fetch(opener, f"{OPENGA_BASE}/poHome/acceptDisclaimer",
+          {"_action_acceptDisclaimer": "I Understand : Proceed"})
+    years = {}
+    for index in OPENGA_INDEXES:
+        page = fetch(opener, f"{OPENGA_BASE}/{index}")
+        select = re.search(r'name="selectedYear".*?</select>', page, re.S)
+        found = re.findall(r'<option value="(\d{4})"', select.group(0)) if select else []
+        years[index.split("/")[0]] = sorted(found)
+    return {"years": years}
+
+
+def fingerprint(url: str, check: str = "http") -> dict:
     """Return a fingerprint for the resource at ``url``."""
+    if check == "openga_years":
+        return openga_years_fingerprint()
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
         headers = response.headers
@@ -55,7 +93,7 @@ def main() -> int:
     for source in sources:
         source_id, url = source["id"], source["url"]
         try:
-            current = fingerprint(url)
+            current = fingerprint(url, source.get("check", "http"))
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             errors.append(f"{source_id}: {exc}")
             continue
