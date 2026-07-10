@@ -10,7 +10,7 @@ A static-first civic data project tracking how the State of Georgia (down to the
 2. When a source changes, the Python ETL in `pipeline/` downloads and normalizes data into `data/processed/` (Parquet + pre-aggregated JSON per county/fiscal year).
 3. Data changes are **committed to git** — the revision history of the numbers is intentionally the public audit trail — and a commit triggers a rebuild of the static site in `web/`.
 
-Current status: change detection, the ETLs (`etl_rlgf.py`, `etl_state.py`, `etl_population.py`), the statewide dashboard homepage, the county choropleth, and per-county pages (`/county/[slug]`) are all live.
+Current status: change detection, the ETLs (`etl_rlgf.py`, `etl_state.py`, `etl_population.py`), the statewide dashboard homepage, the county choropleth, per-county ledger pages (`/county/[slug]`), the comparison view (`/compare`), the methodology page (`/about`, which renders `pipeline/crosswalk.json` directly so the documented crosswalk can't drift from the code), and a site nav with county search are all live.
 
 ## Commands
 

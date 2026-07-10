@@ -18,8 +18,9 @@ import type {
 } from "./types";
 
 const PROCESSED_DIR = path.resolve(process.cwd(), "..", "data", "processed");
+const PIPELINE_DIR = path.resolve(process.cwd(), "..", "pipeline");
 
-const CATEGORY_LABELS: Record<string, string> = {
+export const CATEGORY_LABELS: Record<string, string> = {
   taxes: "Taxes",
   charges_and_fees: "Charges & fees",
   other_revenue: "Other revenue",
@@ -51,6 +52,42 @@ const SOURCE_NAMES: Record<string, string> = {
 function readJson<T>(...segments: string[]): T {
   const file = path.join(PROCESSED_DIR, ...segments);
   return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
+}
+
+export interface CrosswalkDocument {
+  categories: { revenue: string[]; expenditure: string[] };
+  rlgf: Record<"revenues" | "operating" | "capital", Record<string, string>>;
+  opb: {
+    revenue_groups: Record<string, string>;
+    agencies: Record<string, string>;
+  };
+}
+
+export interface SourceRegistryEntry {
+  id: string;
+  name: string;
+  url: string;
+  provides: string;
+  cadence: string;
+  level: "state" | "county";
+  note?: string;
+  check?: string;
+}
+
+export function loadCrosswalk(): CrosswalkDocument {
+  const file = path.join(PIPELINE_DIR, "crosswalk.json");
+  return JSON.parse(fs.readFileSync(file, "utf-8")) as CrosswalkDocument;
+}
+
+export function loadSourceRegistry(): SourceRegistryEntry[] {
+  const file = path.join(PIPELINE_DIR, "sources.json");
+  return (JSON.parse(fs.readFileSync(file, "utf-8")) as {
+    sources: SourceRegistryEntry[];
+  }).sources;
+}
+
+export function loadManifest(): ManifestDocument {
+  return readJson<ManifestDocument>("manifest.json");
 }
 
 function fiscalYearTotals(
@@ -152,6 +189,21 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
 
 export function loadCountyMetrics(): CountyMetricsDocument {
   return readJson<CountyMetricsDocument>("counties", "metrics.json");
+}
+
+export interface CountyOption {
+  name: string;
+  slug: string;
+}
+
+export function loadCountyOptions(): CountyOption[] {
+  return loadCountyMetrics()
+    .counties.filter((entry) => entry.included)
+    .map((entry) => ({
+      name: countyDisplayName(entry.county),
+      slug: entry.slug as string,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 const COUNTY_NAME_EXCEPTIONS: Record<string, string> = {
