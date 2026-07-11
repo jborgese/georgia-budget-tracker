@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import type { SpendingSlice } from "@/lib/spending";
+import { describeCategory, describeSubcategory } from "@/lib/glossary";
 import { INK, MUTED, RULE } from "@/lib/theme";
 import { formatDollars } from "@/lib/format";
+import { InfoTip } from "./InfoTip";
 
 function Chevron({ open }: { open: boolean }) {
   return (
@@ -74,6 +76,7 @@ export function SpendingTable({
             {slices.map((slice) => {
               const open = expanded.has(slice.key);
               const expandable = slice.subcategories.length > 0;
+              const categoryInfo = describeCategory(slice.key);
               return [
                 <tr key={slice.key} className="border-t" style={{ borderColor: RULE }}>
                   <td className="py-2 pr-4">
@@ -82,7 +85,7 @@ export function SpendingTable({
                         type="button"
                         aria-expanded={open}
                         onClick={() => toggle(slice.key)}
-                        className="flex items-center gap-2 text-left"
+                        className="inline-flex items-center gap-2 text-left"
                         style={{ color: INK }}
                       >
                         <Chevron open={open} />
@@ -91,6 +94,9 @@ export function SpendingTable({
                     ) : (
                       <span className="pl-[18px]">{slice.label}</span>
                     )}
+                    {categoryInfo ? (
+                      <InfoTip text={categoryInfo} subject={slice.label} />
+                    ) : null}
                   </td>
                   <td className="py-2 pr-4 text-right font-mono tabular-nums">
                     {formatDollars(slice.amount)}
@@ -111,6 +117,12 @@ export function SpendingTable({
                           style={{ color: MUTED }}
                         >
                           {sub.label}
+                          {describeSubcategory(sub.label) ? (
+                            <InfoTip
+                              text={describeSubcategory(sub.label) as string}
+                              subject={sub.label}
+                            />
+                          ) : null}
                         </td>
                         <td
                           className="py-1.5 pr-4 text-right font-mono text-xs tabular-nums"
