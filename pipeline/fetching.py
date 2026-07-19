@@ -11,6 +11,8 @@ pipeline/runlog.py.
 from __future__ import annotations
 
 import time
+import urllib.error
+import urllib.request
 from pathlib import Path
 from typing import Callable, TypeVar
 
@@ -30,7 +32,7 @@ class TransientDataError(OSError):
     """A response arrived but was not usable; worth retrying."""
 
 
-RETRYABLE = (httpx.HTTPError, OSError)
+RETRYABLE = (httpx.HTTPError, urllib.error.URLError, OSError)
 
 T = TypeVar("T")
 
@@ -58,16 +60,47 @@ def call_with_retries(operation: Callable[[], T], *, source: str,
     raise AssertionError("unreachable")
 
 
-def download_file(url: str, destination: Path, *, source: str,
-                  attempts: int = DEFAULT_ATTEMPTS,
-                  base_delay: float = DEFAULT_BASE_DELAY,
-                  timeout: float = DEFAULT_TIMEOUT,
-                  budget: float = DEFAULT_BUDGET) -> None:
+def download_file_stdlib(url: str, destination: Path, *, source: str,
+                         attempts: int = DEFAULT_ATTEMPTS,
+                         base_delay: float = DEFAULT_BASE_DELAY,
+                         timeout: float = DEFAULT_TIMEOUT,
+                         budget: float = DEFAULT_BUDGET,
+                         headers: dict[str, str] | None = None) -> None:
+    """urllib transport for hosts whose WAF blocks httpx's TLS fingerprint."""
     destination.parent.mkdir(parents=True, exist_ok=True)
     partial = destination.with_suffix(destination.suffix + ".part")
 
     def fetch() -> None:
-        with httpx.stream("GET", url, headers={"User-Agent": USER_AGENT},
+        request = urllib.request.Request(
+            url, headers=headers or {"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            with partial.open("wb") as handle:
+                while chunk := response.read(1 << 16):
+                    handle.write(chunk)
+
+    try:
+        call_with_retries(fetch, source=source, description=url,
+                          attempts=attempts, base_delay=base_delay,
+                          budget=budget)
+    except RETRYABLE:
+        partial.unlink(missing_ok=True)
+        raise
+    partial.replace(destination)
+    log_event("fetched", source, url=url, bytes=destination.stat().st_size)
+
+
+def download_file(url: str, destination: Path, *, source: str,
+                  attempts: int = DEFAULT_ATTEMPTS,
+                  base_delay: float = DEFAULT_BASE_DELAY,
+                  timeout: float = DEFAULT_TIMEOUT,
+                  budget: float = DEFAULT_BUDGET,
+                  headers: dict[str, str] | None = None) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    partial = destination.with_suffix(destination.suffix + ".part")
+
+    def fetch() -> None:
+        with httpx.stream("GET", url,
+                          headers=headers or {"User-Agent": USER_AGENT},
                           timeout=timeout, follow_redirects=True) as response:
             response.raise_for_status()
             with partial.open("wb") as handle:

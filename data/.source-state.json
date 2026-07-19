@@ -84,6 +84,27 @@
       "last_modified": "Fri, 17 Jul 2026 20:34:14 GMT"
     }
   },
+  "dor_digest_2016": {},
+  "dor_digest_2017": {
+    "consecutive_failures": 4,
+    "last_error": "dor_digest_2017.xlsx carries 158 counties, expected 159."
+  },
+  "dor_digest_2018": {
+    "consecutive_failures": 4,
+    "last_error": "dor_digest_2018.xlsx carries 158 counties, expected 159."
+  },
+  "dor_digest_2019": {},
+  "dor_digest_2020": {},
+  "dor_digest_2021": {},
+  "dor_digest_2022": {
+    "consecutive_failures": 4,
+    "last_error": "dor_digest_2022.xlsx carries duplicate district rows: ['CHEROKEE']."
+  },
+  "dor_digest_2023": {
+    "consecutive_failures": 4,
+    "last_error": "County name 'CHARLT TB' does not resolve to the Census roster (candidates: [])."
+  },
+  "dor_digest_2024": {},
   "gdac_budget": {
     "checked_at": "2026-07-19T06:11:17+00:00",
     "fingerprint": {

@@ -60,7 +60,7 @@
     },
     {
       "id": "census_place_pop_2020s",
-      "name": "US Census — incorporated place population estimates, vintage 2025 (2020-2025)",
+      "name": "US Census \u2014 incorporated place population estimates, vintage 2025 (2020-2025)",
       "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/cities/totals/sub-est2025_13.csv",
       "provides": "Annual Georgia incorporated-place population estimates 2020-2025 (SUMLEV 162); denominator for city per-capita metrics",
       "cadence": "annual (new vintage each spring)",
@@ -177,6 +177,78 @@
       "provides": "Downloadable RLGF datasets and local government budget documents",
       "cadence": "rolling / annual",
       "level": "county"
+    },
+    {
+      "id": "dor_digest_2016",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2016",
+      "url": "https://georgiadata.org/download/file/fid/247",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2016; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2017",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2017",
+      "url": "https://georgiadata.org/download/file/fid/248",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2017; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2018",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2018",
+      "url": "https://georgiadata.org/download/file/fid/285",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2018; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2019",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2019",
+      "url": "https://georgiadata.org/download/file/fid/321",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2019; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2020",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2020",
+      "url": "https://georgiadata.org/download/file/fid/339",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2020; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2021",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2021",
+      "url": "https://georgiadata.org/download/file/fid/360",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2021; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2022",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2022",
+      "url": "https://georgiadata.org/download/file/fid/410",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2022; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2023",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2023",
+      "url": "https://georgiadata.org/download/file/fid/432",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2023; DOR digest export republished by UGA CVIOG",
+      "cadence": "annual; may be corrected",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2024",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2024",
+      "url": "https://georgiadata.org/download/file/fid/453",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2024; DOR digest export republished by UGA CVIOG",
+      "cadence": "annual; may be corrected",
+      "level": "property_tax"
     },
     {
       "id": "georgiadata_financial",

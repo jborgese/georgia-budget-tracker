@@ -38,7 +38,8 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
-          contains(steps.detect.outputs.changed_sources, 'census_f33')
+          contains(steps.detect.outputs.changed_sources, 'census_f33') ||
+          contains(steps.detect.outputs.changed_sources, 'dor_digest')
         run: pip install -r pipeline/requirements.txt
 
       - name: Run RLGF county ETL
@@ -81,6 +82,12 @@ jobs:
         if: contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: python pipeline/etl_schools.py ${{ steps.detect.outputs.changed_sources }}
 
+      - name: Run tax digest ETL
+        id: digest
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'dor_digest')
+        run: python pipeline/etl_digest.py ${{ steps.detect.outputs.changed_sources }}
+
       - name: Validate contract and normalize
         id: normalize
         if: |
@@ -89,7 +96,8 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
-          contains(steps.detect.outputs.changed_sources, 'census_f33')
+          contains(steps.detect.outputs.changed_sources, 'census_f33') ||
+          contains(steps.detect.outputs.changed_sources, 'dor_digest')
         run: python pipeline/normalize.py
 
       - name: Commit updated data
@@ -123,7 +131,8 @@ jobs:
           steps.rlgf_consolidated.outcome == 'failure' ||
           steps.state.outcome == 'failure' ||
           steps.population.outcome == 'failure' ||
-          steps.schools.outcome == 'failure'
+          steps.schools.outcome == 'failure' ||
+          steps.digest.outcome == 'failure'
         run: |
           echo "One or more transforms failed; see the steps above and the source-failure issue."
           exit 1

@@ -59,6 +59,7 @@ sys.path.insert(0, str(PIPELINE_DIR))
 import schema as contract  # noqa: E402
 
 ROOT = PIPELINE_DIR.parent
+DIGEST_PARQUET = ROOT / "data" / "processed" / "digest.parquet"
 SCHOOL_PARQUET = ROOT / "data" / "processed" / "school_finances.parquet"
 COUNTY_PARQUET = ROOT / "data" / "processed" / "rlgf_county_finances.parquet"
 CITY_PARQUET = ROOT / "data" / "processed" / "rlgf_city_finances.parquet"
@@ -470,6 +471,26 @@ def school_manifest_entry(source_state: dict) -> dict | None:
     }
 
 
+def digest_manifest_entry(source_state: dict) -> dict | None:
+    if not DIGEST_PARQUET.exists():
+        return None
+    digest = duckdb.sql(f"FROM '{DIGEST_PARQUET}'").df()
+    return {
+        "vintages": {
+            source_id: vintage(source_state, source_id)
+            for source_id in sorted(source_state)
+            if source_id.startswith("dor_digest_")},
+        "tax_years": sorted(int(y) for y in digest.tax_year.unique()),
+        "records": int(len(digest)),
+        "counties": int(digest.county.nunique()),
+        "in_normalized_table": False,
+        "note": ("millage rates and digest values per taxing district; the "
+                 "tax-bill lens, separate from the spending ledgers. DOR "
+                 "directs readers to county tax commissioners for "
+                 "authoritative figures"),
+    }
+
+
 def debt_identity(county: pd.DataFrame, city: pd.DataFrame,
                   consolidated: pd.DataFrame) -> dict:
     frames = [county.rename(columns={"county": "entity"}), city, consolidated]
@@ -488,9 +509,11 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
     opb = state[state.source == OPB_SOURCE]
     counties_present = sorted(county.county.unique())
     schools = school_manifest_entry(source_state)
+    digest = digest_manifest_entry(source_state)
     return {
         "sources": {
             **({"census_f33": schools} if schools else {}),
+            **({"dor_digest": digest} if digest else {}),
             COUNTY_SOURCE: {
                 "vintage": vintage(source_state, COUNTY_SOURCE),
                 "fiscal_years": sorted(int(y) for y in county.fiscal_year.unique()),
