@@ -10,7 +10,7 @@
     },
     {
       "id": "open_georgia_poa",
-      "name": "Open Georgia — payments, obligations, professional services",
+      "name": "Open Georgia \u2014 payments, obligations, professional services",
       "url": "https://open.ga.gov/openga/poa",
       "provides": "Vendor payments, obligations, and professional-services expenditures of state organizations, CSV export per fiscal year (2015+)",
       "cadence": "annual",
@@ -19,7 +19,7 @@
     },
     {
       "id": "gdac_budget",
-      "name": "Georgia Data Analytics Center — Budget",
+      "name": "Georgia Data Analytics Center \u2014 Budget",
       "url": "https://gdac.georgia.gov/budget",
       "provides": "State of Georgia revenues and expenditures dashboards",
       "cadence": "annual",
@@ -28,7 +28,7 @@
     },
     {
       "id": "opb_budget_reports",
-      "name": "OPB — Governor's Budget Reports listing",
+      "name": "OPB \u2014 Governor's Budget Reports listing",
       "url": "https://opb.georgia.gov/budget-information/budget-documents/governors-budget-reports",
       "provides": "Index of Governor's Budget Report PDFs; Last-Modified changes when OPB publishes a new report (register the new PDF in sources.json and pipeline/etl_state.py OPB_REPORTS when that happens)",
       "cadence": "annual",
@@ -36,7 +36,7 @@
     },
     {
       "id": "opb_governors_budget_report_fy2026",
-      "name": "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
+      "name": "OPB \u2014 Governor's Budget Report, AFY 2025 & FY 2026",
       "url": "https://opb.georgia.gov/document/governors-budget-reports/afy-2025-and-fy-2026-governors-budget-report/download",
       "provides": "State revenues reported/estimated by source (FY2022-FY2026) and expenditures/appropriations by agency (FY2023-FY2026), parsed from PDF tables",
       "cadence": "annual",
@@ -44,7 +44,7 @@
     },
     {
       "id": "census_county_pop_2010s",
-      "name": "US Census — county population estimates, vintage 2020 (2010-2020)",
+      "name": "US Census \u2014 county population estimates, vintage 2020 (2010-2020)",
       "url": "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/counties/totals/co-est2020-alldata.csv",
       "provides": "Annual county population estimates 2010-2020 (POPESTIMATE columns); denominator for per-capita metrics",
       "cadence": "final; no longer revised",
@@ -52,15 +52,87 @@
     },
     {
       "id": "census_county_pop_2020s",
-      "name": "US Census — county population estimates, vintage 2024 (2020-2024)",
+      "name": "US Census \u2014 county population estimates, vintage 2024 (2020-2024)",
       "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv",
       "provides": "Annual county population estimates 2020-2024 (POPESTIMATE columns); denominator for per-capita metrics",
       "cadence": "annual (new vintage each spring)",
       "level": "county"
     },
     {
+      "id": "census_f33_2016",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2016",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2016/secondary-education-finance/elsec16.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2016 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2017",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2017",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2017/secondary-education-finance/elsec17.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2017 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2018",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2018",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2018/secondary-education-finance/elsec18.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2018 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2019",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2019",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2019/secondary-education-finance/elsec19.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2019 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2020",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2020",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2020/secondary-education-finance/elsec20.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2020 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2021",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2021",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2021/secondary-education-finance/elsec21.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2021 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2022",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2022",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2022/secondary-education-finance/elsec22.xlsx",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2022 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2023",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2023",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2023/secondary-education-finance/elsec23.xlsx",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2023 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "annual; may be revised in the next release",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2024",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2024",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2024/secondary-education-finance/elsec24.xlsx",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2024 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "annual; may be revised in the next release",
+      "level": "school_district"
+    },
+    {
       "id": "dca_rlgf",
-      "name": "DCA — Report of Local Government Finances",
+      "name": "DCA \u2014 Report of Local Government Finances",
       "url": "https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf",
       "provides": "County and municipal revenues, expenditures, debt, and assets (required annual filing)",
       "cadence": "rolling; due 6 months after each government's fiscal year end",
@@ -68,7 +140,7 @@
     },
     {
       "id": "ted_rlgf_county_workbook",
-      "name": "TED — RLGF all-counties Excel workbook",
+      "name": "TED \u2014 RLGF all-counties Excel workbook",
       "url": "https://ted.cviog.uga.edu/Content/AllDataExcelFiles/FinancialClassificationByYearByCounty.xlsx",
       "provides": "County revenues and expenditures by RLGF classification and fiscal year (2016+), one sheet per county; prebuilt export behind the TED portal's File Export page",
       "cadence": "annual",
@@ -76,7 +148,7 @@
     },
     {
       "id": "ted_rlgf_city_workbook",
-      "name": "TED — RLGF all-cities Excel workbook",
+      "name": "TED \u2014 RLGF all-cities Excel workbook",
       "url": "https://ted.cviog.uga.edu/Content/AllDataExcelFiles/FinancialClassificationByYearByCity.xlsx",
       "provides": "Municipal revenues and expenditures by RLGF classification and fiscal year (2016+), one sheet per city; prebuilt export behind the TED portal's File Export page",
       "cadence": "annual",
@@ -84,7 +156,7 @@
     },
     {
       "id": "ted_rlgf_consolidated_workbook",
-      "name": "TED — RLGF consolidated city-county governments Excel workbook",
+      "name": "TED \u2014 RLGF consolidated city-county governments Excel workbook",
       "url": "https://ted.cviog.uga.edu/Content/AllDataExcelFiles/FinancialClassificationByYearByConsolidatedCityCounty.xlsx",
       "provides": "Consolidated city-county government revenues and expenditures by RLGF classification and fiscal year (2016+), one sheet per government; covers the 8 consolidated governments absent from the county workbook",
       "cadence": "annual",
@@ -100,7 +172,7 @@
     },
     {
       "id": "georgiadata_financial",
-      "name": "GeorgiaData.org — Local Government Financial Portal",
+      "name": "GeorgiaData.org \u2014 Local Government Financial Portal",
       "url": "https://georgiadata.org/financialdata",
       "provides": "Searchable county, municipal, and school-system financial data",
       "cadence": "annual",

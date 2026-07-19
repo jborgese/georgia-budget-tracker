@@ -7,6 +7,10 @@ Versioned datasets with provenance.
   app) are not committed; `raw/open_georgia_manifest.json` records the SHA-256
   and row count of every export consumed, and the aggregated per-organization
   records live in `processed/state_finances.parquet`.
+  Exception: Census F-33 school finance workbooks (~12-16 MB per fiscal year,
+  nationwide coverage) are not committed; `.source-state.json` records each
+  file's fingerprint, and the extracted Georgia records live in
+  `processed/school_finances.parquet`.
 - `processed/` — cleaned, normalized Parquet + pre-aggregated JSON per county and fiscal year.
 - `.source-state.json` — fingerprints written by `pipeline/check_sources.py`.
 

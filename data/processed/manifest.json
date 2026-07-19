@@ -1,12 +1,94 @@
 {
  "sources": {
+  "census_f33": {
+   "vintages": {
+    "census_f33_2016": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Tue, 21 May 2019 14:00:12 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2017": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Mon, 11 May 2020 14:04:23 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2018": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Tue, 18 May 2021 13:22:51 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2019": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Tue, 14 Jun 2022 11:20:21 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2020": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Wed, 17 May 2023 13:29:49 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2021": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Tue, 23 Apr 2024 16:11:14 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2022": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Tue, 29 Apr 2025 18:14:06 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2023": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Thu, 07 May 2026 11:30:26 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    },
+    "census_f33_2024": {
+     "fingerprint": {
+      "etag": null,
+      "last_modified": "Thu, 07 May 2026 11:45:26 GMT"
+     },
+     "checked_at": "2026-07-19T06:11:18+00:00"
+    }
+   },
+   "fiscal_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+   ],
+   "records": 1595,
+   "districts": 178,
+   "in_normalized_table": false,
+   "note": "regular school systems (F-33 school level 03); excluded from the normalized table because state QBE aid is already counted as state Department of Education spending"
+  },
   "ted_rlgf_county_workbook": {
    "vintage": {
     "fingerprint": {
      "etag": "\"2f34ed9e63cedc1:0\"",
      "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:19+00:00"
    },
    "fiscal_years": [
     2016,
@@ -37,7 +119,7 @@
      "etag": "\"f6ce69e63cedc1:0\"",
      "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:19+00:00"
    },
    "fiscal_years": [
     2016,
@@ -59,7 +141,7 @@
      "etag": "\"f6ce69e63cedc1:0\"",
      "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:19+00:00"
    },
    "fiscal_years": [
     2016,
@@ -129,7 +211,7 @@
       ]
      }
     },
-    "checked_at": "2026-07-19T03:21:11+00:00"
+    "checked_at": "2026-07-19T06:11:17+00:00"
    },
    "fiscal_years": [
     2015,
@@ -160,7 +242,7 @@
      "etag": null,
      "last_modified": "Tue, 04 May 2021 15:42:59 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:18+00:00"
    },
    "note": "county population denominators 2010-2020 (vintage 2020, final)"
   },
@@ -170,7 +252,7 @@
      "etag": null,
      "last_modified": "Thu, 13 Mar 2025 12:38:39 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:18+00:00"
    },
    "note": "county population denominators 2020 onward (latest vintage)"
   },
@@ -180,7 +262,7 @@
      "etag": null,
      "last_modified": "Thu, 16 Jan 2025 16:18:29 GMT"
     },
-    "checked_at": "2026-07-19T03:21:12+00:00"
+    "checked_at": "2026-07-19T06:11:18+00:00"
    },
    "fiscal_years_by_basis": {
     "actual": [

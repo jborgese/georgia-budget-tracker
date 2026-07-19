@@ -59,6 +59,7 @@ sys.path.insert(0, str(PIPELINE_DIR))
 import schema as contract  # noqa: E402
 
 ROOT = PIPELINE_DIR.parent
+SCHOOL_PARQUET = ROOT / "data" / "processed" / "school_finances.parquet"
 COUNTY_PARQUET = ROOT / "data" / "processed" / "rlgf_county_finances.parquet"
 CITY_PARQUET = ROOT / "data" / "processed" / "rlgf_city_finances.parquet"
 CONSOLIDATED_PARQUET = (ROOT / "data" / "processed"
@@ -402,6 +403,25 @@ def vintage(source_state: dict, source_id: str) -> dict:
             "checked_at": entry.get("checked_at")}
 
 
+def school_manifest_entry(source_state: dict) -> dict | None:
+    if not SCHOOL_PARQUET.exists():
+        return None
+    schools = duckdb.sql(f"FROM '{SCHOOL_PARQUET}'").df()
+    return {
+        "vintages": {
+            source_id: vintage(source_state, source_id)
+            for source_id in sorted(source_state)
+            if source_id.startswith("census_f33_")},
+        "fiscal_years": sorted(int(y) for y in schools.fiscal_year.unique()),
+        "records": int(len(schools)),
+        "districts": int(schools.ncesid.nunique()),
+        "in_normalized_table": False,
+        "note": ("regular school systems (F-33 school level 03); excluded "
+                 "from the normalized table because state QBE aid is already "
+                 "counted as state Department of Education spending"),
+    }
+
+
 def debt_identity(county: pd.DataFrame, city: pd.DataFrame,
                   consolidated: pd.DataFrame) -> dict:
     frames = [county.rename(columns={"county": "entity"}), city, consolidated]
@@ -418,8 +438,10 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
     openga = state[state.source == OPENGA_SOURCE]
     opb = state[state.source == OPB_SOURCE]
     counties_present = sorted(county.county.unique())
+    schools = school_manifest_entry(source_state)
     return {
         "sources": {
+            **({"census_f33": schools} if schools else {}),
             COUNTY_SOURCE: {
                 "vintage": vintage(source_state, COUNTY_SOURCE),
                 "fiscal_years": sorted(int(y) for y in county.fiscal_year.unique()),

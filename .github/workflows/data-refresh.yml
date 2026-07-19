@@ -36,7 +36,8 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'ted_rlgf_') ||
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
-          contains(steps.detect.outputs.changed_sources, 'census_county_pop')
+          contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
+          contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: pip install -r pipeline/requirements.txt
 
       - name: Run RLGF county ETL
@@ -71,13 +72,20 @@ jobs:
         if: contains(steps.detect.outputs.changed_sources, 'census_county_pop')
         run: python pipeline/etl_population.py
 
+      - name: Run school finances ETL
+        id: schools
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'census_f33')
+        run: python pipeline/etl_schools.py ${{ steps.detect.outputs.changed_sources }}
+
       - name: Validate contract and normalize
         id: normalize
         if: |
           contains(steps.detect.outputs.changed_sources, 'ted_rlgf_') ||
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
-          contains(steps.detect.outputs.changed_sources, 'census_county_pop')
+          contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
+          contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: python pipeline/normalize.py
 
       - name: Commit updated data
@@ -110,7 +118,8 @@ jobs:
           steps.rlgf_city.outcome == 'failure' ||
           steps.rlgf_consolidated.outcome == 'failure' ||
           steps.state.outcome == 'failure' ||
-          steps.population.outcome == 'failure'
+          steps.population.outcome == 'failure' ||
+          steps.schools.outcome == 'failure'
         run: |
           echo "One or more transforms failed; see the steps above and the source-failure issue."
           exit 1
