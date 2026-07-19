@@ -23,10 +23,17 @@ def county_sheet():
         ("          PART 2 INTERGOVERNMENTAL REVENUES", 300, 330),
         ("     ENTERPRISE FUND REVENUES", 100, 110),
         ("Debt", None, None),
-        ("PART XI DEBT OUTSTANDING", 5555, None),
+        ("PART XI DEBT OUTSTANDING, ISSUED, RETIRED DURING FISCAL YEAR", None, None),
+        ("     Section B GO Bond Debt", None, None),
+        ("          GO Bond Debt Beginning Amount Outstanding", 500, 400),
+        ("          GO Bond Debt Amount Retired", 100, 100),
+        ("          GO Bond Debt Ending Amount Outstanding", 400, 300),
         ("Operating Expenditures", None, None),
         ("TOTAL CURRENT OPERATING EXPENDITURES", 800, None),
         ("     PART V GENERAL GOVERNMENT EXPENDITURES", 800, 0),
+        ("Cash And Investments", None, None),
+        ("PART XII CASH AND INVESTMENT ASSETS", None, None),
+        ("     General Fund Cash", 9999, 9999),
     ]
     return header, rows
 
@@ -43,6 +50,7 @@ def normalized_frame():
             "fiscal_year": 2023,
             "category": "taxes",
             "subcategory": "PART I TAX REVENUES",
+            "measure": "flow",
             "amount": 100.0,
         } for county in counties]
         records.append({
@@ -52,6 +60,7 @@ def normalized_frame():
             "fiscal_year": 2023,
             "category": "education",
             "subcategory": "Department of Education",
+            "measure": "flow",
             "amount": 500.0,
         })
         frame = pd.DataFrame.from_records(

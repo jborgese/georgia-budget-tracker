@@ -21,6 +21,13 @@
       "other_expenditure",
       "enterprise_operations",
       "intergovernmental_expenditure"
+    ],
+    "debt": [
+      "debt_outstanding",
+      "debt_issued",
+      "debt_retired",
+      "debt_interest",
+      "debt_costs"
     ]
   },
   "rlgf": {
@@ -58,6 +65,15 @@
       "Capital Expenditures - Machinery and Equipment": "other_expenditure",
       "Capital Expenditures - Intangibles": "other_expenditure"
     }
+  },
+  "rlgf_debt": {
+    "Ending Amount Outstanding": "debt_outstanding",
+    "New Issued Amount": "debt_issued",
+    "Amount Retired": "debt_retired",
+    "Interest Paid": "debt_interest",
+    "Fiscal Agent Fees for Year": "debt_costs",
+    "Issuance Costs": "debt_costs",
+    "Advanced Refunding Esc.": "debt_costs"
   },
   "opb": {
     "revenue_groups": {

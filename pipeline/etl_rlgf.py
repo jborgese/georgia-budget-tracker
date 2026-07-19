@@ -15,9 +15,10 @@ workbooks):
 - Unindented Title Case rows with no amounts ("Revenues", "Debt", ...) are
   section headers; unindented ALL CAPS rows ("TOTAL REVENUES", ...) are that
   section's total lines.
-- Only the Revenues, Operating Expenditures, and Capital Expenditures
-  sections are extracted; the remaining sections (debt, cash, fund equity,
-  personnel) are out of scope for now.
+- The Revenues, Operating Expenditures, Capital Expenditures, and Debt
+  (PART XI: outstanding, issued, retired, interest by debt type) sections
+  are extracted; the remaining sections (cash, fund equity, personnel) are
+  out of scope for now.
 
 Outputs per government type:
 - data/raw/<source_id>.xlsx                     workbook as downloaded
@@ -26,6 +27,8 @@ Outputs per government type:
 - data/processed/<dir>/<slug>.json              per-government totals plus a
   shallow (depth <= 2) breakdown for the frontend
 - data/processed/<dir>/index.json               government list with latest totals
+- data/processed/<dir>/sales_tax.json           itemized sales-tax revenue lines
+  (LOST/SPLOST/TSPLOST/...) per government, entities with any nonzero year
 
 The county outputs keep their original column and key names (``county``,
 ``counties``) so historical data files stay byte-stable; city and
@@ -65,8 +68,10 @@ SECTIONS = {
     "Revenues": ("revenue", "revenues"),
     "Operating Expenditures": ("expenditure", "operating"),
     "Capital Expenditures": ("expenditure", "capital"),
+    "Debt": ("debt", "debt"),
 }
 JSON_BREAKDOWN_MAX_DEPTH = 2
+SALES_TAX_PATTERN = "SPLOST|Sales Tax|Sales and Use"
 CONSOLIDATED_SUFFIX = re.compile(r"\s+COUNTY$")
 PRESERVED_JSON = ("metrics.json", "categories.json", "index.json")
 
@@ -311,6 +316,53 @@ def write_entity_json(connection: duckdb.DuckDBPyConnection,
     return totals.entity.nunique()
 
 
+def sales_tax_lines(connection: duckdb.DuckDBPyConnection,
+                    government: GovernmentType) -> pd.DataFrame:
+    return connection.execute(
+        f"""
+        SELECT {government.entity_column} AS entity, classification,
+               map_from_entries(
+                   list((fiscal_year, amount) ORDER BY fiscal_year)
+               ) AS amounts,
+               min(line) AS first_line
+        FROM records
+        WHERE depth = 4
+          AND section = 'revenues'
+          AND path LIKE '%PART I TAX REVENUES%Section B - General Sales and Use Taxes%'
+          AND regexp_matches(classification, ?)
+        GROUP BY entity, classification
+        HAVING sum(abs(amount)) > 0
+        ORDER BY entity, first_line
+        """,
+        [SALES_TAX_PATTERN],
+    ).df()
+
+
+def write_sales_tax_json(connection: duckdb.DuckDBPyConnection,
+                         government: GovernmentType,
+                         fiscal_years: list[int]) -> None:
+    lines = sales_tax_lines(connection, government)
+    entities: dict[str, dict] = {}
+    for entity, entity_rows in lines.groupby("entity"):
+        entities[entity_slug(entity)] = {
+            "entity": entity,
+            "lines": [
+                {
+                    "classification": row.classification,
+                    "amounts": {str(year): int(amount)
+                                for year, amount in row.amounts.items()},
+                }
+                for row in entity_rows.itertuples(index=False)
+            ],
+        }
+    document = {
+        "source": government.source_id,
+        "fiscal_years": fiscal_years,
+        "entities": dict(sorted(entities.items())),
+    }
+    write_json(json_dir(government) / "sales_tax.json", document)
+
+
 def parse_args(argv: list[str]) -> tuple[GovernmentType, str | None]:
     if argv and argv[0] in GOVERNMENT_TYPES:
         return GOVERNMENT_TYPES[argv[0]], argv[1] if len(argv) > 1 else None
@@ -337,6 +389,8 @@ def run(government: GovernmentType, local_path: str | None) -> None:
     connection.register("records", records)
     write_parquet(connection, government)
     entity_count = write_entity_json(connection, government)
+    write_sales_tax_json(connection, government,
+                         sorted(int(y) for y in records.fiscal_year.unique()))
 
     runlog.log_event("transformed", government.source_id, records=len(records),
                      entities=entity_count)

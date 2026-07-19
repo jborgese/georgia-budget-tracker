@@ -11,8 +11,19 @@ def records_for(county, sheet):
 def test_only_target_sections_are_extracted(county_sheet):
     records = records_for("APPLING", county_sheet)
     sections = {record["section"] for record in records}
-    assert sections == {"revenues", "operating"}
-    assert not any("DEBT" in record["classification"] for record in records)
+    assert sections == {"revenues", "operating", "debt"}
+    assert not any("Cash" in record["classification"] for record in records)
+
+
+def test_debt_section_extracted_with_category(county_sheet):
+    records = records_for("APPLING", county_sheet)
+    debt = [r for r in records if r["section"] == "debt"]
+    assert all(r["category"] == "debt" for r in debt)
+    ending = next(r for r in debt
+                  if r["classification"] == "GO Bond Debt Ending Amount Outstanding"
+                  and r["fiscal_year"] == 2016)
+    assert ending["amount"] == 400
+    assert ending["depth"] == 2
 
 
 def test_hierarchy_depth_and_path(county_sheet):
@@ -41,7 +52,8 @@ def test_every_record_carries_county_and_category(county_sheet):
     records = records_for("BARTOW", county_sheet)
     assert records
     assert all(record["county"] == "BARTOW" for record in records)
-    assert {record["category"] for record in records} == {"revenue", "expenditure"}
+    assert {record["category"] for record in records} == {"revenue", "expenditure",
+                                                          "debt"}
 
 
 def test_entity_column_is_parameterized(county_sheet):

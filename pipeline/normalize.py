@@ -118,11 +118,12 @@ def crosswalk_category(mapping: dict[str, str], classification: str) -> str:
 
 
 def local_row(entity_type: str, entity: str, fips: str, fiscal_year: int,
-              category: str, subcategory: str, amount: float) -> dict:
+              category: str, subcategory: str, amount: float,
+              measure: str = "flow") -> dict:
     return {"entity": entity, "entity_type": entity_type,
             "fips": fips, "fiscal_year": int(fiscal_year),
             "category": category, "subcategory": subcategory,
-            "amount": round(float(amount), 2)}
+            "measure": measure, "amount": round(float(amount), 2)}
 
 
 def normalize_rlgf_group(entity_type: str, entity: str, fips: str,
@@ -162,6 +163,36 @@ def normalize_rlgf_group(entity_type: str, entity: str, fips: str,
     return records, total
 
 
+def debt_category(classification: str) -> str | None:
+    mapping = contract.CROSSWALK["rlgf_debt"]
+    if classification in mapping:
+        return mapping[classification]
+    for suffix, category in mapping.items():
+        if classification.endswith(suffix):
+            return category
+    if classification.endswith("Beginning Amount Outstanding"):
+        return None
+    raise SystemExit(f"No rlgf_debt entry matches {classification!r} — "
+                     "add it to pipeline/crosswalk.json.")
+
+
+def normalize_debt_group(entity_type: str, entity: str, fips: str,
+                         fiscal_year: int, group: pd.DataFrame) -> list[dict]:
+    records = []
+    for row in group[group.depth == 2].itertuples():
+        if not row.amount:
+            continue
+        category = debt_category(row.classification)
+        if category is None:
+            continue
+        records.append(local_row(
+            entity_type, entity, fips, fiscal_year, category,
+            row.classification, row.amount,
+            measure="stock" if category in contract.STOCK_CATEGORIES
+            else "flow"))
+    return records
+
+
 def normalize_rlgf(frame: pd.DataFrame,
                    entity_type: str) -> tuple[list[dict], dict[tuple, float]]:
     level = RLGF_LEVELS[entity_type]
@@ -169,6 +200,11 @@ def normalize_rlgf(frame: pd.DataFrame,
     expected: dict[tuple, float] = {}
     for (entity, fiscal_year, section), group in frame.groupby(
             [level["entity_column"], "fiscal_year", "section"], sort=True):
+        if section == "debt":
+            records += normalize_debt_group(
+                entity_type, entity, level["fips"](entity), int(fiscal_year),
+                group)
+            continue
         group_records, total = normalize_rlgf_group(
             entity_type, entity, level["fips"](entity), int(fiscal_year),
             section, group)
@@ -183,7 +219,7 @@ def state_row(fiscal_year: int, category: str, subcategory: str,
     return {"entity": contract.STATE_ENTITY, "entity_type": "state",
             "fips": contract.STATE_FIPS, "fiscal_year": int(fiscal_year),
             "category": category, "subcategory": subcategory,
-            "amount": round(float(amount), 2)}
+            "measure": "flow", "amount": round(float(amount), 2)}
 
 
 def opb_revenue_category(path: str) -> str:
@@ -334,6 +370,7 @@ def categories_document(normalized: pd.DataFrame, entity_type: str,
                         container_key: str, entry_key: str) -> dict:
     rows = normalized[normalized.entity_type == entity_type].assign(
         side=lambda f: f.category.map(contract.side))
+    rows = rows[rows.side != "debt"]
     grouped = (rows.groupby(
         ["entity", "fiscal_year", "side", "category", "subcategory"])
         .amount.sum())
@@ -363,6 +400,14 @@ def vintage(source_state: dict, source_id: str) -> dict:
     entry = source_state.get(source_id, {})
     return {"fingerprint": entry.get("fingerprint"),
             "checked_at": entry.get("checked_at")}
+
+
+def debt_identity(county: pd.DataFrame, city: pd.DataFrame,
+                  consolidated: pd.DataFrame) -> dict:
+    frames = [county.rename(columns={"county": "entity"}), city, consolidated]
+    debt = pd.concat([frame[frame.section == "debt"] for frame in frames],
+                     ignore_index=True)
+    return contract.debt_identity_report(debt)
 
 
 def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
@@ -440,6 +485,7 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
             "tolerance": {"relative": contract.DEFAULT_RELATIVE_TOLERANCE,
                           "absolute": contract.DEFAULT_ABSOLUTE_TOLERANCE},
             "reconciliation": contract.reconciliation_report(normalized, expected),
+            "debt_identity": debt_identity(county, city, consolidated),
         },
     }
 

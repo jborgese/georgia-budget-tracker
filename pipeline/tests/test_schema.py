@@ -80,14 +80,16 @@ def test_reconciliation_breach_fails(normalized_frame):
 def city_row(entity, **overrides):
     return {"entity": entity, "entity_type": "city", "fips": contract.STATE_FIPS,
             "fiscal_year": 2023, "category": "taxes",
-            "subcategory": "PART I TAX REVENUES", "amount": 40.0, **overrides}
+            "subcategory": "PART I TAX REVENUES", "measure": "flow",
+            "amount": 40.0, **overrides}
 
 
 def consolidated_rows():
     return [{"entity": government, "entity_type": "consolidated",
              "fips": contract.CONSOLIDATED_COUNTY_FIPS[government],
              "fiscal_year": 2023, "category": "taxes",
-             "subcategory": "PART I TAX REVENUES", "amount": 70.0}
+             "subcategory": "PART I TAX REVENUES", "measure": "flow",
+             "amount": 70.0}
             for government in contract.CONSOLIDATED_GOVERNMENTS]
 
 
@@ -131,6 +133,46 @@ def test_city_county_name_collision_reconciles_separately(normalized_frame):
 def test_consolidated_roster_matches_known_missing_counties():
     assert (set(contract.CONSOLIDATED_GOVERNMENTS.values())
             == set(contract.KNOWN_MISSING_COUNTIES))
+
+
+def debt_row(category, measure, amount):
+    return {"entity": "APPLING", "entity_type": "county", "fips": "13001",
+            "fiscal_year": 2023, "category": category,
+            "subcategory": "GO Bond Debt Ending Amount Outstanding",
+            "measure": measure, "amount": amount}
+
+
+def test_debt_stock_row_validates(normalized_frame):
+    frame = with_rows(normalized_frame(),
+                      [debt_row("debt_outstanding", "stock", 400.0)])
+    validate(frame)
+
+
+def test_stock_measure_outside_debt_outstanding_fails(normalized_frame):
+    frame = with_rows(normalized_frame(),
+                      [debt_row("debt_retired", "stock", 100.0)])
+    with pytest.raises(pandera.errors.SchemaError, match="measure"):
+        validate(frame)
+
+
+def test_flow_measure_on_debt_outstanding_fails(normalized_frame):
+    frame = with_rows(normalized_frame(),
+                      [debt_row("debt_outstanding", "flow", 400.0)])
+    with pytest.raises(pandera.errors.SchemaError, match="measure"):
+        validate(frame)
+
+
+def test_negative_debt_kept_as_filed(normalized_frame):
+    frame = with_rows(normalized_frame(),
+                      [debt_row("debt_outstanding", "stock", -400.0)])
+    validate(frame)
+
+
+def test_side_maps_debt_categories():
+    assert contract.side("debt_outstanding") == "debt"
+    assert contract.side("debt_service") == "expenditure"
+    assert contract.DEBT_CATEGORIES.isdisjoint(
+        contract.REVENUE_CATEGORIES | contract.EXPENDITURE_CATEGORIES)
 
 
 def test_side_classifies_disjoint_vocabulary():

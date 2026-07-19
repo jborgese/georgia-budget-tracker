@@ -23,6 +23,14 @@ consolidated governments (``CONSOLIDATED_COUNTY_FIPS``), and the bare state
 prefix "13" for the state and — until the Census place roster lands with the
 sub-county denominators work — for cities.
 
+``measure`` distinguishes flows (annual amounts — every revenue and
+expenditure row) from stocks (point-in-time balances — debt outstanding at
+fiscal year end). RLGF Part XI's beginning-of-year balances are not emitted:
+they duplicate the prior year's ending balance and would double-count any
+sum over debt_outstanding rows; they feed :func:`debt_identity_report`
+instead. Debt rows carry side "debt" and never mix into revenue/expenditure
+reconciliation.
+
 Contract rules enforced by :func:`build_schema`:
 - every Georgia county (Census roster, pipeline/ga_counties.json) is present
   or explicitly listed in ``KNOWN_MISSING_COUNTIES``;
@@ -30,7 +38,10 @@ Contract rules enforced by :func:`build_schema`:
 - per (entity_type, entity, fiscal-year, side), normalized amounts reconcile
   to the source's printed totals within tolerance;
 - no impossible negatives: state amounts and local-government tax revenues
-  must be non-negative except in synthetic reconciliation rows.
+  must be non-negative except in synthetic reconciliation rows (debt rows
+  are exempt — a few filings report negative balances, kept as filed and
+  counted in :func:`debt_identity_report`);
+- the stock measure appears exactly on debt_outstanding rows.
 """
 
 from __future__ import annotations
@@ -47,11 +58,14 @@ COUNTY_FIPS: dict[str, str] = json.loads(
 CROSSWALK: dict = json.loads((PIPELINE_DIR / "crosswalk.json").read_text())
 REVENUE_CATEGORIES = set(CROSSWALK["categories"]["revenue"])
 EXPENDITURE_CATEGORIES = set(CROSSWALK["categories"]["expenditure"])
-ALL_CATEGORIES = REVENUE_CATEGORIES | EXPENDITURE_CATEGORIES
+DEBT_CATEGORIES = set(CROSSWALK["categories"]["debt"])
+ALL_CATEGORIES = REVENUE_CATEGORIES | EXPENDITURE_CATEGORIES | DEBT_CATEGORIES
+STOCK_CATEGORIES = {"debt_outstanding"}
+MEASURES = ("flow", "stock")
 STATE_ENTITY = "STATE OF GEORGIA"
 STATE_FIPS = "13"
 NORMALIZED_COLUMNS = ["entity", "entity_type", "fips", "fiscal_year",
-                      "category", "subcategory", "amount"]
+                      "category", "subcategory", "measure", "amount"]
 DEFAULT_RELATIVE_TOLERANCE = 0.01
 DEFAULT_ABSOLUTE_TOLERANCE = 5.0
 SYNTHETIC_MARKERS = ("(unallocated)", "(reconciliation adjustment)")
@@ -83,7 +97,9 @@ LOCAL_ENTITY_TYPES = ("county", "city", "consolidated")
 
 
 def side(category: str) -> str:
-    return "revenue" if category in REVENUE_CATEGORIES else "expenditure"
+    if category in REVENUE_CATEGORIES:
+        return "revenue"
+    return "debt" if category in DEBT_CATEGORIES else "expenditure"
 
 
 def is_synthetic(subcategory: pd.Series) -> pd.Series:
@@ -117,6 +133,10 @@ def no_impossible_negatives(frame: pd.DataFrame) -> pd.Series:
     local_tax_violation = (negative & frame.entity_type.isin(LOCAL_ENTITY_TYPES)
                            & (frame.category == "taxes") & ~synthetic)
     return ~(state_violation | local_tax_violation)
+
+
+def measure_matches_category(frame: pd.DataFrame) -> pd.Series:
+    return (frame.measure == "stock") == frame.category.isin(STOCK_CATEGORIES)
 
 
 def side_sums(frame: pd.DataFrame) -> pd.Series:
@@ -154,6 +174,52 @@ def reconciliation_report(frame: pd.DataFrame,
     }
 
 
+DEBT_MEASURE_SUFFIXES = {
+    "Beginning Amount Outstanding": "beginning",
+    "New Issued Amount": "issued",
+    "Amount Retired": "retired",
+    "Ending Amount Outstanding": "ending",
+}
+
+
+def debt_identity_report(debt_frame: pd.DataFrame,
+                         absolute_tolerance: float = 5.0) -> dict:
+    """Check beginning + issued - retired = ending per entity/year/debt type.
+
+    Part XI prints no total lines, so this internal identity is the debt
+    analogue of source-total reconciliation. Violations describe the filing
+    itself and are reported, not gated on.
+    """
+    rows = debt_frame[debt_frame.depth == 2].copy()
+    measures = pd.Series("", index=rows.index)
+    debt_type = rows.classification.copy()
+    for suffix, name in DEBT_MEASURE_SUFFIXES.items():
+        matches = rows.classification.str.endswith(suffix)
+        measures[matches] = name
+        debt_type[matches] = rows.classification[matches].str.removesuffix(
+            suffix).str.strip()
+    rows = rows.assign(measure=measures, debt_type=debt_type)
+    rows = rows[rows.measure != ""]
+    pivot = rows.pivot_table(index=["entity", "fiscal_year", "debt_type"],
+                             columns="measure", values="amount",
+                             aggfunc="sum", fill_value=0.0)
+    for column in DEBT_MEASURE_SUFFIXES.values():
+        if column not in pivot.columns:
+            pivot[column] = 0.0
+    deviation = (pivot.beginning + pivot.issued - pivot.retired
+                 - pivot.ending).abs()
+    filed = pivot[(pivot[list(DEBT_MEASURE_SUFFIXES.values())] != 0)
+                  .any(axis=1)]
+    filed_deviation = deviation.loc[filed.index]
+    return {
+        "identities_checked": int(len(filed)),
+        "violations": int((filed_deviation > absolute_tolerance).sum()),
+        "max_absolute_deviation": round(float(filed_deviation.max()), 2)
+        if len(filed_deviation) else 0.0,
+        "negative_amount_rows": int((debt_frame.amount < 0).sum()),
+    }
+
+
 def build_schema(expected_totals: dict[tuple, float] | None = None,
                  relative_tolerance: float = DEFAULT_RELATIVE_TOLERANCE,
                  absolute_tolerance: float = DEFAULT_ABSOLUTE_TOLERANCE,
@@ -167,6 +233,8 @@ def build_schema(expected_totals: dict[tuple, float] | None = None,
                  error="fips does not match the Census roster for the entity"),
         pa.Check(no_impossible_negatives, name="no_impossible_negatives",
                  error="negative amount where the contract forbids it"),
+        pa.Check(measure_matches_category, name="measure_matches_category",
+                 error="stock measure is reserved for debt_outstanding"),
     ]
     if expected_totals is not None:
         checks.append(pa.Check(
@@ -183,6 +251,7 @@ def build_schema(expected_totals: dict[tuple, float] | None = None,
             "fiscal_year": pa.Column(int, pa.Check.in_range(1990, 2100)),
             "category": pa.Column(str, pa.Check.isin(sorted(ALL_CATEGORIES))),
             "subcategory": pa.Column(str, pa.Check.str_length(min_value=1)),
+            "measure": pa.Column(str, pa.Check.isin(list(MEASURES))),
             "amount": pa.Column(float, pa.Check(lambda s: s.notna() & (s.abs() < 1e12),
                                                 element_wise=False,
                                                 name="amount_finite")),

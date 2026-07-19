@@ -6,7 +6,7 @@
      "etag": "\"2f34ed9e63cedc1:0\"",
      "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
     },
-    "checked_at": "2026-07-10T07:33:41+00:00"
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "fiscal_years": [
     2016,
@@ -18,7 +18,7 @@
     2022,
     2023
    ],
-   "records": 628152,
+   "records": 668016,
    "counties_present": 151,
    "counties_missing": {
     "BIBB": "Macon-Bibb consolidated government; separate TED government type",
@@ -33,8 +33,11 @@
   },
   "ted_rlgf_city_workbook": {
    "vintage": {
-    "fingerprint": null,
-    "checked_at": null
+    "fingerprint": {
+     "etag": "\"f6ce69e63cedc1:0\"",
+     "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
+    },
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "fiscal_years": [
     2016,
@@ -46,14 +49,17 @@
     2022,
     2023
    ],
-   "records": 2170680,
+   "records": 2308488,
    "cities_present": 522,
    "note": "municipal RLGF filings; city fips carries the bare state prefix until the Census place roster lands"
   },
   "ted_rlgf_consolidated_workbook": {
    "vintage": {
-    "fingerprint": null,
-    "checked_at": null
+    "fingerprint": {
+     "etag": "\"f6ce69e63cedc1:0\"",
+     "last_modified": "Fri, 17 Apr 2026 12:13:37 GMT"
+    },
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "fiscal_years": [
     2016,
@@ -65,7 +71,7 @@
     2022,
     2023
    ],
-   "records": 33272,
+   "records": 35384,
    "governments": {
     "ATHENS-CLARKE": "CLARKE",
     "AUGUSTA-RICHMOND": "RICHMOND",
@@ -123,7 +129,7 @@
       ]
      }
     },
-    "checked_at": "2026-07-10T07:33:40+00:00"
+    "checked_at": "2026-07-19T03:21:11+00:00"
    },
    "fiscal_years": [
     2015,
@@ -154,7 +160,7 @@
      "etag": null,
      "last_modified": "Tue, 04 May 2021 15:42:59 GMT"
     },
-    "checked_at": "2026-07-10T07:33:41+00:00"
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "note": "county population denominators 2010-2020 (vintage 2020, final)"
   },
@@ -164,7 +170,7 @@
      "etag": null,
      "last_modified": "Thu, 13 Mar 2025 12:38:39 GMT"
     },
-    "checked_at": "2026-07-10T07:33:41+00:00"
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "note": "county population denominators 2020 onward (latest vintage)"
   },
@@ -174,7 +180,7 @@
      "etag": null,
      "last_modified": "Thu, 16 Jan 2025 16:18:29 GMT"
     },
-    "checked_at": "2026-07-10T07:33:41+00:00"
+    "checked_at": "2026-07-19T03:21:12+00:00"
    },
    "fiscal_years_by_basis": {
     "actual": [
@@ -202,7 +208,7 @@
   }
  },
  "normalized": {
-  "records": 197313,
+  "records": 221929,
   "entities": 682,
   "fiscal_years": [
    2016,
@@ -221,6 +227,10 @@
    "charges_and_fees",
    "community_and_economic_development",
    "culture_and_recreation",
+   "debt_interest",
+   "debt_issued",
+   "debt_outstanding",
+   "debt_retired",
    "debt_service",
    "education",
    "enterprise_operations",
@@ -247,6 +257,12 @@
    "max_relative_deviation": 0.0,
    "synthetic_rows": 8735,
    "synthetic_amount_absolute_sum": 16808192079.0
+  },
+  "debt_identity": {
+   "identities_checked": 7799,
+   "violations": 1,
+   "max_absolute_deviation": 206015000.0,
+   "negative_amount_rows": 29
   }
  }
 }
