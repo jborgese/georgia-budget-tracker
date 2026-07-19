@@ -27,7 +27,7 @@ export function DataTable({
             >
               {columns.map((column, index) => (
                 <th
-                  key={column}
+                  key={`${column}-${index}`}
                   scope="col"
                   className={`py-2 pr-4 font-normal ${index === 0 ? "text-left" : "text-right"}`}
                   style={{ color: MUTED }}
@@ -38,11 +38,15 @@ export function DataTable({
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => (
-              <tr key={row[0]} className="border-t" style={{ borderColor: RULE }}>
+            {rows.map((row, rowIndex) => (
+              <tr
+                key={`${row[0]}-${rowIndex}`}
+                className="border-t"
+                style={{ borderColor: RULE }}
+              >
                 {row.map((cell, index) => (
                   <td
-                    key={`${row[0]}-${columns[index]}`}
+                    key={index}
                     className={
                       index === 0
                         ? "py-2 pr-4 text-left"

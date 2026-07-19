@@ -219,9 +219,9 @@ export function StackView({ data }: { data: StackData }) {
                 <RateCells rate={line.rate} />
               </tr>
             ))}
-            {addedSpecials.map((special) => (
+            {addedSpecials.map((special, index) => (
               <tr
-                key={special.district}
+                key={`${special.district}-${index}`}
                 className="border-t"
                 style={{ borderColor: RULE }}
               >
@@ -306,11 +306,11 @@ export function StackView({ data }: { data: StackData }) {
                 </tr>
               </thead>
               <tbody>
-                {data.specials.map((special) => {
+                {data.specials.map((special, index) => {
                   const note = describeTaxingDistrict(special.district);
                   return (
                     <tr
-                      key={special.district}
+                      key={`${special.district}-${index}`}
                       className="border-t"
                       style={{ borderColor: RULE }}
                     >

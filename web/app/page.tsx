@@ -172,7 +172,13 @@ export default function Home() {
           </p>
           <DataTable
             caption="Revenues and expenditures by fiscal year"
-            columns={["Fiscal year", "Revenues", "Basis", "Expenditures", "Basis"]}
+            columns={[
+              "Fiscal year",
+              "Revenues",
+              "Revenue basis",
+              "Expenditures",
+              "Expenditure basis",
+            ]}
             rows={data.fiscalYearTotals.map((t) => [
               fiscalYearLabel(t.fiscalYear),
               t.revenue != null ? formatDollars(t.revenue) : "—",
