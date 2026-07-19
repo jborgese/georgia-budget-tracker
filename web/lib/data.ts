@@ -21,6 +21,9 @@ import type {
   MedianYear,
   SalesTaxDocument,
   SalesTaxLine,
+  SchoolDocument,
+  SchoolIndexDocument,
+  SchoolPageData,
   Side,
   SourceNote,
   StateCategoriesDocument,
@@ -60,6 +63,7 @@ const SOURCE_NAMES: Record<string, string> = {
   opb_governors_budget_report_fy2026:
     "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
   census_county_pop_2020s: "US Census — county population estimates",
+  census_f33: "US Census — Annual Survey of School System Finances (F-33)",
 };
 
 const ENTITY_LEVELS: Record<
@@ -217,11 +221,13 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
       entry?.governments != null
         ? ` · ${Object.keys(entry.governments).length} consolidated governments`
         : "";
+    const districts =
+      entry?.districts != null ? ` · ${entry.districts} school districts` : "";
     return {
       id,
       name,
       vintage: formatVintage(manifest, id),
-      coverage: `${span}${counties}${cities}${governments}`,
+      coverage: `${span}${counties}${cities}${governments}${districts}`,
     };
   });
 }
@@ -497,16 +503,72 @@ export function loadEntityPage(
   };
 }
 
+export function loadSchoolIndex(): SchoolIndexDocument {
+  return readJsonCached<SchoolIndexDocument>("schools", "index.json");
+}
+
+export function schoolsByCountyFips(): Record<
+  string,
+  { name: string; slug: string }[]
+> {
+  const grouped: Record<string, { name: string; slug: string }[]> = {};
+  for (const district of loadSchoolIndex().districts) {
+    (grouped[district.county_fips] ??= []).push({
+      name: district.display_name,
+      slug: district.slug,
+    });
+  }
+  return grouped;
+}
+
+function schoolProvenance(manifest: ManifestDocument): string {
+  const entry = manifest.sources["census_f33"];
+  const years = entry?.fiscal_years ?? [];
+  const span = years.length
+    ? `fiscal years ${Math.min(...years)}–${Math.max(...years)}`
+    : "";
+  return (
+    `Source: US Census Bureau Annual Survey of School System Finances ` +
+    `(F-33 individual unit files), ${span}. The survey publishes roughly ` +
+    `18 months after each fiscal year closes, so the newest school year ` +
+    `always lags the newest county and city filings. Figures are as ` +
+    `reported to the Census Bureau; dollar amounts are converted from the ` +
+    `survey's thousands.`
+  );
+}
+
+export function loadSchoolPage(slug: string): SchoolPageData | null {
+  const index = loadSchoolIndex();
+  const entry = index.districts.find((candidate) => candidate.slug === slug);
+  if (!entry) return null;
+  const document = readJson<SchoolDocument>("schools", `${slug}.json`);
+  const manifest = readJsonCached<ManifestDocument>("manifest.json");
+  const county = loadCountyMetrics().counties.find(
+    (candidate) => candidate.fips === document.county_fips,
+  );
+  const filedYears = Object.keys(document.years).map(Number).sort();
+  return {
+    document,
+    displayName: document.display_name,
+    countyName: county ? countyDisplayName(county.county) : null,
+    countySlug: county?.slug ?? null,
+    latestYear: filedYears.at(-1) as number,
+    filedYears,
+    provenance: schoolProvenance(manifest),
+  };
+}
+
 export interface SearchOption {
   name: string;
   slug: string;
-  kind: "county" | EntityKind;
+  kind: "county" | EntityKind | "school";
 }
 
 const SEARCH_KIND_ORDER: Record<SearchOption["kind"], number> = {
   county: 0,
   consolidated: 1,
   city: 2,
+  school: 3,
 };
 
 export function loadSearchOptions(): SearchOption[] {
@@ -524,7 +586,14 @@ export function loadSearchOptions(): SearchOption[] {
           kind,
         })),
   );
-  return [...counties, ...entities].sort(
+  const schools: SearchOption[] = loadSchoolIndex().districts.map(
+    (district) => ({
+      name: district.display_name,
+      slug: district.slug,
+      kind: "school",
+    }),
+  );
+  return [...counties, ...entities, ...schools].sort(
     (a, b) =>
       a.name.localeCompare(b.name) ||
       SEARCH_KIND_ORDER[a.kind] - SEARCH_KIND_ORDER[b.kind],

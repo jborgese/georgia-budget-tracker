@@ -182,6 +182,72 @@ export interface EntityListing {
   expenditure: number | null;
 }
 
+export interface SchoolYear {
+  enrollment: number;
+  revenue: {
+    total: number;
+    federal: number;
+    state: number;
+    local: number;
+    property_tax: number;
+    sales_tax: number;
+    parent_government: number;
+  };
+  expenditure: {
+    total: number;
+    current: number;
+    instruction: number;
+    support_services: number;
+    other_current: number;
+    capital: number;
+    interest_on_debt: number;
+  };
+  debt: { outstanding: number; issued: number; retired: number };
+  per_pupil: {
+    revenue: number | null;
+    current_spending: number | null;
+    instruction: number | null;
+  };
+}
+
+export interface SchoolDocument {
+  district: string;
+  display_name: string;
+  slug: string;
+  ncesid: string;
+  county_fips: string;
+  source: string;
+  fiscal_years: number[];
+  years: Record<string, SchoolYear>;
+}
+
+export interface SchoolIndexDocument {
+  source: string;
+  fiscal_years: number[];
+  districts: {
+    district: string;
+    display_name: string;
+    slug: string;
+    ncesid: string;
+    county_fips: string;
+    latest_fiscal_year: number;
+    enrollment: number;
+    revenue: number;
+    expenditure: number;
+    per_pupil_current_spending: number | null;
+  }[];
+}
+
+export interface SchoolPageData {
+  document: SchoolDocument;
+  displayName: string;
+  countyName: string | null;
+  countySlug: string | null;
+  latestYear: number;
+  filedYears: number[];
+  provenance: string;
+}
+
 export interface MedianYear {
   revenue: number | null;
   expenditure: number | null;
@@ -245,6 +311,8 @@ export interface ManifestDocument {
       counties_missing?: Record<string, string>;
       cities_present?: number;
       governments?: Record<string, string>;
+      districts?: number;
+      vintages?: Record<string, SourceVintage>;
       note?: string;
     }
   >;

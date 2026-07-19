@@ -10,12 +10,14 @@ const KIND_LABELS: Record<SearchOption["kind"], string> = {
   county: "County",
   city: "City",
   consolidated: "Consolidated",
+  school: "District",
 };
 
 const KIND_ROUTES: Record<SearchOption["kind"], string> = {
   county: "/county",
   city: "/city",
   consolidated: "/consolidated",
+  school: "/school",
 };
 
 function optionLabel(option: SearchOption): string {
@@ -69,6 +71,13 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
             Cities
           </Link>
           <Link
+            href="/schools/"
+            className="font-mono text-xs uppercase tracking-widest"
+            style={{ color: GOLD }}
+          >
+            Schools
+          </Link>
+          <Link
             href="/compare/"
             className="font-mono text-xs uppercase tracking-widest"
             style={{ color: GOLD }}
@@ -97,8 +106,8 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
                 ? `${listId}-${matches[active].kind}-${matches[active].slug}`
                 : undefined
             }
-            aria-label="Find a county or city"
-            placeholder="Find a county or city…"
+            aria-label="Find a county, city, or school district"
+            placeholder="Find a government…"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -129,7 +138,7 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
             <ul
               id={listId}
               role="listbox"
-              aria-label="Counties and cities"
+              aria-label="Counties, cities, and school districts"
               className="absolute right-0 z-20 mt-1 w-60 border shadow-sm"
               style={{ backgroundColor: PAPER, borderColor: RULE }}
             >

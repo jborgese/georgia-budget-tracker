@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { loadCountyMetrics, loadCountyPage } from "@/lib/data";
+import { loadCountyMetrics, loadCountyPage, schoolsByCountyFips } from "@/lib/data";
 import {
   fiscalYearLabel,
   formatCompactDollars,
@@ -408,6 +408,37 @@ export default async function CountyPage({
           latestFiledYear={data.latestFiledYear}
           entityLabel={`${data.displayName} County`}
         />
+
+        {(schoolsByCountyFips()[data.fips] ?? []).length ? (
+          <section aria-label="School systems in this county" className="mt-14">
+            <div className="border-t pb-1 pt-3" style={{ borderColor: INK }}>
+              <h2
+                className="font-mono text-xs uppercase tracking-widest"
+                style={{ color: SPRUCE }}
+              >
+                School systems in this county
+              </h2>
+            </div>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed">
+              School districts tax and spend separately from the county
+              government — usually the largest line on a property tax bill.
+              These figures are not included in the county totals above.
+            </p>
+            <ul className="mt-3 space-y-1 text-sm">
+              {(schoolsByCountyFips()[data.fips] ?? []).map((district) => (
+                <li key={district.slug}>
+                  <Link
+                    href={`/school/${district.slug}/`}
+                    className="underline underline-offset-4"
+                    style={{ color: SPRUCE }}
+                  >
+                    {district.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>

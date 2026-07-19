@@ -125,6 +125,29 @@ const DEBT_TYPE_DESCRIPTIONS: Record<string, string> = {
     "Debt repaid by charges on the specific properties that benefit from an improvement.",
 };
 
+const SCHOOL_TERM_DESCRIPTIONS: Record<string, string> = {
+  "Local property taxes":
+    "The district's own property tax levy. Georgia districts must levy at least 5 mills as their required local share.",
+  "Local sales taxes (ESPLOST)":
+    "Education SPLOST — a voter-approved 1% sales tax that school districts levy separately for buildings, buses, and other capital projects.",
+  "State aid":
+    "State funding, mostly the Quality Basic Education (QBE) formula that allots money per student.",
+  "Federal aid":
+    "Federal programs like Title I, special education grants, and school meals funding.",
+  "Parent government contributions":
+    "Money transferred from the city or county government associated with the school system.",
+  Instruction:
+    "Teachers and classroom activity: salaries, benefits, supplies, and purchased instruction services.",
+  "Support services":
+    "Everything supporting the classroom: administration, counselors, libraries, transportation, and building maintenance.",
+  "Current spending":
+    "Day-to-day operating costs — salaries, benefits, supplies — excluding construction and debt payments.",
+};
+
+export function describeSchoolTerm(term: string): string | null {
+  return SCHOOL_TERM_DESCRIPTIONS[term] ?? null;
+}
+
 export function describeSalesTax(classification: string): string | null {
   return SALES_TAX_DESCRIPTIONS[classification] ?? null;
 }
