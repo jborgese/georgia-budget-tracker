@@ -21,6 +21,7 @@ import type {
   FiscalYearTotals,
   ManifestDocument,
   MedianYear,
+  MillageDocument,
   SalesTaxDocument,
   SalesTaxLine,
   SchoolDocument,
@@ -66,6 +67,7 @@ const SOURCE_NAMES: Record<string, string> = {
     "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
   census_county_pop_2020s: "US Census — county population estimates",
   census_f33: "US Census — Annual Survey of School System Finances (F-33)",
+  dor_digest: "DOR — consolidated tax digest (millage rates), via GeorgiaData.org",
 };
 
 const ENTITY_LEVELS: Record<
@@ -225,13 +227,20 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
         : "";
     const districts =
       entry?.districts != null ? ` · ${entry.districts} school districts` : "";
+    const digestYears = entry?.tax_years?.length
+      ? `tax years ${Math.min(...entry.tax_years)}–${Math.max(...entry.tax_years)}`
+      : "";
     return {
       id,
       name,
       vintage: formatVintage(manifest, id),
-      coverage: `${span}${counties}${cities}${governments}${districts}`,
+      coverage: `${span || digestYears}${counties}${cities}${governments}${districts}`,
     };
   });
+}
+
+export function loadMillage(): MillageDocument {
+  return readJsonCached<MillageDocument>("counties", "millage.json");
 }
 
 export function loadCountyMetrics(): CountyMetricsDocument {
@@ -366,6 +375,8 @@ export function loadCountyPage(slug: string): CountyPageData | null {
       categories.counties[slug]?.years[String(latestFiledYear)]?.expenditure ??
       {},
     salesTaxLines: salesTaxLinesFor("counties", slug),
+    millage: loadMillage().counties[slug] ?? null,
+    millageTaxYears: loadMillage().tax_years,
   };
 }
 

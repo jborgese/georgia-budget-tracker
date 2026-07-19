@@ -148,6 +148,38 @@ export function describeSchoolTerm(term: string): string | null {
   return SCHOOL_TERM_DESCRIPTIONS[term] ?? null;
 }
 
+const TAXING_DISTRICT_DESCRIPTIONS: Record<string, string> = {
+  STATE:
+    "The state's own property tax, phased out after 2015 — the rate has been zero since.",
+  SCHOOL:
+    "The school district's levy — usually the largest rate on the bill. Georgia districts must levy at least 5 mills.",
+  "COUNTY INCORPORATED":
+    "The county government's rate on property inside city limits.",
+  "COUNTY UNINCORPORATED":
+    "The county government's rate on property outside any city.",
+};
+
+const TAXING_DISTRICT_PATTERNS: [RegExp, string][] = [
+  [/FIRE/, "A special district levy funding fire protection in part of the county."],
+  [/HOSPITAL/, "A levy funding the public hospital or hospital authority."],
+  [/DEVELOPMENT AUTH/, "A levy funding the development authority."],
+  [/\bCID\b/, "A community improvement district — commercial property owners taxing themselves for local upgrades."],
+  [/\bSSD\b|SPECIAL SERVICE/, "A special service district levy for a defined service area."],
+  [/BOND/, "A levy dedicated to repaying voter-approved bond debt."],
+];
+
+export function describeTaxingDistrict(district: string): string | null {
+  const exact = TAXING_DISTRICT_DESCRIPTIONS[district];
+  if (exact) return exact;
+  const pattern = TAXING_DISTRICT_PATTERNS.find(([regex]) =>
+    regex.test(district),
+  );
+  return pattern ? pattern[1] : null;
+}
+
+export const MILLAGE_RATE_NOTE =
+  "One mill is $1 of tax per $1,000 of assessed value. Georgia assesses most property at 40% of market value, so a 25-mill total rate is roughly 1% of market value per year.";
+
 export function describeSalesTax(classification: string): string | null {
   return SALES_TAX_DESCRIPTIONS[classification] ?? null;
 }

@@ -266,6 +266,32 @@ export interface SchoolPageData {
   provenance: string;
 }
 
+export interface MillageDistrictYear {
+  millage_mo: number | null;
+  millage_bond: number | null;
+  tax_mo: number | null;
+  tax_bond: number | null;
+}
+
+export interface MillageCountyEntry {
+  county: string;
+  county_total: Record<
+    string,
+    { parcels: number | null; assessed_mo: number | null; assessed_bond: number | null }
+  >;
+  districts: {
+    district: string;
+    code: number;
+    years: Record<string, MillageDistrictYear>;
+  }[];
+}
+
+export interface MillageDocument {
+  sources: string[];
+  tax_years: number[];
+  counties: Record<string, MillageCountyEntry>;
+}
+
 export interface MedianYear {
   revenue: number | null;
   expenditure: number | null;
@@ -305,6 +331,8 @@ export interface CountyPageData {
   provenance: string;
   spendingByCategory: Record<string, CategoryNode>;
   salesTaxLines: SalesTaxLine[];
+  millage: MillageCountyEntry | null;
+  millageTaxYears: number[];
 }
 
 export interface SourceVintage {
@@ -330,6 +358,7 @@ export interface ManifestDocument {
       cities_present?: number;
       governments?: Record<string, string>;
       districts?: number;
+      tax_years?: number[];
       vintages?: Record<string, SourceVintage>;
       note?: string;
     }

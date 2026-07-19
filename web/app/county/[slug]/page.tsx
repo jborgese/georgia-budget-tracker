@@ -13,6 +13,7 @@ import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
 import { DataGapsSection } from "@/components/DataGapsSection";
 import { DebtSection } from "@/components/DebtSection";
+import { MillageSection } from "@/components/MillageSection";
 import { SalesTaxSection } from "@/components/SalesTaxSection";
 import { CountyMedianChart, type MedianRow } from "@/components/CountyMedianChart";
 import { SpendingPie } from "@/components/SpendingPie";
@@ -402,6 +403,12 @@ export default async function CountyPage({
           latestFiledYear={data.latestFiledYear}
           entityLabel={`${data.displayName} County`}
           revenueTotal={revenueTotal}
+        />
+
+        <MillageSection
+          millage={data.millage}
+          taxYears={data.millageTaxYears}
+          countyName={data.displayName}
         />
 
         <DebtSection
