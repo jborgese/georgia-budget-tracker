@@ -19,6 +19,8 @@ import type {
   FiscalYearTotals,
   ManifestDocument,
   MedianYear,
+  SalesTaxDocument,
+  SalesTaxLine,
   Side,
   SourceNote,
   StateCategoriesDocument,
@@ -355,6 +357,7 @@ export function loadCountyPage(slug: string): CountyPageData | null {
     spendingByCategory:
       categories.counties[slug]?.years[String(latestFiledYear)]?.expenditure ??
       {},
+    salesTaxLines: salesTaxLinesFor("counties", slug),
   };
 }
 
@@ -368,6 +371,11 @@ function filedYearTotals(
     expenditure_operating: totals.expenditure_operating,
     expenditure_capital: totals.expenditure_capital,
   };
+}
+
+function salesTaxLinesFor(dir: string, slug: string): SalesTaxLine[] {
+  const document = readJsonCached<SalesTaxDocument>(dir, "sales_tax.json");
+  return document.entities[slug]?.lines ?? [];
 }
 
 export function loadEntityIndex(kind: EntityKind): EntitiesIndexDocument {
@@ -483,6 +491,7 @@ export function loadEntityPage(
     spendingByCategory:
       categories.entities[slug]?.years[String(latestFiledYear)]?.expenditure ??
       {},
+    salesTaxLines: salesTaxLinesFor(level.dir, slug),
     provenance: entityProvenance(kind, manifest),
     countyServed: countyServed ? countyDisplayName(countyServed) : undefined,
   };

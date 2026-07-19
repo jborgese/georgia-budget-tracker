@@ -11,6 +11,8 @@ import { GOLD, INK, MUTED, PAPER, RULE, SERIES, SPRUCE } from "@/lib/theme";
 import type { CountyPageData } from "@/lib/types";
 import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
+import { DebtSection } from "@/components/DebtSection";
+import { SalesTaxSection } from "@/components/SalesTaxSection";
 import { CountyMedianChart, type MedianRow } from "@/components/CountyMedianChart";
 import { SpendingPie } from "@/components/SpendingPie";
 import { SpendingTable } from "@/components/SpendingTable";
@@ -393,6 +395,19 @@ export default async function CountyPage({
             />
           </section>
         </div>
+
+        <SalesTaxSection
+          lines={data.salesTaxLines}
+          latestFiledYear={data.latestFiledYear}
+          entityLabel={`${data.displayName} County`}
+          revenueTotal={revenueTotal}
+        />
+
+        <DebtSection
+          breakdown={data.document.breakdown}
+          latestFiledYear={data.latestFiledYear}
+          entityLabel={`${data.displayName} County`}
+        />
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>

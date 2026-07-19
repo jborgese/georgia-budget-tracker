@@ -4,6 +4,8 @@ import { GOLD, INK, MUTED, PAPER, RULE, SERIES, SPRUCE } from "@/lib/theme";
 import type { EntityPageData } from "@/lib/types";
 import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
+import { DebtSection } from "@/components/DebtSection";
+import { SalesTaxSection } from "@/components/SalesTaxSection";
 import { SpendingPie } from "@/components/SpendingPie";
 import { SpendingTable } from "@/components/SpendingTable";
 import { CountyTrendChart, type TrendRow } from "@/components/CountyTrendChart";
@@ -276,6 +278,19 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
             />
           </section>
         </div>
+
+        <SalesTaxSection
+          lines={data.salesTaxLines}
+          latestFiledYear={data.latestFiledYear}
+          entityLabel={heading}
+          revenueTotal={latest?.revenue ?? null}
+        />
+
+        <DebtSection
+          breakdown={data.document.breakdown}
+          latestFiledYear={data.latestFiledYear}
+          entityLabel={heading}
+        />
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>

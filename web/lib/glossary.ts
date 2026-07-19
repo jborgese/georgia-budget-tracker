@@ -91,6 +91,48 @@ const FIXED_DESCRIPTIONS: Record<string, string> = {
     "Money passed to other governments — cities, school boards, authorities.",
 };
 
+const SALES_TAX_DESCRIPTIONS: Record<string, string> = {
+  "Local Option Sales Tax (LOST) Counties Only":
+    "A 1% sales tax shared between a county and its cities; the proceeds must reduce property tax rates, and the split is renegotiated every ten years.",
+  "Special Purpose Local Option Sales Tax (SPLOST)":
+    "A 1% county sales tax, approved by voters, that pays for specific capital projects like roads, parks, and buildings.",
+  "Local Option Sales Tax - Homestead (HOST)":
+    "A 1% sales tax used to fund homestead property-tax exemptions, with any remainder for capital projects.",
+  "Special Purpose Local Option Sales Tax (TSPLOST) Regional":
+    "A voter-approved 1% sales tax for transportation projects, shared across a multi-county region.",
+  "Special Purpose Local Option Sales Tax (TSPLOST2) Single County":
+    "A voter-approved sales tax (up to 1%) for transportation projects in a single county.",
+  "Municipal Option Sales Tax (MOST) Atlanta Only":
+    "Atlanta's 1% sales tax that funds water and sewer system improvements.",
+  "Local Option Sales Tax (O-LOST) Columbus-Muscogee only":
+    "An additional local option sales tax levied only by the Columbus-Muscogee consolidated government.",
+  "MARTA Sales Tax (DeKalb, Fulton , Clayton)":
+    "The 1% sales tax that funds MARTA transit, levied in Fulton, DeKalb, and Clayton counties and the City of Atlanta.",
+};
+
+const DEBT_TYPE_DESCRIPTIONS: Record<string, string> = {
+  "Revenue Bond Debt":
+    "Bonds repaid from a specific revenue stream, like water bills or tolls — not from general taxes.",
+  "GO Bond Debt":
+    "General obligation bonds backed by the government's power to tax; voters must approve them.",
+  "Other Long-term Debt":
+    "Long-term borrowing other than bonds, such as government loans and installment contracts.",
+  "Capital Leases Payable":
+    "Long-term leases for equipment or buildings that work like installment purchases.",
+  "Short Term Notes":
+    "Borrowing due within a year, often to cover expenses before tax payments arrive.",
+  "Special Assessment Debt":
+    "Debt repaid by charges on the specific properties that benefit from an improvement.",
+};
+
+export function describeSalesTax(classification: string): string | null {
+  return SALES_TAX_DESCRIPTIONS[classification] ?? null;
+}
+
+export function describeDebtType(debtType: string): string | null {
+  return DEBT_TYPE_DESCRIPTIONS[debtType] ?? null;
+}
+
 const SYNTHETIC_NOTE =
   "A bookkeeping line: the difference between the county's reported total and the sum of its listed items.";
 

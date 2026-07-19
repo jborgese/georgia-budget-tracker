@@ -139,6 +139,17 @@ export interface EntityCategoriesDocument {
   >;
 }
 
+export interface SalesTaxLine {
+  classification: string;
+  amounts: Record<string, number>;
+}
+
+export interface SalesTaxDocument {
+  source: string;
+  fiscal_years: number[];
+  entities: Record<string, { entity: string; lines: SalesTaxLine[] }>;
+}
+
 export interface EntityYearTotals {
   revenue: number | null;
   expenditure: number | null;
@@ -157,6 +168,7 @@ export interface EntityPageData {
   totalsByYear: Record<string, EntityYearTotals | null>;
   document: EntityDocument;
   spendingByCategory: Record<string, CategoryNode>;
+  salesTaxLines: SalesTaxLine[];
   provenance: string;
   countyServed?: string;
 }
@@ -208,6 +220,7 @@ export interface CountyPageData {
   document: CountyDocument;
   provenance: string;
   spendingByCategory: Record<string, CategoryNode>;
+  salesTaxLines: SalesTaxLine[];
 }
 
 export interface SourceVintage {
