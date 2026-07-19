@@ -157,6 +157,23 @@ export interface EntityYearTotals {
   expenditure_capital: number | null;
 }
 
+export interface EntityYearMetrics {
+  revenue: number | null;
+  expenditure: number | null;
+  population: number | null;
+  revenue_per_capita: number | null;
+  expenditure_per_capita: number | null;
+}
+
+export interface EntityMetricsDocument {
+  sources: string[];
+  fiscal_years: number[];
+  entities: Record<
+    string,
+    { entity: string; years: Record<string, EntityYearMetrics | null> }
+  >;
+}
+
 export interface EntityPageData {
   kind: EntityKind;
   entity: string;
@@ -166,6 +183,7 @@ export interface EntityPageData {
   latestFiledYear: number;
   missingYears: number[];
   totalsByYear: Record<string, EntityYearTotals | null>;
+  metricsByYear: Record<string, EntityYearMetrics | null>;
   document: EntityDocument;
   spendingByCategory: Record<string, CategoryNode>;
   salesTaxLines: SalesTaxLine[];

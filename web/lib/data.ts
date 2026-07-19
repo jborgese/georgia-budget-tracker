@@ -14,7 +14,9 @@ import type {
   EntityDocument,
   EntityKind,
   EntityListing,
+  EntityMetricsDocument,
   EntityPageData,
+  EntityYearMetrics,
   EntityYearTotals,
   FiscalYearTotals,
   ManifestDocument,
@@ -384,6 +386,14 @@ function salesTaxLinesFor(dir: string, slug: string): SalesTaxLine[] {
   return document.entities[slug]?.lines ?? [];
 }
 
+function entityMetricsFor(
+  dir: string,
+  slug: string,
+): Record<string, EntityYearMetrics | null> {
+  const document = readJsonCached<EntityMetricsDocument>(dir, "metrics.json");
+  return document.entities[slug]?.years ?? {};
+}
+
 export function loadEntityIndex(kind: EntityKind): EntitiesIndexDocument {
   return readJsonCached<EntitiesIndexDocument>(
     ENTITY_LEVELS[kind].dir, "index.json");
@@ -436,11 +446,17 @@ function entityProvenance(
         "services, so its figures are not directly comparable to " +
         "county-only or city-only governments."
       : "";
+  const denominators =
+    kind === "city"
+      ? " Population denominators: US Census incorporated-place estimates, " +
+        "available from 2020 onward; earlier years and places absent from " +
+        "the Census file show no per-resident figures."
+      : " Population denominators: US Census county estimates.";
   return (
     `Source: DCA Report of Local Government Finances via the UGA Tax & ` +
     `Expenditure Data Center (${vintage}), ${span}. Expenditures are ` +
     `operating plus capital, as filed. A year the government did not file ` +
-    `appears as missing, never as zero.${caveat}`
+    `appears as missing, never as zero.${denominators}${caveat}`
   );
 }
 
@@ -498,6 +514,7 @@ export function loadEntityPage(
       categories.entities[slug]?.years[String(latestFiledYear)]?.expenditure ??
       {},
     salesTaxLines: salesTaxLinesFor(level.dir, slug),
+    metricsByYear: entityMetricsFor(level.dir, slug),
     provenance: entityProvenance(kind, manifest),
     countyServed: countyServed ? countyDisplayName(countyServed) : undefined,
   };

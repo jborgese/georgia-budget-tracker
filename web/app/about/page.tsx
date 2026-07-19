@@ -6,6 +6,7 @@ import {
   loadSourceRegistry,
 } from "@/lib/data";
 import { GOLD, INK, MUTED, PAPER, RULE, SPRUCE } from "@/lib/theme";
+import { LEDGER_DATA_GAPS } from "@/lib/dataGaps";
 
 export const metadata: Metadata = {
   title: "About & methodology",
@@ -263,6 +264,30 @@ export default function AboutPage() {
           fromLabel="Department / agency"
           mapping={crosswalk.opb.agencies}
         />
+
+        <SectionHead>Known gaps</SectionHead>
+        <p className="max-w-prose text-sm leading-relaxed">
+          Some layers of Georgia local government have no public
+          machine-readable data. Rather than estimate, this site marks them
+          with a warning icon and explains what was checked:
+        </p>
+        <ul className="mt-3">
+          {LEDGER_DATA_GAPS.map((gap) => (
+            <li
+              key={gap.id}
+              className="border-t py-3"
+              style={{ borderColor: RULE }}
+            >
+              <p className="text-sm font-semibold">{gap.title}</p>
+              <p
+                className="mt-1 max-w-prose text-sm leading-relaxed"
+                style={{ color: MUTED }}
+              >
+                {gap.explanation}
+              </p>
+            </li>
+          ))}
+        </ul>
 
         <SectionHead>Corrections</SectionHead>
         <p className="max-w-prose text-sm leading-relaxed">

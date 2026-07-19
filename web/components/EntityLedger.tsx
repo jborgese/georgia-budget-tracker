@@ -4,6 +4,7 @@ import { GOLD, INK, MUTED, PAPER, RULE, SERIES, SPRUCE } from "@/lib/theme";
 import type { EntityPageData } from "@/lib/types";
 import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
+import { DataGapsSection } from "@/components/DataGapsSection";
 import { DebtSection } from "@/components/DebtSection";
 import { SalesTaxSection } from "@/components/SalesTaxSection";
 import { SpendingPie } from "@/components/SpendingPie";
@@ -97,6 +98,7 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
   const heading = entityHeading(data);
   const fy = fiscalYearLabel(data.latestFiledYear);
   const latest = data.totalsByYear[String(data.latestFiledYear)];
+  const latestMetrics = data.metricsByYear[String(data.latestFiledYear)];
   const eyebrow =
     data.kind === "city"
       ? "City ledger"
@@ -147,22 +149,30 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
             detail="Operating plus capital"
           />
           <StatTile
-            label="Operating"
+            label="Revenue / resident"
             value={
-              latest?.expenditure_operating != null
-                ? formatCompactDollars(latest.expenditure_operating)
+              latestMetrics?.revenue_per_capita != null
+                ? formatDollars(latestMetrics.revenue_per_capita)
                 : "—"
             }
-            detail={`${fy} operating expenditures`}
+            detail={
+              latestMetrics?.revenue_per_capita != null
+                ? `${fy}, per Census estimate`
+                : "Population estimate unavailable"
+            }
           />
           <StatTile
-            label="Capital"
+            label="Population"
             value={
-              latest?.expenditure_capital != null
-                ? formatCompactDollars(latest.expenditure_capital)
+              latestMetrics?.population != null
+                ? latestMetrics.population.toLocaleString("en-US")
                 : "—"
             }
-            detail={`${fy} capital expenditures`}
+            detail={
+              latestMetrics?.population != null
+                ? `Census estimate, ${data.latestFiledYear}`
+                : "Not in the Census place file"
+            }
           />
         </section>
 
@@ -223,9 +233,18 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
           ) : null}
           <DataTable
             caption={`${heading} revenues and expenditures by fiscal year`}
-            columns={["Fiscal year", "Revenues", "Expenditures", "Operating", "Capital"]}
+            columns={[
+              "Fiscal year",
+              "Revenues",
+              "Expenditures",
+              "Operating",
+              "Capital",
+              "Rev / resident",
+              "Population",
+            ]}
             rows={data.fiscalYears.map((year) => {
               const totals = data.totalsByYear[String(year)];
+              const metrics = data.metricsByYear[String(year)];
               return [
                 fiscalYearLabel(year),
                 totals?.revenue != null ? formatDollars(totals.revenue) : "no filing",
@@ -237,6 +256,12 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
                   : "—",
                 totals?.expenditure_capital != null
                   ? formatDollars(totals.expenditure_capital)
+                  : "—",
+                metrics?.revenue_per_capita != null
+                  ? formatDollars(metrics.revenue_per_capita)
+                  : "—",
+                metrics?.population != null
+                  ? metrics.population.toLocaleString("en-US")
                   : "—",
               ];
             })}
@@ -291,6 +316,8 @@ export function EntityLedger({ data }: { data: EntityPageData }) {
           latestFiledYear={data.latestFiledYear}
           entityLabel={heading}
         />
+
+        <DataGapsSection entityLabel={heading} />
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>
