@@ -11,20 +11,37 @@ sub-county taxing districts (fire districts, CIDs, school bond levies).
 
 Layout notes the parser relies on:
 - Sheet names vary by vintage ("2016 digest", "Job", "Digest Export.4.1.25")
-  but the first sheet always carries the data and the key columns keep the
-  same names across vintages.
+  but the first sheet always carries the data.
+- Vintages 1990-2013 use raw DOR field names ("txpyr-name", "tax-mlg-mo");
+  2014+ use display names ("County Name", "Millage Rate-M&O"). Both name
+  sets appear in DIGEST_COLUMNS and carry identical semantics — the levy
+  identity (tax = assessed x millage / 1000) holds row-for-row in both.
 - District Code 0 is the county aggregate row (parcels and assessed values
-  for the whole county, no millage of its own); the STATE district's rate is
-  0 from 2016 on (the state millage was phased out after 2015).
+  for the whole county, no millage of its own); the STATE district levied
+  0.25 mills through 2015 and 0 from 2016 on (the state millage was phased
+  out after 2015).
 - An empty millage cell means the district did not report a rate — kept as
   null, never coerced to 0. A literal 0 is a real levied rate of zero.
+- The 2023 and 2024 vintages key some rows under truncated or suffixed
+  county names ("CHARLT TB", "GORDCO"); canonical_county resolves them
+  against the Census roster by progressively dropping trailing tokens.
+- A district split across rows with one rate (2022 CHEROKEE / HOLLY SPRINGS
+  FIRE) is collapsed by summing its amounts; conflicting rates still fail.
+- KNOWN_MISSING documents counties absent from a vintage upstream (WAYNE
+  has no rows in the 2014-2015 exports, FULTON none in 2017-2018); any
+  other gap, or a documented gap that heals, fails loudly so the registry
+  stays deliberate.
 - DOR itself directs readers to county tax commissioners for authoritative
   figures; these exports are the state's compiled view.
 
 Outputs:
-- data/processed/digest.parquet          one row per (county, district, year)
+- data/processed/digest.parquet          one row per (county, district, year),
+  full history (1990+)
 - data/processed/counties/millage.json   per-county districts with rates and
-  levies per tax year, plus the county aggregate assessed values
+  levies per tax year, plus the county aggregate assessed values — windowed
+  to the most recent MILLAGE_WEB_YEARS tax years so county-page payloads
+  stay small (the site renders only the latest year; the parquet keeps the
+  full series)
 
 Usage: etl_digest.py [dor_digest_YYYY ...]
 With no arguments every year is refreshed; with source-id arguments only
@@ -59,23 +76,47 @@ REQUEST_HEADERS = {
                    "+https://github.com/jborgese/georgia-budget-tracker)"),
 }
 COUNTY_TOTAL_CODE = 0
-EXPECTED_COUNTIES = 159
+MILLAGE_WEB_YEARS = 10
+KNOWN_MISSING = {
+    2014: frozenset({"WAYNE"}),
+    2015: frozenset({"WAYNE"}),
+    2017: frozenset({"FULTON"}),
+    2018: frozenset({"FULTON"}),
+}
 
 DIGEST_COLUMNS = {
-    "County Name": "county",
-    "District Name": "district",
-    "District Code": "district_code",
-    "Tax Year": "tax_year",
-    "Total Parcels": "parcels",
-    "Total Assessed Value-M&O": "assessed_mo",
-    "Total Assessed Value-Bond": "assessed_bond",
-    "Millage Rate-M&O": "millage_mo",
-    "Millage Rate-Bond": "millage_bond",
-    "Total Tax-M&O": "tax_mo",
-    "Total Tax-Bond": "tax_bond",
+    "county": ("County Name", "txpyr-name"),
+    "district": ("District Name", "txpyr-dist-name"),
+    "district_code": ("District Code", "txpyr-dist-did"),
+    "tax_year": ("Tax Year", "rtn-period-taxYr"),
+    "parcels": ("Total Parcels", "pCnt"),
+    "assessed_mo": ("Total Assessed Value-M&O", "tax-valAmt-mo"),
+    "assessed_bond": ("Total Assessed Value-Bond", "tax-valAmt-bnd"),
+    "millage_mo": ("Millage Rate-M&O", "tax-mlg-mo"),
+    "millage_bond": ("Millage Rate-Bond", "tax-mlg-bnd"),
+    "tax_mo": ("Total Tax-M&O", "tax-taxAmt-mo"),
+    "tax_bond": ("Total Tax-Bond", "tax-taxAmt-bnd"),
 }
 TEXT_FIELDS = {"county", "district"}
 RATE_FIELDS = {"millage_mo", "millage_bond"}
+AMOUNT_FIELDS = {"parcels", "assessed_mo", "assessed_bond",
+                 "tax_mo", "tax_bond"}
+DISTRICT_KEYS = ["county", "district_code", "district"]
+
+
+def collapse_split_districts(frame: pd.DataFrame, name: str) -> pd.DataFrame:
+    if not frame.duplicated(DISTRICT_KEYS).any():
+        return frame
+    rates = frame.groupby(DISTRICT_KEYS)[list(RATE_FIELDS)].nunique()
+    conflicted = rates[rates.gt(1).any(axis=1)]
+    if not conflicted.empty:
+        raise SystemExit(
+            f"{name} carries duplicate district rows with conflicting "
+            f"rates: {sorted({county for county, _, _ in conflicted.index})[:5]}.")
+    return frame.groupby(DISTRICT_KEYS, as_index=False).agg({
+        field: (lambda s: s.sum(min_count=1)) if field in AMOUNT_FIELDS
+        else "first"
+        for field in frame.columns if field not in DISTRICT_KEYS})
 
 
 def digest_sources() -> dict[str, dict]:
@@ -91,20 +132,32 @@ def source_year(source_id: str) -> int:
     return int(source_id.removeprefix(SOURCE_PREFIX))
 
 
-def canonical_county(name: str) -> str:
-    candidate = name.strip().upper()
-    if candidate in COUNTY_ROSTER:
-        return candidate
-    candidate = candidate.removesuffix(" SO").removesuffix(" COUNTY").strip()
-    if candidate in COUNTY_ROSTER:
-        return candidate
-    compressed = candidate.replace(" ", "")
+def unique_prefix_match(compressed: str) -> str | None:
     matches = [county for county in COUNTY_ROSTER
-               if county.replace(" ", "").startswith(compressed)]
-    if len(matches) == 1:
-        return matches[0]
+               if compressed and county.replace(" ", "").startswith(compressed)]
+    return matches[0] if len(matches) == 1 else None
+
+
+def roster_match(candidate: str) -> str | None:
+    if candidate in COUNTY_ROSTER:
+        return candidate
+    trimmed = candidate.removesuffix(" SO").removesuffix(" COUNTY").strip()
+    if trimmed in COUNTY_ROSTER:
+        return trimmed
+    compressed = trimmed.replace(" ", "")
+    return (unique_prefix_match(compressed)
+            or (unique_prefix_match(compressed[:-2])
+                if compressed.endswith("CO") else None))
+
+
+def canonical_county(name: str) -> str:
+    tokens = name.strip().upper().split()
+    for length in range(len(tokens), 0, -1):
+        match = roster_match(" ".join(tokens[:length]))
+        if match:
+            return match
     raise SystemExit(f"County name {name!r} does not resolve to the Census "
-                     f"roster (candidates: {sorted(matches)}).")
+                     "roster.")
 
 
 def county_slug(county: str) -> str:
@@ -116,13 +169,15 @@ def parse_year(path: Path, tax_year: int) -> pd.DataFrame:
     sheet = workbook[workbook.sheetnames[0]]
     rows = sheet.iter_rows(values_only=True)
     header = list(next(rows))
-    missing = [column for column in DIGEST_COLUMNS if column not in header]
+    missing = [names[0] for names in DIGEST_COLUMNS.values()
+               if not any(name in header for name in names)]
     if missing:
         raise SystemExit(
             f"{path.name} lacks expected digest columns {missing} — "
             "layout may have changed.")
-    positions = {DIGEST_COLUMNS[column]: header.index(column)
-                 for column in DIGEST_COLUMNS}
+    positions = {field: next(header.index(name) for name in names
+                             if name in header)
+                 for field, names in DIGEST_COLUMNS.items()}
     records = []
     for cells in rows:
         county = cells[positions["county"]]
@@ -141,18 +196,14 @@ def parse_year(path: Path, tax_year: int) -> pd.DataFrame:
         raise SystemExit(
             f"{path.name} carries tax years {sorted(parsed_years)}, "
             f"expected {tax_year}.")
-    counties = frame.county.nunique()
-    if counties != EXPECTED_COUNTIES:
+    missing = COUNTY_ROSTER - set(frame.county.unique())
+    if missing != KNOWN_MISSING.get(tax_year, frozenset()):
         raise SystemExit(
-            f"{path.name} carries {counties} counties, "
-            f"expected {EXPECTED_COUNTIES}.")
-    duplicates = frame[frame.duplicated(
-        ["county", "district_code", "district"], keep=False)]
-    if not duplicates.empty:
-        raise SystemExit(
-            f"{path.name} carries duplicate district rows: "
-            f"{sorted(set(duplicates.county))[:5]}.")
-    return frame.assign(tax_year=tax_year)
+            f"{path.name} is missing counties {sorted(missing)}; documented "
+            f"gaps for {tax_year}: "
+            f"{sorted(KNOWN_MISSING.get(tax_year, frozenset()))}.")
+    return collapse_split_districts(frame, path.name).assign(
+        tax_year=tax_year)
 
 
 def write_parquet(frame: pd.DataFrame) -> None:
@@ -218,13 +269,17 @@ def county_entry(rows: pd.DataFrame) -> dict:
 
 
 def write_millage_json(frame: pd.DataFrame, source_ids: list[str]) -> int:
+    web_years = sorted(int(y) for y in frame.tax_year.unique())[
+        -MILLAGE_WEB_YEARS:]
+    windowed = frame[frame.tax_year.isin(web_years)]
     counties = {
         county_slug(county): county_entry(rows)
-        for county, rows in frame.groupby("county")
+        for county, rows in windowed.groupby("county")
     }
     document = {
-        "sources": source_ids,
-        "tax_years": sorted(int(y) for y in frame.tax_year.unique()),
+        "sources": [source_id for source_id in source_ids
+                    if source_year(source_id) in set(web_years)],
+        "tax_years": web_years,
         "counties": dict(sorted(counties.items())),
     }
     MILLAGE_FILE.parent.mkdir(parents=True, exist_ok=True)

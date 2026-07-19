@@ -239,10 +239,11 @@ def test_etl_population_falls_back_to_committed_raw(tmp_path, monkeypatch):
     text = census_csv(sorted(contract.COUNTY_FIPS.values()))
     for source_id in etl_population.SOURCE_IDS:
         (raw_dir / f"{source_id}.csv").write_text(text, encoding="latin-1")
-    (raw_dir / f"{etl_population.PLACE_SOURCE_ID}.csv").write_text(
-        place_csv(), encoding="latin-1")
+    for source_id in etl_population.PLACE_SOURCE_IDS:
+        (raw_dir / f"{source_id}.csv").write_text(
+            place_csv(), encoding="latin-1")
 
-    all_ids = [*etl_population.SOURCE_IDS, etl_population.PLACE_SOURCE_ID]
+    all_ids = [*etl_population.SOURCE_IDS, *etl_population.PLACE_SOURCE_IDS]
     monkeypatch.setattr(etl_population, "RAW_DIR", raw_dir)
     monkeypatch.setattr(etl_population, "OUTPUT_FILE", tmp_path / "pop.json")
     monkeypatch.setattr(etl_population, "CITY_OUTPUT_FILE",

@@ -67,6 +67,30 @@
     }
    },
    "fiscal_years": [
+    1992,
+    1993,
+    1994,
+    1995,
+    1996,
+    1997,
+    1998,
+    1999,
+    2000,
+    2001,
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
     2016,
     2017,
     2018,
@@ -77,13 +101,21 @@
     2023,
     2024
    ],
-   "records": 1595,
-   "districts": 178,
+   "records": 5691,
+   "districts": 182,
    "in_normalized_table": false,
    "note": "regular school systems (F-33 school level 03); excluded from the normalized table because state QBE aid is already counted as state Department of Education spending"
   },
   "dor_digest": {
    "vintages": {
+    "dor_digest_2014": {
+     "fingerprint": null,
+     "checked_at": null
+    },
+    "dor_digest_2015": {
+     "fingerprint": null,
+     "checked_at": null
+    },
     "dor_digest_2016": {
      "fingerprint": {
       "sha256": "dd497cd891cfcbb3de9048e936ef4a6e80146feaba8b3daef6af25b5b01e34b0"
@@ -140,13 +172,43 @@
     }
    },
    "tax_years": [
+    1990,
+    1991,
+    1992,
+    1993,
+    1994,
+    1995,
+    1996,
+    1997,
+    1998,
+    1999,
+    2000,
+    2001,
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
     2016,
+    2017,
+    2018,
     2019,
     2020,
     2021,
+    2022,
+    2023,
     2024
    ],
-   "records": 8694,
+   "records": 56185,
    "counties": 159,
    "in_normalized_table": false,
    "note": "millage rates and digest values per taxing district; the tax-bill lens, separate from the spending ledgers. DOR directs readers to county tax commissioners for authoritative figures"
@@ -325,6 +387,13 @@
    },
    "note": "county population denominators 2020 onward (latest vintage)"
   },
+  "census_place_pop_2010s": {
+   "vintage": {
+    "fingerprint": null,
+    "checked_at": null
+   },
+   "note": "incorporated-place denominators 2010-2020 (vintage 2020, final)"
+  },
   "census_place_pop_2020s": {
    "vintage": {
     "fingerprint": {
@@ -333,7 +402,7 @@
     },
     "checked_at": "2026-07-19T09:54:46+00:00"
    },
-   "cities_with_population": 520,
+   "cities_with_population": 522,
    "note": "incorporated-place denominators 2020 onward, matched to RLGF city names; cities missing from the Census place file carry null population"
   },
   "opb_governors_budget_report_fy2026": {

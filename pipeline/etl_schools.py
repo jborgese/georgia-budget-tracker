@@ -10,7 +10,9 @@ secondary systems, ~177 districts) — state charter facilities and special
 state schools carry other levels and are excluded from the district ledger.
 
 ``CONUM`` is the district's county FIPS, which links county and independent
-city school systems to the county pages. School finances stay out of
+city school systems to the county pages; vintages through FY2002 carry the
+same code under the older ``FIPS`` name (the second entry in that field's
+F33_FIELDS tuple). School finances stay out of
 data/processed/normalized.parquet: state QBE aid is already counted there as
 state Department of Education spending, so adding district revenues and
 expenditures would double-count it (the same reasoning that excludes Open
@@ -57,27 +59,27 @@ REGULAR_SCHOOL_LEVEL = "3"
 THOUSANDS = 1000
 
 F33_FIELDS = {
-    "NAME": "name",
-    "CONUM": "county_fips",
-    "NCESID": "ncesid",
-    "V33": "enrollment",
-    "TOTALREV": "revenue_total",
-    "TFEDREV": "revenue_federal",
-    "TSTREV": "revenue_state",
-    "TLOCREV": "revenue_local",
-    "T06": "revenue_property_tax",
-    "T09": "revenue_sales_tax",
-    "T02": "revenue_parent_government",
-    "TOTALEXP": "expenditure_total",
-    "TCURELSC": "expenditure_current",
-    "TCURINST": "expenditure_instruction",
-    "TCURSSVC": "expenditure_support_services",
-    "TCUROTH": "expenditure_other_current",
-    "TCAPOUT": "expenditure_capital",
-    "Q11": "interest_on_debt",
-    "_19H": "debt_outstanding",
-    "_21F": "debt_issued",
-    "_31F": "debt_retired",
+    "name": ("NAME",),
+    "county_fips": ("CONUM", "FIPS"),
+    "ncesid": ("NCESID",),
+    "enrollment": ("V33",),
+    "revenue_total": ("TOTALREV",),
+    "revenue_federal": ("TFEDREV",),
+    "revenue_state": ("TSTREV",),
+    "revenue_local": ("TLOCREV",),
+    "revenue_property_tax": ("T06",),
+    "revenue_sales_tax": ("T09",),
+    "revenue_parent_government": ("T02",),
+    "expenditure_total": ("TOTALEXP",),
+    "expenditure_current": ("TCURELSC",),
+    "expenditure_instruction": ("TCURINST",),
+    "expenditure_support_services": ("TCURSSVC",),
+    "expenditure_other_current": ("TCUROTH",),
+    "expenditure_capital": ("TCAPOUT",),
+    "interest_on_debt": ("Q11",),
+    "debt_outstanding": ("_19H",),
+    "debt_issued": ("_21F",),
+    "debt_retired": ("_31F",),
 }
 COUNT_FIELDS = {"enrollment"}
 KEY_FIELDS = {"name", "county_fips", "ncesid"}
@@ -138,18 +140,23 @@ def georgia_mask(frame: pd.DataFrame) -> pd.Series:
 
 def parse_year(path: Path, fiscal_year: int) -> pd.DataFrame:
     frame = pd.read_excel(path, sheet_name=0, dtype=str)
-    missing = [code for code in F33_FIELDS if code not in frame.columns]
+    columns = {field: next((code for code in codes if code in frame.columns),
+                           None)
+               for field, codes in F33_FIELDS.items()}
+    missing = [F33_FIELDS[field][0] for field, code in columns.items()
+               if code is None]
     if missing:
         raise SystemExit(
             f"{path.name} lacks expected F-33 columns {missing} — "
             "layout may have changed.")
     georgia = frame[georgia_mask(frame)
                     & (normalized_code(frame.SCHLEV) == REGULAR_SCHOOL_LEVEL)]
-    records = georgia[list(F33_FIELDS)].rename(columns=F33_FIELDS)
+    records = georgia[list(columns.values())].rename(
+        columns={code: field for field, code in columns.items()})
     records["name"] = records["name"].str.strip()
     records["county_fips"] = normalized_code(records.county_fips).str.zfill(5)
     records["ncesid"] = normalized_code(records.ncesid).str.zfill(7)
-    for field in F33_FIELDS.values():
+    for field in F33_FIELDS:
         if field in KEY_FIELDS:
             continue
         numeric = pd.to_numeric(records[field], errors="coerce").fillna(0)

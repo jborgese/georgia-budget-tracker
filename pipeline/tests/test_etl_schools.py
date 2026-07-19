@@ -45,19 +45,25 @@ def workbook(tmp_path, header, rows):
     return path
 
 
+KEY_CODES = ("NAME", "CONUM", "NCESID", "V33")
+
+
+def money_codes():
+    return [codes[0] for codes in etl_schools.F33_FIELDS.values()
+            if codes[0] not in KEY_CODES]
+
+
 def f33_row(fipst, schlev, name, values):
     return [fipst, schlev, name, "13121", "1302280", 100, *values]
 
 
-def f33_header():
-    return ["FIPST", "SCHLEV", "NAME", "CONUM", "NCESID", "V33",
-            *[code for code in etl_schools.F33_FIELDS
-              if code not in ("NAME", "CONUM", "NCESID", "V33")]]
+def f33_header(county_code="CONUM"):
+    return ["FIPST", "SCHLEV", "NAME", county_code, "NCESID", "V33",
+            *money_codes()]
 
 
 def test_parse_year_filters_and_scales(tmp_path):
-    money_columns = len([c for c in etl_schools.F33_FIELDS
-                         if c not in ("NAME", "CONUM", "NCESID", "V33")])
+    money_columns = len(money_codes())
     path = workbook(tmp_path, f33_header(), [
         f33_row("13", "03", "FULTON CO SCHOOL DIST", [7] * money_columns),
         f33_row("13", "07", "STATE CHARTER FACILITY", [1] * money_columns),
@@ -74,8 +80,7 @@ def test_parse_year_filters_and_scales(tmp_path):
 
 
 def test_parse_year_accepts_census_state_code_vintage(tmp_path):
-    money_columns = len([c for c in etl_schools.F33_FIELDS
-                         if c not in ("NAME", "CONUM", "NCESID", "V33")])
+    money_columns = len(money_codes())
     header = ["STATE", *f33_header()[1:]]
     path = workbook(tmp_path, header, [
         f33_row(11, 3, "FULTON COUNTY SCHOOL DISTRICT", [7] * money_columns),
@@ -83,6 +88,16 @@ def test_parse_year_accepts_census_state_code_vintage(tmp_path):
     ])
     frame = etl_schools.parse_year(path, 2016)
     assert list(frame["name"]) == ["FULTON COUNTY SCHOOL DISTRICT"]
+
+
+def test_parse_year_accepts_fips_county_column_vintage(tmp_path):
+    money_columns = len(money_codes())
+    header = ["STATE", *f33_header(county_code="FIPS")[1:]]
+    path = workbook(tmp_path, header, [
+        f33_row(11, 3, "FULTON CO SCH DIST", [7] * money_columns),
+    ])
+    frame = etl_schools.parse_year(path, 1995)
+    assert frame.iloc[0].county_fips == "13121"
 
 
 def test_parse_year_fails_loudly_on_missing_columns(tmp_path):

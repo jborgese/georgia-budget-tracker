@@ -14,6 +14,11 @@ def test_canonical_county_variants():
     assert etl_digest.canonical_county("BENHIL SO") == "BEN HILL"
     assert etl_digest.canonical_county("CHARLT") == "CHARLTON"
     assert etl_digest.canonical_county("MCINTO") == "MCINTOSH"
+    assert etl_digest.canonical_county("CHARLT TB") == "CHARLTON"
+    assert etl_digest.canonical_county("CLINCH COUNTY TAX") == "CLINCH"
+    assert etl_digest.canonical_county("GORDCO") == "GORDON"
+    assert etl_digest.canonical_county("GREENE NW") == "GREENE"
+    assert etl_digest.canonical_county("TATTNA NA") == "TATTNALL"
     with pytest.raises(SystemExit, match="roster"):
         etl_digest.canonical_county("ZZZ")
 
@@ -25,10 +30,11 @@ def test_number_preserves_null_and_precision():
     assert etl_digest.number(1299602748.0) == 1299602748
 
 
-def digest_workbook(tmp_path, rows):
+def digest_workbook(tmp_path, rows, header_variant=0):
     book = openpyxl.Workbook()
     sheet = book.active
-    sheet.append(list(etl_digest.DIGEST_COLUMNS))
+    sheet.append([names[header_variant]
+                  for names in etl_digest.DIGEST_COLUMNS.values()])
     for row in rows:
         sheet.append(row)
     path = tmp_path / "digest.xlsx"
@@ -60,17 +66,54 @@ def test_parse_year_preserves_null_millage(tmp_path):
     assert school.millage_mo.iloc[0] == 12.203
 
 
-def test_parse_year_rejects_wrong_year_and_duplicates(tmp_path):
+def test_parse_year_rejects_wrong_year_and_conflicting_duplicates(tmp_path):
     path = digest_workbook(tmp_path, full_roster_rows(tax_year=2023))
     with pytest.raises(SystemExit, match="tax years"):
         etl_digest.parse_year(path, 2024)
     rows = full_roster_rows() + [
         digest_row("APPLING", "SCHOOL", 2, 12.0),
-        digest_row("APPLING SO", "SCHOOL", 2, 12.0),
+        digest_row("APPLING SO", "SCHOOL", 2, 13.0),
     ]
     path = digest_workbook(tmp_path, rows)
-    with pytest.raises(SystemExit, match="duplicate"):
+    with pytest.raises(SystemExit, match="conflicting"):
         etl_digest.parse_year(path, 2024)
+
+
+def test_parse_year_reads_legacy_column_names(tmp_path):
+    rows = full_roster_rows() + [digest_row("APPLING", "SCHOOL", 2, 12.203)]
+    path = digest_workbook(tmp_path, rows, header_variant=1)
+    frame = etl_digest.parse_year(path, 2024)
+    school = frame[(frame.county == "APPLING") & (frame.district == "SCHOOL")]
+    assert school.millage_mo.iloc[0] == 12.203
+
+
+def test_parse_year_collapses_split_districts_with_one_rate(tmp_path):
+    rows = full_roster_rows() + [
+        digest_row("APPLING", "HOLLY SPRINGS FIRE", 18, 2.984),
+        digest_row("APPLING", "HOLLY SPRINGS FIRE", 18, 2.984),
+    ]
+    path = digest_workbook(tmp_path, rows)
+    frame = etl_digest.parse_year(path, 2024)
+    fire = frame[frame.district == "HOLLY SPRINGS FIRE"]
+    assert len(fire) == 1
+    assert fire.millage_mo.iloc[0] == 2.984
+    assert fire.tax_mo.iloc[0] == 10000
+    assert fire.parcels.iloc[0] == 200
+
+
+def test_parse_year_enforces_documented_county_gaps(tmp_path):
+    complete = [row for row in full_roster_rows(tax_year=2018)]
+    with_fulton = digest_workbook(tmp_path, complete)
+    with pytest.raises(SystemExit, match="missing counties"):
+        etl_digest.parse_year(with_fulton, 2018)
+    without_fulton = digest_workbook(
+        tmp_path, [row for row in complete if row[0] != "FULTON"])
+    frame = etl_digest.parse_year(without_fulton, 2018)
+    assert "FULTON" not in set(frame.county)
+    incomplete_2024 = digest_workbook(
+        tmp_path, [row for row in full_roster_rows() if row[0] != "WAYNE"])
+    with pytest.raises(SystemExit, match="missing counties"):
+        etl_digest.parse_year(incomplete_2024, 2024)
 
 
 def test_county_entry_splits_aggregate_from_districts():

@@ -79,7 +79,8 @@ CONSOLIDATED_SOURCE = "ted_rlgf_consolidated_workbook"
 OPENGA_SOURCE = "open_georgia_poa"
 OPB_SOURCE = "opb_governors_budget_report_fy2026"
 POPULATION_SOURCES = ["census_county_pop_2010s", "census_county_pop_2020s"]
-PLACE_POPULATION_SOURCE = "census_place_pop_2020s"
+PLACE_POPULATION_SOURCES = ["census_place_pop_2010s",
+                            "census_place_pop_2020s"]
 PLACE_NAME_ALIASES = {
     "DESOTO": "DE SOTO",
     "DUPONT": "DU PONT",
@@ -559,13 +560,23 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                 "vintage": vintage(source_state, POPULATION_SOURCES[1]),
                 "note": "county population denominators 2020 onward (latest vintage)",
             },
-            **({PLACE_POPULATION_SOURCE: {
-                "vintage": vintage(source_state, PLACE_POPULATION_SOURCE),
-                "cities_with_population": cities_with_population,
-                "note": ("incorporated-place denominators 2020 onward, "
-                         "matched to RLGF city names; cities missing from "
-                         "the Census place file carry null population"),
-            }} if cities_with_population is not None else {}),
+            **({
+                PLACE_POPULATION_SOURCES[0]: {
+                    "vintage": vintage(source_state,
+                                       PLACE_POPULATION_SOURCES[0]),
+                    "note": ("incorporated-place denominators 2010-2020 "
+                             "(vintage 2020, final)"),
+                },
+                PLACE_POPULATION_SOURCES[1]: {
+                    "vintage": vintage(source_state,
+                                       PLACE_POPULATION_SOURCES[1]),
+                    "cities_with_population": cities_with_population,
+                    "note": ("incorporated-place denominators 2020 onward, "
+                             "matched to RLGF city names; cities missing "
+                             "from the Census place file carry null "
+                             "population"),
+                },
+            } if cities_with_population is not None else {}),
             OPB_SOURCE: {
                 "vintage": vintage(source_state, OPB_SOURCE),
                 "fiscal_years_by_basis": {
@@ -655,7 +666,7 @@ def main() -> int:
         city_metrics = entity_metrics_document(
             "city", city_expected,
             lambda entity, year: city_population_lookup(entity, places, year),
-            [CITY_SOURCE, PLACE_POPULATION_SOURCE])
+            [CITY_SOURCE, *PLACE_POPULATION_SOURCES])
         (ROOT / "data" / "processed" / "cities" / "metrics.json").write_text(
             json.dumps(city_metrics, indent=1) + "\n")
     consolidated_metrics = entity_metrics_document(

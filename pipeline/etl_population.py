@@ -10,13 +10,18 @@ Populations are July 1 estimates for the named calendar year; per-capita
 metrics elsewhere in the pipeline pair fiscal year FY20NN with the year-20NN
 estimate.
 
-Incorporated places: downloads ``census_place_pop_2020s`` (SUB-EST vintage
-file, 2020 onward), filters to whole-place rows (SUMLEV 162), and writes
+Incorporated places: downloads the two SUB-EST vintage files
+(``census_place_pop_2010s`` for 2010-2020 and ``census_place_pop_2020s``
+for 2020 onward; the newer vintage wins where they overlap), filters to
+whole-place rows (SUMLEV 162), and writes
 data/processed/city_population.json keyed by the place name normalized to
 the TED convention (uppercase, "city"/"town" suffix stripped) so city
-per-capita metrics can join on the RLGF entity name.
+per-capita metrics can join on the RLGF entity name. The 2010s vintage
+carries a POPESTIMATE042020 April-census column; only four-digit
+POPESTIMATE years are kept.
 
-Usage: etl_population.py [path-2010s-csv path-2020s-csv [path-places-csv]]
+Usage: etl_population.py [path-2010s-csv path-2020s-csv
+                          [path-places-2010s-csv path-places-2020s-csv]]
 With local paths the download is skipped (the files are still copied into
 data/raw/).
 """
@@ -39,7 +44,7 @@ RAW_DIR = ROOT / "data" / "raw"
 OUTPUT_FILE = ROOT / "data" / "processed" / "county_population.json"
 CITY_OUTPUT_FILE = ROOT / "data" / "processed" / "city_population.json"
 SOURCE_IDS = ["census_county_pop_2010s", "census_county_pop_2020s"]
-PLACE_SOURCE_ID = "census_place_pop_2020s"
+PLACE_SOURCE_IDS = ["census_place_pop_2010s", "census_place_pop_2020s"]
 USER_AGENT = (
     "georgia-budget-tracker/0.1 (+https://github.com/<owner>/georgia-budget-tracker; "
     "civic data project)"
@@ -52,11 +57,21 @@ PLACE_SUFFIXES = (" city", " town")
 
 def source_urls() -> dict[str, str]:
     sources = {s["id"]: s["url"] for s in json.loads(SOURCES_FILE.read_text())["sources"]}
-    wanted = [*SOURCE_IDS, PLACE_SOURCE_ID]
+    wanted = [*SOURCE_IDS, *PLACE_SOURCE_IDS]
     missing = [sid for sid in wanted if sid not in sources]
     if missing:
         raise SystemExit(f"Sources {missing} not found in {SOURCES_FILE}")
     return {sid: sources[sid] for sid in wanted}
+
+
+def year_estimates(row: dict[str, str | None]) -> dict[str, int]:
+    years = {
+        column.removeprefix("POPESTIMATE"): value
+        for column, value in row.items()
+        if column and column.startswith("POPESTIMATE") and value
+    }
+    return {year: int(value) for year, value in years.items()
+            if year.isdigit() and len(year) == 4}
 
 
 def georgia_populations(csv_text: str) -> dict[str, dict[str, int]]:
@@ -67,12 +82,7 @@ def georgia_populations(csv_text: str) -> dict[str, dict[str, int]]:
                 or row.get("STATE") != GEORGIA_STATE_FIPS):
             continue
         fips = row["STATE"] + row["COUNTY"]
-        estimates = {
-            column.removeprefix("POPESTIMATE"): int(value)
-            for column, value in row.items()
-            if column.startswith("POPESTIMATE") and value
-        }
-        populations[fips] = estimates
+        populations[fips] = year_estimates(row)
     return populations
 
 
@@ -93,11 +103,7 @@ def georgia_place_populations(csv_text: str) -> dict[str, dict[str, int]]:
                 or row.get("STATE") != GEORGIA_STATE_FIPS):
             continue
         name = place_entity_name(row["NAME"])
-        estimates = {
-            column.removeprefix("POPESTIMATE"): int(value)
-            for column, value in row.items()
-            if column.startswith("POPESTIMATE") and value
-        }
+        estimates = year_estimates(row)
         if name in populations and populations[name] != estimates:
             raise SystemExit(
                 f"Distinct place rows normalize to the same name {name!r}.")
@@ -115,8 +121,9 @@ def merge_vintages(older: dict[str, dict[str, int]],
 
 def main() -> int:
     urls = source_urls()
-    all_ids = [*SOURCE_IDS, PLACE_SOURCE_ID]
-    local_paths = dict(zip(all_ids, sys.argv[1:4])) if len(sys.argv) > 2 else {}
+    all_ids = [*SOURCE_IDS, *PLACE_SOURCE_IDS]
+    local_paths = (dict(zip(all_ids, sys.argv[1:1 + len(all_ids)]))
+                   if len(sys.argv) > 2 else {})
     texts: dict[str, str] = {}
     any_failed = False
     for source_id in all_ids:
@@ -166,13 +173,15 @@ def main() -> int:
     print(f"Wrote populations for {len(merged)} counties "
           f"({years[0]}-{years[-1]}) to {runlog.display_path(OUTPUT_FILE)}")
 
-    places = georgia_place_populations(texts[PLACE_SOURCE_ID])
+    place_vintages = [georgia_place_populations(texts[sid])
+                      for sid in PLACE_SOURCE_IDS]
+    places = merge_vintages(*place_vintages)
     if not places:
         raise SystemExit("No Georgia incorporated places parsed — "
                          "layout may have changed.")
     place_years = sorted({year for place in places.values() for year in place})
     CITY_OUTPUT_FILE.write_text(json.dumps({
-        "sources": [PLACE_SOURCE_ID],
+        "sources": PLACE_SOURCE_IDS,
         "years": [int(year) for year in place_years],
         "populations": places,
     }, indent=1, sort_keys=True) + "\n")

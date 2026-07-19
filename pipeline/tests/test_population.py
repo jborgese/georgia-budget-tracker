@@ -17,6 +17,13 @@ def test_georgia_populations_filters_state_and_sumlev():
     assert populations == {"13001": {"2020": 18378, "2021": 18425}}
 
 
+def test_year_estimates_excludes_april_census_column():
+    row = {"NAME": "Abbeville city", "CENSUS2010POP": "2908",
+           "POPESTIMATE2010": "2978", "POPESTIMATE042020": "2892",
+           "POPESTIMATE2020": "2884", "POPESTIMATE2021": ""}
+    assert etl_population.year_estimates(row) == {"2010": 2978, "2020": 2884}
+
+
 def test_merge_vintages_prefers_newer():
     older = {"13001": {"2019": 18386, "2020": 18400}}
     newer = {"13001": {"2020": 18378, "2021": 18425}}

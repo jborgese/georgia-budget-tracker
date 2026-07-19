@@ -59,12 +59,212 @@
       "level": "county"
     },
     {
+      "id": "census_place_pop_2010s",
+      "name": "US Census \u2014 incorporated place population estimates, vintage 2020 (2010-2020)",
+      "url": "https://www2.census.gov/programs-surveys/popest/datasets/2010-2020/cities/SUB-EST2020_13.csv",
+      "provides": "Annual Georgia incorporated-place population estimates 2010-2020 (SUMLEV 162); denominator for city per-capita metrics",
+      "cadence": "final; no longer revised",
+      "level": "city"
+    },
+    {
       "id": "census_place_pop_2020s",
       "name": "US Census \u2014 incorporated place population estimates, vintage 2025 (2020-2025)",
       "url": "https://www2.census.gov/programs-surveys/popest/datasets/2020-2025/cities/totals/sub-est2025_13.csv",
       "provides": "Annual Georgia incorporated-place population estimates 2020-2025 (SUMLEV 162); denominator for city per-capita metrics",
       "cadence": "annual (new vintage each spring)",
       "level": "city"
+    },
+    {
+      "id": "census_f33_1992",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1992",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1992/secondary-education-finance/elsec92.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1992 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1993",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1993",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1993/secondary-education-finance/elsec93.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1993 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1994",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1994",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1994/secondary-education-finance/elsec94.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1994 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1995",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1995",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1995/secondary-education-finance/elsec95.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1995 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1996",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1996",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1996/secondary-education-finance/elsec96.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1996 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1997",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1997",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1997/secondary-education-finance/elsec97.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1997 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1998",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1998",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1998/secondary-education-finance/elsec98.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1998 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_1999",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY1999",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/1999/secondary-education-finance/elsec99.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY1999 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2000",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2000",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2000/secondary-education-finance/elsec00.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2000 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2001",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2001",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2001/secondary-education-finance/elsec01.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2001 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2002",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2002",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2002/secondary-education-finance/elsec02.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2002 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2003",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2003",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2003/secondary-education-finance/elsec03.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2003 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2004",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2004",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2004/secondary-education-finance/elsec04.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2004 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2005",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2005",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2005/secondary-education-finance/elsec05.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2005 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2006",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2006",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2006/secondary-education-finance/elsec06.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2006 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2007",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2007",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2007/secondary-education-finance/elsec07.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2007 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2008",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2008",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2008/secondary-education-finance/elsec08.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2008 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2009",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2009",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2009/secondary-education-finance/elsec09.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2009 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2010",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2010",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2010/secondary-education-finance/elsec10.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2010 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2011",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2011",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2011/secondary-education-finance/elsec11.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2011 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2012",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2012",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2012/secondary-education-finance/elsec12.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2012 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2013",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2013",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2013/secondary-education-finance/elsec13.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2013 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2014",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2014",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2014/secondary-education-finance/elsec14.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2014 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
+    },
+    {
+      "id": "census_f33_2015",
+      "name": "US Census \u2014 Annual Survey of School System Finances, FY2015",
+      "url": "https://www2.census.gov/programs-surveys/school-finances/tables/2015/secondary-education-finance/elsec15.xls",
+      "provides": "Per-district revenues by source, expenditures by function, debt, and enrollment for FY2015 (F-33 individual unit file; dollars in thousands)",
+      "cadence": "final; no longer revised",
+      "level": "school_district"
     },
     {
       "id": "census_f33_2016",
@@ -177,6 +377,214 @@
       "provides": "Downloadable RLGF datasets and local government budget documents",
       "cadence": "rolling / annual",
       "level": "county"
+    },
+    {
+      "id": "dor_digest_1990",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1990",
+      "url": "https://georgiadata.org/download/file/fid/134",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1990; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1991",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1991",
+      "url": "https://georgiadata.org/download/file/fid/135",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1991; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1992",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1992",
+      "url": "https://georgiadata.org/download/file/fid/136",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1992; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1993",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1993",
+      "url": "https://georgiadata.org/download/file/fid/137",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1993; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1994",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1994",
+      "url": "https://georgiadata.org/download/file/fid/138",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1994; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1995",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1995",
+      "url": "https://georgiadata.org/download/file/fid/139",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1995; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1996",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1996",
+      "url": "https://georgiadata.org/download/file/fid/140",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1996; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1997",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1997",
+      "url": "https://georgiadata.org/download/file/fid/141",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1997; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1998",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1998",
+      "url": "https://georgiadata.org/download/file/fid/142",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1998; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_1999",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 1999",
+      "url": "https://georgiadata.org/download/file/fid/143",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 1999; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2000",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2000",
+      "url": "https://georgiadata.org/download/file/fid/144",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2000; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2001",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2001",
+      "url": "https://georgiadata.org/download/file/fid/145",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2001; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2002",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2002",
+      "url": "https://georgiadata.org/download/file/fid/146",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2002; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2003",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2003",
+      "url": "https://georgiadata.org/download/file/fid/147",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2003; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2004",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2004",
+      "url": "https://georgiadata.org/download/file/fid/148",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2004; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2005",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2005",
+      "url": "https://georgiadata.org/download/file/fid/149",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2005; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2006",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2006",
+      "url": "https://georgiadata.org/download/file/fid/150",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2006; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2007",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2007",
+      "url": "https://georgiadata.org/download/file/fid/151",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2007; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2008",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2008",
+      "url": "https://georgiadata.org/download/file/fid/152",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2008; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2009",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2009",
+      "url": "https://georgiadata.org/download/file/fid/153",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2009; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2010",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2010",
+      "url": "https://georgiadata.org/download/file/fid/154",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2010; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2011",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2011",
+      "url": "https://georgiadata.org/download/file/fid/155",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2011; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2012",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2012",
+      "url": "https://georgiadata.org/download/file/fid/156",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2012; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2013",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2013",
+      "url": "https://georgiadata.org/download/file/fid/157",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2013; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2014",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2014",
+      "url": "https://georgiadata.org/download/file/fid/158",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2014; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
+    },
+    {
+      "id": "dor_digest_2015",
+      "name": "DOR tax digest via GeorgiaData.org, tax year 2015",
+      "url": "https://georgiadata.org/download/file/fid/159",
+      "provides": "Assessed values, exemptions, millage rates (M&O and bond), and tax levies per county and taxing district for tax year 2015; DOR digest export republished by UGA CVIOG",
+      "cadence": "final; no longer revised",
+      "level": "property_tax"
     },
     {
       "id": "dor_digest_2016",
