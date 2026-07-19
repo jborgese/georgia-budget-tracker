@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { geoConicEqualArea, geoPath } from "d3-geo";
 import type { CountyFeature } from "@/lib/geo";
 import type { CountyMetricsDocument, CountyYearMetrics } from "@/lib/types";
@@ -62,11 +63,21 @@ function formatMetric(value: number, perCapita: boolean): string {
   return perCapita ? formatDollars(value) : formatCompactDollars(value);
 }
 
+export interface ConsolidatedLink {
+  name: string;
+  slug: string;
+}
+
 function hoverLines(
   entry: CountyMetricsDocument["counties"][number],
   year: number,
+  consolidated?: ConsolidatedLink,
 ): string[] {
-  if (!entry.included) return [entry.note];
+  if (!entry.included) {
+    return consolidated
+      ? [entry.note, `Click for the ${consolidated.name} ledger`]
+      : [entry.note];
+  }
   const metrics = entry.years[String(year)];
   if (!metrics) return [`No RLGF filing for ${fiscalYearLabel(year)}`];
   return [
@@ -92,9 +103,11 @@ function hoverLines(
 export function CountyChoropleth({
   features,
   metrics,
+  consolidated = {},
 }: {
   features: CountyFeature[];
   metrics: CountyMetricsDocument;
+  consolidated?: Record<string, ConsolidatedLink>;
 }) {
   const selectId = useId();
   const years = metrics.fiscal_years;
@@ -215,6 +228,9 @@ export function CountyChoropleth({
               geometry: feature.geometry,
             });
             if (!d || !entry) return null;
+            const consolidatedLink = entry.included
+              ? undefined
+              : consolidated[feature.fips];
             const shape = (
               <path
                 d={d}
@@ -228,7 +244,7 @@ export function CountyChoropleth({
                     x: event.clientX - box.left,
                     y: event.clientY - box.top,
                     county: entry.county,
-                    lines: hoverLines(entry, year),
+                    lines: hoverLines(entry, year, consolidatedLink),
                   });
                 }}
                 onFocus={() => {
@@ -236,21 +252,35 @@ export function CountyChoropleth({
                     x: WIDTH / 2,
                     y: 24,
                     county: entry.county,
-                    lines: hoverLines(entry, year),
+                    lines: hoverLines(entry, year, consolidatedLink),
                   });
                 }}
                 onBlur={() => setHover(null)}
               />
             );
-            return entry.included ? (
-              <a
-                key={feature.fips}
-                href={`/county/${entry.slug}/`}
-                aria-label={`${feature.name} County — open its ledger`}
-              >
-                {shape}
-              </a>
-            ) : (
+            if (entry.included) {
+              return (
+                <a
+                  key={feature.fips}
+                  href={`/county/${entry.slug}/`}
+                  aria-label={`${feature.name} County — open its ledger`}
+                >
+                  {shape}
+                </a>
+              );
+            }
+            if (consolidatedLink) {
+              return (
+                <a
+                  key={feature.fips}
+                  href={`/consolidated/${consolidatedLink.slug}/`}
+                  aria-label={`${feature.name} County — consolidated government, open the ${consolidatedLink.name} ledger`}
+                >
+                  {shape}
+                </a>
+              );
+            }
+            return (
               <g
                 key={feature.fips}
                 tabIndex={0}
@@ -324,7 +354,16 @@ export function CountyChoropleth({
       <p className="mt-2 text-xs" style={{ color: MUTED }}>
         Click a county for its full ledger. Gray counties either filed no RLGF
         report for {fiscalYearLabel(year)} or are consolidated city-county
-        governments not in this dataset.
+        governments — those link to their own{" "}
+        <Link
+          href="/consolidated/"
+          className="underline underline-offset-2"
+          style={{ color: SPRUCE }}
+        >
+          consolidated ledgers
+        </Link>
+        , which are kept off the color scale because they include municipal
+        services.
       </p>
     </div>
   );

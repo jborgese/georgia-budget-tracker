@@ -3,10 +3,28 @@
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { CountyOption } from "@/lib/data";
-import { GOLD, INK, PAPER, RULE, SPRUCE } from "@/lib/theme";
+import type { SearchOption } from "@/lib/data";
+import { GOLD, INK, MUTED, PAPER, RULE, SPRUCE } from "@/lib/theme";
 
-export function SiteNav({ options }: { options: CountyOption[] }) {
+const KIND_LABELS: Record<SearchOption["kind"], string> = {
+  county: "County",
+  city: "City",
+  consolidated: "Consolidated",
+};
+
+const KIND_ROUTES: Record<SearchOption["kind"], string> = {
+  county: "/county",
+  city: "/city",
+  consolidated: "/consolidated",
+};
+
+function optionLabel(option: SearchOption): string {
+  if (option.kind === "county") return `${option.name} County`;
+  if (option.kind === "city") return `City of ${option.name}`;
+  return option.name;
+}
+
+export function SiteNav({ options }: { options: SearchOption[] }) {
   const router = useRouter();
   const listId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -22,11 +40,11 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
         .slice(0, 8)
     : [];
 
-  function go(option: CountyOption) {
+  function go(option: SearchOption) {
     setQuery("");
     setOpen(false);
     inputRef.current?.blur();
-    router.push(`/county/${option.slug}/`);
+    router.push(`${KIND_ROUTES[option.kind]}/${option.slug}/`);
   }
 
   return (
@@ -43,6 +61,13 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
           GA Budget Tracker
         </Link>
         <nav aria-label="Site" className="flex items-center gap-4">
+          <Link
+            href="/city/"
+            className="font-mono text-xs uppercase tracking-widest"
+            style={{ color: GOLD }}
+          >
+            Cities
+          </Link>
           <Link
             href="/compare/"
             className="font-mono text-xs uppercase tracking-widest"
@@ -68,10 +93,12 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
             aria-expanded={open && matches.length > 0}
             aria-controls={listId}
             aria-activedescendant={
-              open && matches[active] ? `${listId}-${matches[active].slug}` : undefined
+              open && matches[active]
+                ? `${listId}-${matches[active].kind}-${matches[active].slug}`
+                : undefined
             }
-            aria-label="Find a county"
-            placeholder="Find a county…"
+            aria-label="Find a county or city"
+            placeholder="Find a county or city…"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
@@ -102,17 +129,17 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
             <ul
               id={listId}
               role="listbox"
-              aria-label="Counties"
-              className="absolute right-0 z-20 mt-1 w-52 border shadow-sm"
+              aria-label="Counties and cities"
+              className="absolute right-0 z-20 mt-1 w-60 border shadow-sm"
               style={{ backgroundColor: PAPER, borderColor: RULE }}
             >
               {matches.map((option, index) => (
                 <li
-                  key={option.slug}
-                  id={`${listId}-${option.slug}`}
+                  key={`${option.kind}-${option.slug}`}
+                  id={`${listId}-${option.kind}-${option.slug}`}
                   role="option"
                   aria-selected={index === active}
-                  className="cursor-pointer px-2 py-1.5 text-sm"
+                  className="flex cursor-pointer items-baseline justify-between gap-2 px-2 py-1.5 text-sm"
                   style={{
                     backgroundColor: index === active ? RULE : PAPER,
                     color: INK,
@@ -123,7 +150,13 @@ export function SiteNav({ options }: { options: CountyOption[] }) {
                   }}
                   onMouseEnter={() => setActive(index)}
                 >
-                  {option.name} County
+                  <span>{optionLabel(option)}</span>
+                  <span
+                    className="font-mono text-[10px] uppercase tracking-widest"
+                    style={{ color: MUTED }}
+                  >
+                    {KIND_LABELS[option.kind]}
+                  </span>
                 </li>
               ))}
             </ul>

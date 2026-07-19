@@ -99,6 +99,77 @@ export interface CountyDocument {
   }[];
 }
 
+export type EntityKind = "city" | "consolidated";
+
+export interface EntitiesIndexDocument {
+  source: string;
+  fiscal_years: number[];
+  entities: {
+    entity: string;
+    slug: string;
+    latest_fiscal_year: number;
+    revenue: number | null;
+    expenditure: number | null;
+  }[];
+}
+
+export interface EntityDocument {
+  entity: string;
+  source: string;
+  fiscal_years: number[];
+  totals: CountyDocument["totals"];
+  breakdown: CountyDocument["breakdown"];
+}
+
+export interface EntityCategoriesDocument {
+  sources: string[];
+  fiscal_years: number[];
+  entities: Record<
+    string,
+    {
+      entity: string;
+      years: Record<
+        string,
+        {
+          revenue?: Record<string, CategoryNode>;
+          expenditure?: Record<string, CategoryNode>;
+        }
+      >;
+    }
+  >;
+}
+
+export interface EntityYearTotals {
+  revenue: number | null;
+  expenditure: number | null;
+  expenditure_operating: number | null;
+  expenditure_capital: number | null;
+}
+
+export interface EntityPageData {
+  kind: EntityKind;
+  entity: string;
+  displayName: string;
+  slug: string;
+  fiscalYears: number[];
+  latestFiledYear: number;
+  missingYears: number[];
+  totalsByYear: Record<string, EntityYearTotals | null>;
+  document: EntityDocument;
+  spendingByCategory: Record<string, CategoryNode>;
+  provenance: string;
+  countyServed?: string;
+}
+
+export interface EntityListing {
+  entity: string;
+  displayName: string;
+  slug: string;
+  latestFiledYear: number | null;
+  revenue: number | null;
+  expenditure: number | null;
+}
+
 export interface MedianYear {
   revenue: number | null;
   expenditure: number | null;
@@ -159,6 +230,8 @@ export interface ManifestDocument {
       records: number;
       counties_present?: number;
       counties_missing?: Record<string, string>;
+      cities_present?: number;
+      governments?: Record<string, string>;
       note?: string;
     }
   >;

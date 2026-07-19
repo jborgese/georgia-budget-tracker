@@ -1,4 +1,9 @@
-import { loadCountyMetrics, loadDashboardData, loadStateCategories } from "@/lib/data";
+import {
+  consolidatedByCountyFips,
+  loadCountyMetrics,
+  loadDashboardData,
+  loadStateCategories,
+} from "@/lib/data";
 import { georgiaCountyFeatures } from "@/lib/geo";
 import { BASIS_LABELS, fiscalYearLabel, formatBillions, formatDollars } from "@/lib/format";
 import { CountyChoropleth } from "@/components/CountyChoropleth";
@@ -251,7 +256,11 @@ export default function Home() {
             </h2>
           </div>
           <div className="mt-4">
-            <CountyChoropleth features={countyFeatures} metrics={countyMetrics} />
+            <CountyChoropleth
+              features={countyFeatures}
+              metrics={countyMetrics}
+              consolidated={consolidatedByCountyFips()}
+            />
           </div>
           <DataTable
             caption={`County finances, ${fiscalYearLabel(Number(latestCountyYear))}`}

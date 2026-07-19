@@ -50,10 +50,10 @@ function TrendTooltip({
 
 export function CountyTrendChart({
   rows,
-  countyName,
+  entityLabel,
 }: {
   rows: TrendRow[];
-  countyName: string;
+  entityLabel: string;
 }) {
   const shared = {
     strokeWidth: 2,
@@ -66,7 +66,7 @@ export function CountyTrendChart({
   return (
     <div
       role="img"
-      aria-label={`Line chart of ${countyName} County revenues and expenditures by fiscal year; unfiled years are gaps`}
+      aria-label={`Line chart of ${entityLabel} revenues and expenditures by fiscal year; unfiled years are gaps`}
     >
       <ResponsiveContainer
         width="100%"

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { GeistSans } from "geist/font/sans";
 import { GeistMono } from "geist/font/mono";
 import { SiteNav } from "@/components/SiteNav";
-import { loadCountyOptions } from "@/lib/data";
+import { loadSearchOptions } from "@/lib/data";
 import "./globals.css";
 
 const geistSans = GeistSans;
@@ -22,14 +22,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const counties = loadCountyOptions();
+  const options = loadSearchOptions();
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SiteNav options={counties} />
+        <SiteNav options={options} />
         {children}
       </body>
     </html>

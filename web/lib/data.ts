@@ -9,6 +9,13 @@ import type {
   CountyMetricsDocument,
   CountyPageData,
   DashboardData,
+  EntitiesIndexDocument,
+  EntityCategoriesDocument,
+  EntityDocument,
+  EntityKind,
+  EntityListing,
+  EntityPageData,
+  EntityYearTotals,
   FiscalYearTotals,
   ManifestDocument,
   MedianYear,
@@ -44,15 +51,38 @@ export const CATEGORY_LABELS: Record<string, string> = {
 
 const SOURCE_NAMES: Record<string, string> = {
   ted_rlgf_county_workbook: "UGA TED — Report of Local Government Finances",
+  ted_rlgf_city_workbook: "UGA TED — RLGF, city governments",
+  ted_rlgf_consolidated_workbook:
+    "UGA TED — RLGF, consolidated city-county governments",
   open_georgia_poa: "Open Georgia — payments, obligations, professional services",
   opb_governors_budget_report_fy2026:
     "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
   census_county_pop_2020s: "US Census — county population estimates",
 };
 
+const ENTITY_LEVELS: Record<
+  EntityKind,
+  { dir: string; source: string; label: string }
+> = {
+  city: { dir: "cities", source: "ted_rlgf_city_workbook", label: "City" },
+  consolidated: {
+    dir: "consolidated",
+    source: "ted_rlgf_consolidated_workbook",
+    label: "Consolidated government",
+  },
+};
+
 function readJson<T>(...segments: string[]): T {
   const file = path.join(PROCESSED_DIR, ...segments);
   return JSON.parse(fs.readFileSync(file, "utf-8")) as T;
+}
+
+const jsonCache = new Map<string, unknown>();
+
+function readJsonCached<T>(...segments: string[]): T {
+  const key = segments.join("/");
+  if (!jsonCache.has(key)) jsonCache.set(key, readJson<T>(...segments));
+  return jsonCache.get(key) as T;
 }
 
 export interface CrosswalkDocument {
@@ -179,11 +209,17 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
       entry?.counties_present != null
         ? ` · ${entry.counties_present} of 159 counties`
         : "";
+    const cities =
+      entry?.cities_present != null ? ` · ${entry.cities_present} cities` : "";
+    const governments =
+      entry?.governments != null
+        ? ` · ${Object.keys(entry.governments).length} consolidated governments`
+        : "";
     return {
       id,
       name,
       vintage: formatVintage(manifest, id),
-      coverage: `${span}${counties}`,
+      coverage: `${span}${counties}${cities}${governments}`,
     };
   });
 }
@@ -211,21 +247,31 @@ export function loadCountyOptions(): CountyOption[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-const COUNTY_NAME_EXCEPTIONS: Record<string, string> = {
+const ENTITY_NAME_EXCEPTIONS: Record<string, string> = {
   DEKALB: "DeKalb",
-  MCDUFFIE: "McDuffie",
-  MCINTOSH: "McIntosh",
+  LAGRANGE: "LaGrange",
 };
 
-export function countyDisplayName(county: string): string {
+function capitalize(part: string): string {
+  if (part.startsWith("mc") && part.length > 2) {
+    return `Mc${part[2].toUpperCase()}${part.slice(3)}`;
+  }
+  return part ? part[0].toUpperCase() + part.slice(1) : part;
+}
+
+export function entityDisplayName(entity: string): string {
   return (
-    COUNTY_NAME_EXCEPTIONS[county] ??
-    county
+    ENTITY_NAME_EXCEPTIONS[entity] ??
+    entity
       .toLowerCase()
       .split(" ")
-      .map((word) => word[0].toUpperCase() + word.slice(1))
+      .map((word) => word.split("-").map(capitalize).join("-"))
       .join(" ")
   );
+}
+
+export function countyDisplayName(county: string): string {
+  return entityDisplayName(county);
 }
 
 function median(values: number[]): number | null {
@@ -310,6 +356,216 @@ export function loadCountyPage(slug: string): CountyPageData | null {
       categories.counties[slug]?.years[String(latestFiledYear)]?.expenditure ??
       {},
   };
+}
+
+function filedYearTotals(
+  totals: EntityDocument["totals"][number],
+): EntityYearTotals | null {
+  if (!totals.revenue && !totals.expenditure) return null;
+  return {
+    revenue: totals.revenue,
+    expenditure: totals.expenditure,
+    expenditure_operating: totals.expenditure_operating,
+    expenditure_capital: totals.expenditure_capital,
+  };
+}
+
+export function loadEntityIndex(kind: EntityKind): EntitiesIndexDocument {
+  return readJsonCached<EntitiesIndexDocument>(
+    ENTITY_LEVELS[kind].dir, "index.json");
+}
+
+const listingsCache = new Map<EntityKind, EntityListing[]>();
+
+function buildEntityListings(kind: EntityKind): EntityListing[] {
+  const index = loadEntityIndex(kind);
+  return index.entities
+    .map((entry) => {
+      const document = readJson<EntityDocument>(
+        ENTITY_LEVELS[kind].dir,
+        `${entry.slug}.json`,
+      );
+      const filed = document.totals
+        .map((totals) => ({ year: totals.fiscal_year, totals: filedYearTotals(totals) }))
+        .filter((candidate) => candidate.totals != null);
+      const latest = filed.at(-1);
+      return {
+        entity: entry.entity,
+        displayName: entityDisplayName(entry.entity),
+        slug: entry.slug,
+        latestFiledYear: latest?.year ?? null,
+        revenue: latest?.totals?.revenue ?? null,
+        expenditure: latest?.totals?.expenditure ?? null,
+      };
+    })
+    .sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
+export function loadEntityListings(kind: EntityKind): EntityListing[] {
+  if (!listingsCache.has(kind)) listingsCache.set(kind, buildEntityListings(kind));
+  return listingsCache.get(kind) as EntityListing[];
+}
+
+function entityProvenance(
+  kind: EntityKind,
+  manifest: ManifestDocument,
+): string {
+  const level = ENTITY_LEVELS[kind];
+  const years = manifest.sources[level.source]?.fiscal_years ?? [];
+  const span = years.length
+    ? `fiscal years ${Math.min(...years)}–${Math.max(...years)}`
+    : "";
+  const vintage = formatVintage(manifest, level.source);
+  const caveat =
+    kind === "consolidated"
+      ? " A consolidated government provides both county and municipal " +
+        "services, so its figures are not directly comparable to " +
+        "county-only or city-only governments."
+      : "";
+  return (
+    `Source: DCA Report of Local Government Finances via the UGA Tax & ` +
+    `Expenditure Data Center (${vintage}), ${span}. Expenditures are ` +
+    `operating plus capital, as filed. A year the government did not file ` +
+    `appears as missing, never as zero.${caveat}`
+  );
+}
+
+export function loadEntityPage(
+  kind: EntityKind,
+  slug: string,
+): EntityPageData | null {
+  const level = ENTITY_LEVELS[kind];
+  const index = loadEntityIndex(kind);
+  const entry = index.entities.find((candidate) => candidate.slug === slug);
+  if (!entry) return null;
+  const document = readJson<EntityDocument>(level.dir, `${slug}.json`);
+  const totalsByYear: Record<string, EntityYearTotals | null> =
+    Object.fromEntries(
+      index.fiscal_years.map((year) => [
+        String(year),
+        filedYearTotals(
+          document.totals.find((totals) => totals.fiscal_year === year) ?? {
+            fiscal_year: year,
+            revenue: null,
+            expenditure: null,
+            expenditure_operating: null,
+            expenditure_capital: null,
+          },
+        ),
+      ]),
+    );
+  const filedYears = index.fiscal_years.filter(
+    (year) => totalsByYear[String(year)] != null,
+  );
+  const latestFiledYear = filedYears.at(-1);
+  if (latestFiledYear == null) return null;
+  const manifest = readJsonCached<ManifestDocument>("manifest.json");
+  const categories = readJsonCached<EntityCategoriesDocument>(
+    level.dir,
+    "categories.json",
+  );
+  const countyServed =
+    kind === "consolidated"
+      ? manifest.sources[level.source]?.governments?.[entry.entity]
+      : undefined;
+  return {
+    kind,
+    entity: entry.entity,
+    displayName: entityDisplayName(entry.entity),
+    slug,
+    fiscalYears: index.fiscal_years,
+    latestFiledYear,
+    missingYears: index.fiscal_years.filter(
+      (year) => totalsByYear[String(year)] == null,
+    ),
+    totalsByYear,
+    document,
+    spendingByCategory:
+      categories.entities[slug]?.years[String(latestFiledYear)]?.expenditure ??
+      {},
+    provenance: entityProvenance(kind, manifest),
+    countyServed: countyServed ? countyDisplayName(countyServed) : undefined,
+  };
+}
+
+export interface SearchOption {
+  name: string;
+  slug: string;
+  kind: "county" | EntityKind;
+}
+
+const SEARCH_KIND_ORDER: Record<SearchOption["kind"], number> = {
+  county: 0,
+  consolidated: 1,
+  city: 2,
+};
+
+export function loadSearchOptions(): SearchOption[] {
+  const counties: SearchOption[] = loadCountyOptions().map((option) => ({
+    ...option,
+    kind: "county",
+  }));
+  const entities: SearchOption[] = (["consolidated", "city"] as const).flatMap(
+    (kind) =>
+      loadEntityListings(kind)
+        .filter((listing) => listing.latestFiledYear != null)
+        .map((listing) => ({
+          name: listing.displayName,
+          slug: listing.slug,
+          kind,
+        })),
+  );
+  return [...counties, ...entities].sort(
+    (a, b) =>
+      a.name.localeCompare(b.name) ||
+      SEARCH_KIND_ORDER[a.kind] - SEARCH_KIND_ORDER[b.kind],
+  );
+}
+
+export interface ConsolidatedLink {
+  name: string;
+  slug: string;
+}
+
+export function consolidatedCountyServed(): Record<string, string> {
+  const manifest = readJsonCached<ManifestDocument>("manifest.json");
+  const governments =
+    manifest.sources[ENTITY_LEVELS.consolidated.source]?.governments ?? {};
+  const slugsByEntity = new Map(
+    loadEntityIndex("consolidated").entities.map((entry) => [
+      entry.entity,
+      entry.slug,
+    ]),
+  );
+  return Object.fromEntries(
+    Object.entries(governments).flatMap(([government, county]) => {
+      const slug = slugsByEntity.get(government);
+      return slug ? [[slug, countyDisplayName(county)]] : [];
+    }),
+  );
+}
+
+export function consolidatedByCountyFips(): Record<string, ConsolidatedLink> {
+  const manifest = readJsonCached<ManifestDocument>("manifest.json");
+  const governments =
+    manifest.sources[ENTITY_LEVELS.consolidated.source]?.governments ?? {};
+  const slugsByEntity = new Map(
+    loadEntityIndex("consolidated").entities.map((entry) => [
+      entry.entity,
+      entry.slug,
+    ]),
+  );
+  const fipsByCounty = new Map(
+    loadCountyMetrics().counties.map((entry) => [entry.county, entry.fips]),
+  );
+  return Object.fromEntries(
+    Object.entries(governments).flatMap(([government, county]) => {
+      const fips = fipsByCounty.get(county);
+      const slug = slugsByEntity.get(government);
+      if (!fips || !slug) return [];
+      return [[fips, { name: entityDisplayName(government), slug }]];
+    }),
+  );
 }
 
 export function loadDashboardData(): DashboardData {

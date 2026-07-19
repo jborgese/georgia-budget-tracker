@@ -1,80 +1,25 @@
-import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { loadCountyMetrics, loadCountyPage } from "@/lib/data";
-import {
-  fiscalYearLabel,
-  formatCompactDollars,
-  formatDollars,
-} from "@/lib/format";
+import { fiscalYearLabel, formatCompactDollars, formatDollars } from "@/lib/format";
 import { GOLD, INK, MUTED, PAPER, RULE, SERIES, SPRUCE } from "@/lib/theme";
-import type { CountyPageData } from "@/lib/types";
+import type { EntityPageData } from "@/lib/types";
 import { spendingSlices } from "@/lib/spending";
 import { ChartLegend } from "@/components/ChartLegend";
-import { CountyMedianChart, type MedianRow } from "@/components/CountyMedianChart";
 import { SpendingPie } from "@/components/SpendingPie";
 import { SpendingTable } from "@/components/SpendingTable";
 import { CountyTrendChart, type TrendRow } from "@/components/CountyTrendChart";
 import { DataTable } from "@/components/DataTable";
 import { StatTile } from "@/components/StatTile";
 
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return loadCountyMetrics()
-    .counties.filter((entry) => entry.included)
-    .map((entry) => ({ slug: entry.slug as string }));
+export function entityHeading(data: EntityPageData): string {
+  return data.kind === "city" ? `City of ${data.displayName}` : data.displayName;
 }
 
-export async function generateMetadata({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}): Promise<Metadata> {
-  const { slug } = await params;
-  const data = loadCountyPage(slug);
-  if (!data) return {};
-  const latest = data.years[String(data.latestFiledYear)];
-  const fy = fiscalYearLabel(data.latestFiledYear);
-  const description =
-    `${data.displayName} County, Georgia government finances: ` +
-    `${fy} revenues ${latest?.revenue != null ? formatCompactDollars(latest.revenue) : "n/a"}, ` +
-    `expenditures ${latest?.expenditure != null ? formatCompactDollars(latest.expenditure) : "n/a"}` +
-    `${latest?.revenue_per_capita != null ? `, ${formatDollars(latest.revenue_per_capita)} revenue per resident` : ""}. ` +
-    `Multi-year trends, breakdowns, and per-capita comparisons from public RLGF filings.`;
-  const title = `${data.displayName} County, GA — county finances ${fy}`;
-  return {
-    title,
-    description,
-    openGraph: { title, description, type: "article" },
-    twitter: { card: "summary", title, description },
-  };
-}
-
-function trendRows(data: CountyPageData): TrendRow[] {
+function trendRows(data: EntityPageData): TrendRow[] {
   return data.fiscalYears.map((year) => ({
     fiscalYear: year,
-    revenue: data.years[String(year)]?.revenue ?? null,
-    expenditure: data.years[String(year)]?.expenditure ?? null,
+    revenue: data.totalsByYear[String(year)]?.revenue ?? null,
+    expenditure: data.totalsByYear[String(year)]?.expenditure ?? null,
   }));
-}
-
-function medianRows(data: CountyPageData): MedianRow[] {
-  return data.fiscalYears.map((year) => ({
-    fiscalYear: year,
-    county: data.years[String(year)]?.revenue_per_capita ?? null,
-    median: data.medians[String(year)]?.revenue_per_capita ?? null,
-  }));
-}
-
-function medianDelta(data: CountyPageData): string | null {
-  const year = String(data.latestFiledYear);
-  const county = data.years[year]?.revenue_per_capita;
-  const median = data.medians[year]?.revenue_per_capita;
-  if (county == null || median == null || median === 0) return null;
-  const delta = ((county - median) / median) * 100;
-  const direction = delta >= 0 ? "above" : "below";
-  return `${Math.abs(delta).toFixed(0)}% ${direction} the state median (${formatDollars(median)})`;
 }
 
 function BreakdownTable({
@@ -83,7 +28,7 @@ function BreakdownTable({
   denominator,
   label,
 }: {
-  data: CountyPageData;
+  data: EntityPageData;
   sections: string[];
   denominator: number | null;
   label: string;
@@ -120,11 +65,7 @@ function BreakdownTable({
             const share =
               denominator && row.depth > 0 ? (amount / denominator) * 100 : null;
             return (
-              <tr
-                key={row.path}
-                className="border-t"
-                style={{ borderColor: RULE }}
-              >
+              <tr key={row.path} className="border-t" style={{ borderColor: RULE }}>
                 <td
                   className={`py-1.5 pr-4 ${row.depth === 0 ? "font-semibold" : ""}`}
                   style={{ paddingLeft: `${row.depth * 20}px` }}
@@ -150,22 +91,14 @@ function BreakdownTable({
   );
 }
 
-export default async function CountyPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-  const data = loadCountyPage(slug);
-  if (!data) notFound();
-
+export function EntityLedger({ data }: { data: EntityPageData }) {
+  const heading = entityHeading(data);
   const fy = fiscalYearLabel(data.latestFiledYear);
-  const latest = data.years[String(data.latestFiledYear)];
-  const revenueTotal =
-    data.document.totals.find((t) => t.fiscal_year === data.latestFiledYear)
-      ?.revenue ?? null;
-  const expenditureTotal = latest?.expenditure ?? null;
-  const delta = medianDelta(data);
+  const latest = data.totalsByYear[String(data.latestFiledYear)];
+  const eyebrow =
+    data.kind === "city"
+      ? "City ledger"
+      : `Consolidated government ledger${data.countyServed ? ` · serves ${data.countyServed} County` : ""}`;
 
   return (
     <main
@@ -177,14 +110,21 @@ export default async function CountyPage({
           className="font-mono text-xs uppercase tracking-[0.25em]"
           style={{ color: GOLD }}
         >
-          County ledger · FIPS {data.fips}
+          {eyebrow}
         </p>
         <h1
           className="mt-4 text-4xl font-semibold leading-tight"
           style={{ color: SPRUCE }}
         >
-          {data.displayName} County
+          {heading}
         </h1>
+        {data.kind === "consolidated" ? (
+          <p className="mt-3 max-w-prose text-sm leading-relaxed">
+            A consolidated city-county government provides both county and
+            municipal services, so its totals are not directly comparable to
+            county-only or city-only governments.
+          </p>
+        ) : null}
 
         <section
           aria-label={`Headline figures, ${fy}`}
@@ -193,7 +133,7 @@ export default async function CountyPage({
           <StatTile
             label={`${fy} revenues`}
             value={latest?.revenue != null ? formatCompactDollars(latest.revenue) : "—"}
-            detail="County government, as filed"
+            detail="As filed"
           />
           <StatTile
             label={`${fy} expenditures`}
@@ -205,28 +145,28 @@ export default async function CountyPage({
             detail="Operating plus capital"
           />
           <StatTile
-            label="Revenue / resident"
+            label="Operating"
             value={
-              latest?.revenue_per_capita != null
-                ? formatDollars(latest.revenue_per_capita)
+              latest?.expenditure_operating != null
+                ? formatCompactDollars(latest.expenditure_operating)
                 : "—"
             }
-            detail={delta ?? "State median unavailable"}
+            detail={`${fy} operating expenditures`}
           />
           <StatTile
-            label="Population"
+            label="Capital"
             value={
-              latest?.population != null
-                ? latest.population.toLocaleString("en-US")
+              latest?.expenditure_capital != null
+                ? formatCompactDollars(latest.expenditure_capital)
                 : "—"
             }
-            detail={`Census estimate, ${data.latestFiledYear}`}
+            detail={`${fy} capital expenditures`}
           />
         </section>
 
         {spendingSlices(data.spendingByCategory).length ? (
           <section
-            aria-label={`Where a ${data.displayName} County tax dollar goes`}
+            aria-label={`Where a ${heading} tax dollar goes`}
             className="mt-14"
           >
             <div className="border-t pb-1 pt-3" style={{ borderColor: INK }}>
@@ -234,21 +174,20 @@ export default async function CountyPage({
                 className="font-mono text-xs uppercase tracking-widest"
                 style={{ color: SPRUCE }}
               >
-                Where a {data.displayName} County tax dollar goes
+                Where a {heading} tax dollar goes
               </h2>
             </div>
             <p className="mt-3 max-w-prose text-sm leading-relaxed">
-              Every dollar the county government spent in {fy}, by what it
-              paid for.
+              Every dollar the government spent in {fy}, by what it paid for.
             </p>
             <SpendingPie
               slices={spendingSlices(data.spendingByCategory)}
               total={latest?.expenditure ?? 0}
               centerLabel={`${fy} spending`}
-              ariaLabel={`Pie chart of ${data.displayName} County ${fy} spending by category; exact values are in the table below.`}
+              ariaLabel={`Pie chart of ${heading} ${fy} spending by category; exact values are in the table below.`}
             />
             <SpendingTable
-              caption={`${data.displayName} County ${fy} spending by category, expandable to line items`}
+              caption={`${heading} ${fy} spending by category, expandable to line items`}
               slices={spendingSlices(data.spendingByCategory)}
               total={latest?.expenditure ?? 0}
             />
@@ -273,88 +212,32 @@ export default async function CountyPage({
               ]}
             />
           </div>
-          <CountyTrendChart
-            rows={trendRows(data)}
-            entityLabel={`${data.displayName} County`}
-          />
+          <CountyTrendChart rows={trendRows(data)} entityLabel={heading} />
           {data.missingYears.length ? (
             <p className="mt-2 text-xs" style={{ color: MUTED }}>
-              No RLGF filing for{" "}
-              {data.missingYears.map(fiscalYearLabel).join(", ")} — shown as gaps,
-              not zeros.
+              No RLGF filing for {data.missingYears.map(fiscalYearLabel).join(", ")}{" "}
+              — shown as gaps, not zeros.
             </p>
           ) : null}
           <DataTable
-            caption={`${data.displayName} County revenues and expenditures by fiscal year`}
-            columns={[
-              "Fiscal year",
-              "Revenues",
-              "Expenditures",
-              "Rev / resident",
-              "Exp / resident",
-              "Population",
-            ]}
+            caption={`${heading} revenues and expenditures by fiscal year`}
+            columns={["Fiscal year", "Revenues", "Expenditures", "Operating", "Capital"]}
             rows={data.fiscalYears.map((year) => {
-              const m = data.years[String(year)];
+              const totals = data.totalsByYear[String(year)];
               return [
                 fiscalYearLabel(year),
-                m?.revenue != null ? formatDollars(m.revenue) : "no filing",
-                m?.expenditure != null ? formatDollars(m.expenditure) : "no filing",
-                m?.revenue_per_capita != null
-                  ? formatDollars(m.revenue_per_capita)
+                totals?.revenue != null ? formatDollars(totals.revenue) : "no filing",
+                totals?.expenditure != null
+                  ? formatDollars(totals.expenditure)
+                  : "no filing",
+                totals?.expenditure_operating != null
+                  ? formatDollars(totals.expenditure_operating)
                   : "—",
-                m?.expenditure_per_capita != null
-                  ? formatDollars(m.expenditure_per_capita)
+                totals?.expenditure_capital != null
+                  ? formatDollars(totals.expenditure_capital)
                   : "—",
-                m?.population != null ? m.population.toLocaleString("en-US") : "—",
               ];
             })}
-          />
-        </section>
-
-        <section aria-label="Comparison with the state median" className="mt-14">
-          <div
-            className="flex flex-wrap items-baseline justify-between gap-2 border-t pb-1 pt-3"
-            style={{ borderColor: INK }}
-          >
-            <h2
-              className="font-mono text-xs uppercase tracking-widest"
-              style={{ color: SPRUCE }}
-            >
-              Revenue per resident vs. the median county
-            </h2>
-            <ChartLegend
-              entries={[
-                {
-                  label: `${data.displayName} County`,
-                  color: SERIES.green,
-                  kind: "line",
-                },
-                { label: "State median", color: MUTED, kind: "line", dashed: true },
-              ]}
-            />
-          </div>
-          <CountyMedianChart rows={medianRows(data)} countyName={data.displayName} />
-          <p className="mt-2 text-xs" style={{ color: MUTED }}>
-            Median across the county governments that filed in each year (151
-            counties in this dataset);{" "}
-            <Link
-              href="/consolidated/"
-              className="underline underline-offset-2"
-              style={{ color: SPRUCE }}
-            >
-              consolidated city-county governments
-            </Link>{" "}
-            are not included.
-          </p>
-          <DataTable
-            caption={`${data.displayName} County revenue per resident versus the state median, by fiscal year`}
-            columns={["Fiscal year", `${data.displayName} County`, "State median"]}
-            rows={medianRows(data).map((row) => [
-              fiscalYearLabel(row.fiscalYear),
-              row.county != null ? formatDollars(row.county) : "no filing",
-              row.median != null ? formatDollars(row.median) : "—",
-            ])}
           />
         </section>
 
@@ -371,8 +254,8 @@ export default async function CountyPage({
             <BreakdownTable
               data={data}
               sections={["revenues"]}
-              denominator={revenueTotal}
-              label={`${data.displayName} County revenue breakdown, ${fy}`}
+              denominator={latest?.revenue ?? null}
+              label={`${heading} revenue breakdown, ${fy}`}
             />
           </section>
 
@@ -388,8 +271,8 @@ export default async function CountyPage({
             <BreakdownTable
               data={data}
               sections={["operating", "capital"]}
-              denominator={expenditureTotal}
-              label={`${data.displayName} County expenditure breakdown, ${fy}`}
+              denominator={latest?.expenditure ?? null}
+              label={`${heading} expenditure breakdown, ${fy}`}
             />
           </section>
         </div>
@@ -402,11 +285,11 @@ export default async function CountyPage({
           </div>
           <p className="mt-8">
             <Link
-              href="/"
+              href={data.kind === "city" ? "/city/" : "/consolidated/"}
               className="font-mono text-xs uppercase tracking-widest underline underline-offset-4"
               style={{ color: SPRUCE }}
             >
-              ← Back to the statewide ledger
+              ← All {data.kind === "city" ? "city" : "consolidated"} ledgers
             </Link>
           </p>
         </footer>
