@@ -33,7 +33,7 @@ jobs:
 
       - name: Install ETL dependencies
         if: |
-          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook') ||
+          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_') ||
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop')
@@ -43,7 +43,19 @@ jobs:
         id: rlgf
         continue-on-error: true
         if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook')
-        run: python pipeline/etl_rlgf.py
+        run: python pipeline/etl_rlgf.py county
+
+      - name: Run RLGF city ETL
+        id: rlgf_city
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_city_workbook')
+        run: python pipeline/etl_rlgf.py city
+
+      - name: Run RLGF consolidated ETL
+        id: rlgf_consolidated
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'ted_rlgf_consolidated_workbook')
+        run: python pipeline/etl_rlgf.py consolidated
 
       - name: Run state-level ETL
         id: state
@@ -62,7 +74,7 @@ jobs:
       - name: Validate contract and normalize
         id: normalize
         if: |
-          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_county_workbook') ||
+          contains(steps.detect.outputs.changed_sources, 'ted_rlgf_') ||
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop')
@@ -95,6 +107,8 @@ jobs:
       - name: Fail the job if a transform failed
         if: |
           steps.rlgf.outcome == 'failure' ||
+          steps.rlgf_city.outcome == 'failure' ||
+          steps.rlgf_consolidated.outcome == 'failure' ||
           steps.state.outcome == 'failure' ||
           steps.population.outcome == 'failure'
         run: |

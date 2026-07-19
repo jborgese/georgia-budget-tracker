@@ -75,6 +75,22 @@
       "level": "county"
     },
     {
+      "id": "ted_rlgf_city_workbook",
+      "name": "TED — RLGF all-cities Excel workbook",
+      "url": "https://ted.cviog.uga.edu/Content/AllDataExcelFiles/FinancialClassificationByYearByCity.xlsx",
+      "provides": "Municipal revenues and expenditures by RLGF classification and fiscal year (2016+), one sheet per city; prebuilt export behind the TED portal's File Export page",
+      "cadence": "annual",
+      "level": "city"
+    },
+    {
+      "id": "ted_rlgf_consolidated_workbook",
+      "name": "TED — RLGF consolidated city-county governments Excel workbook",
+      "url": "https://ted.cviog.uga.edu/Content/AllDataExcelFiles/FinancialClassificationByYearByConsolidatedCityCounty.xlsx",
+      "provides": "Consolidated city-county government revenues and expenditures by RLGF classification and fiscal year (2016+), one sheet per government; covers the 8 consolidated governments absent from the county workbook",
+      "cadence": "annual",
+      "level": "consolidated"
+    },
+    {
       "id": "ted_portal",
       "name": "Tax & Expenditure Data Center (UGA Carl Vinson Institute)",
       "url": "https://ted.cviog.uga.edu/",

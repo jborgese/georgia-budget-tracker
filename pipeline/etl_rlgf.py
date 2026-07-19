@@ -1,14 +1,16 @@
-"""Transform the TED RLGF all-counties workbook into normalized datasets.
+"""Transform the TED RLGF workbooks into normalized datasets.
 
-The UGA Carl Vinson Institute's Tax & Expenditure Data Center publishes a
-prebuilt Excel export of Report of Local Government Finances data (source id
-``ted_rlgf_county_workbook`` in pipeline/sources.json). Each sheet is one
-county (152 sheets — the seven consolidated city-county governments are
-published under a separate government type and are not included), rows are
-the RLGF classification hierarchy indented five spaces per level, and columns
-are fiscal years (2016 onward).
+The UGA Carl Vinson Institute's Tax & Expenditure Data Center publishes
+prebuilt Excel exports of Report of Local Government Finances data, one per
+government type (source ids ``ted_rlgf_county_workbook``,
+``ted_rlgf_city_workbook``, and ``ted_rlgf_consolidated_workbook`` in
+pipeline/sources.json). Each sheet is one government — 152 county sheets, 522
+city sheets, and 8 consolidated city-county sheets — rows are the RLGF
+classification hierarchy indented five spaces per level, and columns are
+fiscal years (2016 onward).
 
-Sheet layout conventions this parser relies on:
+Sheet layout conventions this parser relies on (identical across the three
+workbooks):
 - Row 1 is ``Classification`` followed by fiscal-year columns.
 - Unindented Title Case rows with no amounts ("Revenues", "Debt", ...) are
   section headers; unindented ALL CAPS rows ("TOTAL REVENUES", ...) are that
@@ -17,23 +19,30 @@ Sheet layout conventions this parser relies on:
   sections are extracted; the remaining sections (debt, cash, fund equity,
   personnel) are out of scope for now.
 
-Outputs:
-- data/raw/ted_rlgf_county_workbook.xlsx        workbook as downloaded
-- data/processed/rlgf_county_finances.parquet   one row per
-  (county, fiscal_year, classification line)
-- data/processed/counties/<slug>.json           per-county totals plus a
+Outputs per government type:
+- data/raw/<source_id>.xlsx                     workbook as downloaded
+- data/processed/rlgf_<type>_finances.parquet   one row per
+  (government, fiscal_year, classification line)
+- data/processed/<dir>/<slug>.json              per-government totals plus a
   shallow (depth <= 2) breakdown for the frontend
-- data/processed/counties/index.json            county list with latest totals
+- data/processed/<dir>/index.json               government list with latest totals
 
-Usage: etl_rlgf.py [path-to-local-workbook]
-When a local path is given it is copied into data/raw/ instead of downloading.
+The county outputs keep their original column and key names (``county``,
+``counties``) so historical data files stay byte-stable; city and
+consolidated outputs use the generic ``entity`` naming.
+
+Usage: etl_rlgf.py [county|city|consolidated] [path-to-local-workbook]
+The government type defaults to county. When a local path is given it is
+copied into data/raw/ instead of downloading.
 """
 
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import sys
+from dataclasses import dataclass
 from pathlib import Path
 
 import duckdb
@@ -45,10 +54,7 @@ from fetching import download_file
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
-SOURCE_ID = "ted_rlgf_county_workbook"
-RAW_FILE = ROOT / "data" / "raw" / f"{SOURCE_ID}.xlsx"
-PARQUET_FILE = ROOT / "data" / "processed" / "rlgf_county_finances.parquet"
-COUNTIES_DIR = ROOT / "data" / "processed" / "counties"
+PROCESSED_DIR = ROOT / "data" / "processed"
 USER_AGENT = (
     "georgia-budget-tracker/0.1 (+https://github.com/<owner>/georgia-budget-tracker; "
     "civic data project)"
@@ -61,14 +67,51 @@ SECTIONS = {
     "Capital Expenditures": ("expenditure", "capital"),
 }
 JSON_BREAKDOWN_MAX_DEPTH = 2
+CONSOLIDATED_SUFFIX = re.compile(r"\s+COUNTY$")
+PRESERVED_JSON = ("metrics.json", "categories.json", "index.json")
 
 
-def source_url() -> str:
+@dataclass(frozen=True)
+class GovernmentType:
+    key: str
+    source_id: str
+    entity_column: str
+    json_dir: str
+    index_key: str
+
+
+GOVERNMENT_TYPES = {
+    "county": GovernmentType("county", "ted_rlgf_county_workbook",
+                             "county", "counties", "counties"),
+    "city": GovernmentType("city", "ted_rlgf_city_workbook",
+                           "entity", "cities", "entities"),
+    "consolidated": GovernmentType("consolidated", "ted_rlgf_consolidated_workbook",
+                                   "entity", "consolidated", "entities"),
+}
+
+
+def raw_file(government: GovernmentType) -> Path:
+    return ROOT / "data" / "raw" / f"{government.source_id}.xlsx"
+
+
+def parquet_file(government: GovernmentType) -> Path:
+    return PROCESSED_DIR / f"rlgf_{government.key}_finances.parquet"
+
+
+def json_dir(government: GovernmentType) -> Path:
+    return PROCESSED_DIR / government.json_dir
+
+
+def source_url(source_id: str) -> str:
     sources = json.loads(SOURCES_FILE.read_text())["sources"]
-    matches = [s["url"] for s in sources if s["id"] == SOURCE_ID]
+    matches = [s["url"] for s in sources if s["id"] == source_id]
     if not matches:
-        raise SystemExit(f"Source {SOURCE_ID!r} not found in {SOURCES_FILE}")
+        raise SystemExit(f"Source {source_id!r} not found in {SOURCES_FILE}")
     return matches[0]
+
+
+def canonical_entity(sheet_name: str) -> str:
+    return CONSOLIDATED_SUFFIX.sub("", sheet_name.strip().upper())
 
 
 def indent_depth(label: str) -> int:
@@ -84,7 +127,8 @@ def to_amount(value) -> int | None:
     return None if pd.isna(numeric) else int(numeric)
 
 
-def sheet_records(county: str, header: tuple, rows: list[tuple]) -> list[dict]:
+def sheet_records(entity: str, header: tuple, rows: list[tuple],
+                  entity_column: str = "county") -> list[dict]:
     years = [int(cell) for cell in header[1:] if cell is not None]
     section = None
     stack: list[str] = []
@@ -108,7 +152,7 @@ def sheet_records(county: str, header: tuple, rows: list[tuple]) -> list[dict]:
         path = " > ".join(stack)
         records.extend(
             {
-                "county": county,
+                entity_column: entity,
                 "fiscal_year": year,
                 "category": category,
                 "section": section_name,
@@ -124,37 +168,42 @@ def sheet_records(county: str, header: tuple, rows: list[tuple]) -> list[dict]:
     return records
 
 
-def parse_workbook(path: Path) -> pd.DataFrame:
+def parse_workbook(path: Path, entity_column: str = "county") -> pd.DataFrame:
     workbook = openpyxl.load_workbook(path, read_only=True)
     records = [
         record
         for sheet in workbook.sheetnames
         for rows in [list(workbook[sheet].iter_rows(values_only=True))]
-        for record in sheet_records(sheet, rows[0], rows[1:])
+        for record in sheet_records(canonical_entity(sheet), rows[0], rows[1:],
+                                    entity_column)
     ]
     workbook.close()
     return pd.DataFrame.from_records(records)
 
 
-def county_slug(county: str) -> str:
-    return county.lower().replace(" ", "-")
+def entity_slug(entity: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", entity.lower()).strip("-")
 
 
-def write_parquet(connection: duckdb.DuckDBPyConnection) -> None:
-    PARQUET_FILE.parent.mkdir(parents=True, exist_ok=True)
+def write_parquet(connection: duckdb.DuckDBPyConnection,
+                  government: GovernmentType) -> None:
+    target = parquet_file(government)
+    target.parent.mkdir(parents=True, exist_ok=True)
     connection.execute(
         f"""
-        COPY (SELECT * FROM records ORDER BY county, line, fiscal_year)
-        TO '{PARQUET_FILE}' (FORMAT PARQUET, COMPRESSION ZSTD)
+        COPY (SELECT * FROM records
+              ORDER BY {government.entity_column}, line, fiscal_year)
+        TO '{target}' (FORMAT PARQUET, COMPRESSION ZSTD)
         """
     )
 
 
-def county_totals(connection: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+def entity_totals(connection: duckdb.DuckDBPyConnection,
+                  government: GovernmentType) -> pd.DataFrame:
     return connection.execute(
-        """
+        f"""
         SELECT
-            county,
+            {government.entity_column} AS entity,
             fiscal_year,
             sum(amount) FILTER (category = 'revenue') AS revenue,
             sum(amount) FILTER (category = 'expenditure') AS expenditure,
@@ -162,23 +211,25 @@ def county_totals(connection: duckdb.DuckDBPyConnection) -> pd.DataFrame:
             sum(amount) FILTER (section = 'capital') AS expenditure_capital
         FROM records
         WHERE depth = 0
-        GROUP BY county, fiscal_year
-        ORDER BY county, fiscal_year
+        GROUP BY entity, fiscal_year
+        ORDER BY entity, fiscal_year
         """
     ).df()
 
 
-def county_breakdown(connection: duckdb.DuckDBPyConnection) -> pd.DataFrame:
+def entity_breakdown(connection: duckdb.DuckDBPyConnection,
+                     government: GovernmentType) -> pd.DataFrame:
     return connection.execute(
-        """
-        SELECT county, classification, category, section, depth, line, path,
+        f"""
+        SELECT {government.entity_column} AS entity,
+               classification, category, section, depth, line, path,
                map_from_entries(
                    list((fiscal_year, amount) ORDER BY fiscal_year)
                ) AS amounts
         FROM records
         WHERE depth <= ?
-        GROUP BY county, classification, category, section, depth, line, path
-        ORDER BY county, line
+        GROUP BY entity, classification, category, section, depth, line, path
+        ORDER BY entity, line
         """,
         [JSON_BREAKDOWN_MAX_DEPTH],
     ).df()
@@ -209,30 +260,31 @@ def breakdown_entry(row: pd.Series) -> dict:
     }
 
 
-def county_document(county: str, totals: pd.DataFrame, breakdown: pd.DataFrame) -> dict:
+def entity_document(government: GovernmentType, entity: str,
+                    totals: pd.DataFrame, breakdown: pd.DataFrame) -> dict:
     return {
-        "county": county,
-        "source": SOURCE_ID,
+        government.entity_column: entity,
+        "source": government.source_id,
         "fiscal_years": [int(year) for year in sorted(totals.fiscal_year)],
         "totals": [totals_entry(row) for row in totals.itertuples(index=False)],
         "breakdown": [breakdown_entry(row) for row in breakdown.itertuples(index=False)],
     }
 
 
-def index_document(totals: pd.DataFrame) -> dict:
-    latest = totals.sort_values("fiscal_year").groupby("county").last().reset_index()
+def index_document(government: GovernmentType, totals: pd.DataFrame) -> dict:
+    latest = totals.sort_values("fiscal_year").groupby("entity").last().reset_index()
     return {
-        "source": SOURCE_ID,
+        "source": government.source_id,
         "fiscal_years": [int(year) for year in sorted(totals.fiscal_year.unique())],
-        "counties": [
+        government.index_key: [
             {
-                "county": row.county,
-                "slug": county_slug(row.county),
+                government.entity_column: row.entity,
+                "slug": entity_slug(row.entity),
                 "latest_fiscal_year": int(row.fiscal_year),
                 "revenue": None if pd.isna(row.revenue) else int(row.revenue),
                 "expenditure": None if pd.isna(row.expenditure) else int(row.expenditure),
             }
-            for row in latest.sort_values("county").itertuples(index=False)
+            for row in latest.sort_values("entity").itertuples(index=False)
         ],
     }
 
@@ -241,62 +293,73 @@ def write_json(path: Path, document: dict) -> None:
     path.write_text(json.dumps(document, indent=1) + "\n")
 
 
-def write_county_json(connection: duckdb.DuckDBPyConnection) -> int:
-    totals = county_totals(connection)
-    breakdown = county_breakdown(connection)
-    COUNTIES_DIR.mkdir(parents=True, exist_ok=True)
-    for stale in COUNTIES_DIR.glob("*.json"):
-        if stale.name not in ("metrics.json", "categories.json"):
+def write_entity_json(connection: duckdb.DuckDBPyConnection,
+                      government: GovernmentType) -> int:
+    totals = entity_totals(connection, government)
+    breakdown = entity_breakdown(connection, government)
+    target = json_dir(government)
+    target.mkdir(parents=True, exist_ok=True)
+    for stale in target.glob("*.json"):
+        if stale.name not in PRESERVED_JSON:
             stale.unlink()
-    for county, county_rows in totals.groupby("county"):
-        document = county_document(
-            county, county_rows, breakdown[breakdown.county == county]
+    for entity, entity_rows in totals.groupby("entity"):
+        document = entity_document(
+            government, entity, entity_rows, breakdown[breakdown.entity == entity]
         )
-        write_json(COUNTIES_DIR / f"{county_slug(county)}.json", document)
-    write_json(COUNTIES_DIR / "index.json", index_document(totals))
-    return totals.county.nunique()
+        write_json(target / f"{entity_slug(entity)}.json", document)
+    write_json(target / "index.json", index_document(government, totals))
+    return totals.entity.nunique()
 
 
-def run() -> None:
-    if len(sys.argv) > 1:
-        RAW_FILE.parent.mkdir(parents=True, exist_ok=True)
-        if Path(sys.argv[1]).resolve() != RAW_FILE.resolve():
-            shutil.copyfile(sys.argv[1], RAW_FILE)
-            print(f"Copied local workbook {sys.argv[1]} -> {RAW_FILE}")
+def parse_args(argv: list[str]) -> tuple[GovernmentType, str | None]:
+    if argv and argv[0] in GOVERNMENT_TYPES:
+        return GOVERNMENT_TYPES[argv[0]], argv[1] if len(argv) > 1 else None
+    return GOVERNMENT_TYPES["county"], argv[0] if argv else None
+
+
+def run(government: GovernmentType, local_path: str | None) -> None:
+    target = raw_file(government)
+    if local_path:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if Path(local_path).resolve() != target.resolve():
+            shutil.copyfile(local_path, target)
+            print(f"Copied local workbook {local_path} -> {target}")
     else:
-        url = source_url()
-        download_file(url, RAW_FILE, source=SOURCE_ID)
-        print(f"Downloaded {url} -> {RAW_FILE} ({RAW_FILE.stat().st_size:,} bytes)")
+        url = source_url(government.source_id)
+        download_file(url, target, source=government.source_id)
+        print(f"Downloaded {url} -> {target} ({target.stat().st_size:,} bytes)")
 
-    records = parse_workbook(RAW_FILE)
+    records = parse_workbook(target, government.entity_column)
     if records.empty:
         raise SystemExit("Workbook parsed to zero records — layout may have changed.")
 
     connection = duckdb.connect()
     connection.register("records", records)
-    write_parquet(connection)
-    county_count = write_county_json(connection)
+    write_parquet(connection, government)
+    entity_count = write_entity_json(connection, government)
 
-    runlog.log_event("transformed", SOURCE_ID, records=len(records),
-                     counties=county_count)
+    runlog.log_event("transformed", government.source_id, records=len(records),
+                     entities=entity_count)
     print(
-        f"Wrote {len(records):,} records for {county_count} counties "
+        f"Wrote {len(records):,} records for {entity_count} "
+        f"{government.key} governments "
         f"({records.fiscal_year.min()}-{records.fiscal_year.max()}) to "
-        f"{PARQUET_FILE.relative_to(ROOT)} and "
-        f"{COUNTIES_DIR.relative_to(ROOT)}/"
+        f"{parquet_file(government).relative_to(ROOT)} and "
+        f"{json_dir(government).relative_to(ROOT)}/"
     )
 
 
 def main() -> int:
+    government, local_path = parse_args(sys.argv[1:])
     try:
-        run()
+        run(government, local_path)
     except (Exception, SystemExit) as exc:
-        failures = runlog.record_outcome(SOURCE_ID, ok=False, error=str(exc))
-        runlog.log_event("transform_failed", SOURCE_ID,
+        failures = runlog.record_outcome(government.source_id, ok=False, error=str(exc))
+        runlog.log_event("transform_failed", government.source_id,
                          consecutive_failures=failures, error=str(exc)[:300])
-        print(f"ERROR {SOURCE_ID}: {exc}", file=sys.stderr)
+        print(f"ERROR {government.source_id}: {exc}", file=sys.stderr)
         return 1
-    runlog.record_outcome(SOURCE_ID, ok=True)
+    runlog.record_outcome(government.source_id, ok=True)
     return 0
 
 

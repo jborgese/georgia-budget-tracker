@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pandas as pd
 import pandera.errors
 import pytest
 
@@ -65,15 +66,71 @@ def test_negative_county_charges_allowed(normalized_frame):
 
 def test_reconciliation_within_tolerance_passes(normalized_frame):
     frame = normalized_frame()
-    expected = {("STATE OF GEORGIA", 2023, "expenditure"): 500.0}
+    expected = {("state", "STATE OF GEORGIA", 2023, "expenditure"): 500.0}
     validate(frame, expected)
 
 
 def test_reconciliation_breach_fails(normalized_frame):
     frame = normalized_frame()
-    expected = {("STATE OF GEORGIA", 2023, "expenditure"): 900.0}
+    expected = {("state", "STATE OF GEORGIA", 2023, "expenditure"): 900.0}
     with pytest.raises(pandera.errors.SchemaError, match="reconcile"):
         validate(frame, expected)
+
+
+def city_row(entity, **overrides):
+    return {"entity": entity, "entity_type": "city", "fips": contract.STATE_FIPS,
+            "fiscal_year": 2023, "category": "taxes",
+            "subcategory": "PART I TAX REVENUES", "amount": 40.0, **overrides}
+
+
+def consolidated_rows():
+    return [{"entity": government, "entity_type": "consolidated",
+             "fips": contract.CONSOLIDATED_COUNTY_FIPS[government],
+             "fiscal_year": 2023, "category": "taxes",
+             "subcategory": "PART I TAX REVENUES", "amount": 70.0}
+            for government in contract.CONSOLIDATED_GOVERNMENTS]
+
+
+def with_rows(frame, rows):
+    return pd.concat([frame, pd.DataFrame.from_records(
+        rows, columns=contract.NORMALIZED_COLUMNS)], ignore_index=True)
+
+
+def test_city_and_consolidated_rows_validate(normalized_frame):
+    frame = with_rows(normalized_frame(),
+                      [city_row("ATLANTA"), *consolidated_rows()])
+    validate(frame)
+
+
+def test_partial_consolidated_coverage_fails(normalized_frame):
+    frame = with_rows(normalized_frame(), consolidated_rows()[:3])
+    with pytest.raises(pandera.errors.SchemaError, match="all_consolidated"):
+        validate(frame)
+
+
+def test_consolidated_fips_must_match_underlying_county(normalized_frame):
+    rows = consolidated_rows()
+    rows[0]["fips"] = contract.STATE_FIPS
+    with pytest.raises(pandera.errors.SchemaError, match="fips"):
+        validate(with_rows(normalized_frame(), rows))
+
+
+def test_negative_city_tax_fails(normalized_frame):
+    frame = with_rows(normalized_frame(), [city_row("ATLANTA", amount=-2.0)])
+    with pytest.raises(pandera.errors.SchemaError, match="negative"):
+        validate(frame)
+
+
+def test_city_county_name_collision_reconciles_separately(normalized_frame):
+    frame = with_rows(normalized_frame(), [city_row("DECATUR")])
+    expected = {("city", "DECATUR", 2023, "revenue"): 40.0,
+                ("county", "DECATUR", 2023, "revenue"): 100.0}
+    validate(frame, expected)
+
+
+def test_consolidated_roster_matches_known_missing_counties():
+    assert (set(contract.CONSOLIDATED_GOVERNMENTS.values())
+            == set(contract.KNOWN_MISSING_COUNTIES))
 
 
 def test_side_classifies_disjoint_vocabulary():

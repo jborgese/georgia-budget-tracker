@@ -35,9 +35,9 @@ def county_frame():
 
 
 def test_normalize_county_emits_leaves_residuals_and_expected(county_frame):
-    records, expected = normalize.normalize_county(county_frame)
+    records, expected = normalize.normalize_rlgf(county_frame, "county")
     frame = pd.DataFrame.from_records(records)
-    assert expected == {("APPLING", 2023, "revenue"): 1000.0}
+    assert expected == {("county", "APPLING", 2023, "revenue"): 1000.0}
     by_subcategory = dict(zip(frame.subcategory, frame.amount))
     assert by_subcategory["PART I TAX REVENUES"] == 600
     assert by_subcategory["PART 2 INTERGOVERNMENTAL REVENUES"] == 250
@@ -46,8 +46,38 @@ def test_normalize_county_emits_leaves_residuals_and_expected(county_frame):
     assert frame.amount.sum() == 1000
 
 
+def entity_source_row(entity, fiscal_year, section, classification, depth,
+                      path, amount):
+    return {"entity": entity, "fiscal_year": fiscal_year, "category": "x",
+            "section": section, "classification": classification,
+            "depth": depth, "line": 0, "path": path, "amount": amount}
+
+
+def test_normalize_city_uses_state_fips_and_typed_keys():
+    frame = pd.DataFrame.from_records([
+        entity_source_row("DECATUR", 2023, "revenues", "GENERAL REVENUES", 1,
+                          "TOTAL REVENUES > GENERAL REVENUES", 300),
+    ])
+    records, expected = normalize.normalize_rlgf(frame, "city")
+    assert expected == {("city", "DECATUR", 2023, "revenue"): 300.0}
+    assert all(record["entity_type"] == "city" for record in records)
+    assert all(record["fips"] == contract.STATE_FIPS for record in records)
+
+
+def test_normalize_consolidated_maps_county_fips():
+    frame = pd.DataFrame.from_records([
+        entity_source_row("MACON-BIBB", 2023, "operating",
+                          "Section A General Government", 1,
+                          "TOTAL OPERATING > Section A General Government", 90),
+    ])
+    records, expected = normalize.normalize_rlgf(frame, "consolidated")
+    assert expected == {("consolidated", "MACON-BIBB", 2023, "expenditure"): 90.0}
+    assert records[0]["fips"] == contract.COUNTY_FIPS["BIBB"]
+    assert records[0]["category"] == "general_government"
+
+
 def test_normalized_county_rows_validate(county_frame):
-    records, expected = normalize.normalize_county(county_frame)
+    records, expected = normalize.normalize_rlgf(county_frame, "county")
     all_counties = [
         {"entity": name, "entity_type": "county",
          "fips": contract.COUNTY_FIPS[name], "fiscal_year": 2023,
@@ -73,7 +103,7 @@ def test_normalize_state_adds_adjustment_for_orphan_lines():
     ]
     records, expected = normalize.normalize_state(pd.DataFrame.from_records(rows))
     frame = pd.DataFrame.from_records(records)
-    assert expected == {("STATE OF GEORGIA", 2024, "revenue"): 690.0}
+    assert expected == {("state", "STATE OF GEORGIA", 2024, "revenue"): 690.0}
     adjustment = frame[frame.subcategory.str.contains("reconciliation adjustment")]
     assert adjustment.amount.tolist() == [-10.0]
     assert frame.amount.sum() == 690.0

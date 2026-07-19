@@ -34,7 +34,7 @@ database or application server. Instead:
 | [Open Georgia](https://open.ga.gov/) | State employee salaries & travel; payments, obligations, and professional-services expenditures of state organizations | Annual |
 | [Georgia Data Analytics Center](https://gdac.georgia.gov/budget) | State of Georgia revenues and expenditures dashboards | Annual |
 | [DCA — Report of Local Government Finances](https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf) | County / municipal revenues, expenditures, debt, and assets (required annual filing) | Rolling — due 6 months after each government's fiscal year closes |
-| [Tax & Expenditure Data Center (UGA CVIOG)](https://ted.cviog.uga.edu/) | Downloadable RLGF datasets and local budget documents | Rolling / annual |
+| [Tax & Expenditure Data Center (UGA CVIOG)](https://ted.cviog.uga.edu/) | Downloadable RLGF datasets (county, city, and consolidated city-county workbooks) and local budget documents | Rolling / annual |
 | [GeorgiaData.org Local Government Financial Portal](https://georgiadata.org/financialdata) | Searchable county, municipal, and school-system financial data | Annual |
 
 A machine-readable registry of these sources lives in `pipeline/sources.json`.

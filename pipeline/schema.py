@@ -1,10 +1,10 @@
 """Data contract for the normalized cross-level finance table.
 
-The normalized table unifies the RLGF county transform and the OPB state
-transform into one analytic long format:
+The normalized table unifies the RLGF transforms (county, city, consolidated
+city-county) and the OPB state transform into one analytic long format:
 
-    entity, entity_type (state|county), fips, fiscal_year, category,
-    subcategory, amount
+    entity, entity_type (state|county|city|consolidated), fips, fiscal_year,
+    category, subcategory, amount
 
 ``category`` values come from the shared vocabulary in
 pipeline/crosswalk.json; ``subcategory`` preserves the source classification.
@@ -14,13 +14,23 @@ and "(reconciliation adjustment)" rows carry the gap between a statement's
 grand total and the sum of its lines. Those synthetic rows are the only place
 negative amounts are tolerated beyond what the source itself reports.
 
+Entity names alone are ambiguous across levels (the city of DECATUR and
+DECATUR county both exist), so reconciliation totals are keyed by
+(entity_type, entity, fiscal_year, side).
+
+``fips`` is the county FIPS for counties, the underlying county's FIPS for
+consolidated governments (``CONSOLIDATED_COUNTY_FIPS``), and the bare state
+prefix "13" for the state and — until the Census place roster lands with the
+sub-county denominators work — for cities.
+
 Contract rules enforced by :func:`build_schema`:
 - every Georgia county (Census roster, pipeline/ga_counties.json) is present
   or explicitly listed in ``KNOWN_MISSING_COUNTIES``;
-- per entity/fiscal-year/side, normalized amounts reconcile to the source's
-  printed totals within tolerance;
-- no impossible negatives: state amounts and county tax revenues must be
-  non-negative except in synthetic reconciliation rows.
+- when consolidated rows are present, all 8 consolidated governments are;
+- per (entity_type, entity, fiscal-year, side), normalized amounts reconcile
+  to the source's printed totals within tolerance;
+- no impossible negatives: state amounts and local-government tax revenues
+  must be non-negative except in synthetic reconciliation rows.
 """
 
 from __future__ import annotations
@@ -57,6 +67,20 @@ KNOWN_MISSING_COUNTIES = {
     "WEBSTER": "Webster County unified government; separate TED government type",
 }
 
+CONSOLIDATED_GOVERNMENTS = {
+    "ATHENS-CLARKE": "CLARKE",
+    "AUGUSTA-RICHMOND": "RICHMOND",
+    "COLUMBUS-MUSCOGEE": "MUSCOGEE",
+    "CUSSETA-CHATTAHOOCHEE": "CHATTAHOOCHEE",
+    "GEORGETOWN-QUITMAN": "QUITMAN",
+    "MACON-BIBB": "BIBB",
+    "PRESTON-WEBSTER": "WEBSTER",
+    "STATENVILLE-ECHOLS": "ECHOLS",
+}
+CONSOLIDATED_COUNTY_FIPS = {government: COUNTY_FIPS[county]
+                            for government, county in CONSOLIDATED_GOVERNMENTS.items()}
+LOCAL_ENTITY_TYPES = ("county", "city", "consolidated")
+
 
 def side(category: str) -> str:
     return "revenue" if category in REVENUE_CATEGORIES else "expenditure"
@@ -72,9 +96,17 @@ def counties_covered(frame: pd.DataFrame) -> bool:
     return not unaccounted
 
 
+def consolidated_covered(frame: pd.DataFrame) -> bool:
+    present = set(frame.loc[frame.entity_type == "consolidated", "entity"])
+    return not present or present == set(CONSOLIDATED_GOVERNMENTS)
+
+
 def fips_consistent(frame: pd.DataFrame) -> pd.Series:
-    expected = frame.entity.map(COUNTY_FIPS).where(
-        frame.entity_type == "county", STATE_FIPS)
+    expected = (frame.entity.map(COUNTY_FIPS)
+                .where(frame.entity_type == "county",
+                       frame.entity.map(CONSOLIDATED_COUNTY_FIPS))
+                .where(frame.entity_type.isin(["county", "consolidated"]),
+                       STATE_FIPS))
     return frame.fips == expected
 
 
@@ -82,16 +114,20 @@ def no_impossible_negatives(frame: pd.DataFrame) -> pd.Series:
     negative = frame.amount < 0
     synthetic = is_synthetic(frame.subcategory)
     state_violation = negative & (frame.entity_type == "state") & ~synthetic
-    county_tax_violation = (negative & (frame.entity_type == "county")
-                            & (frame.category == "taxes") & ~synthetic)
-    return ~(state_violation | county_tax_violation)
+    local_tax_violation = (negative & frame.entity_type.isin(LOCAL_ENTITY_TYPES)
+                           & (frame.category == "taxes") & ~synthetic)
+    return ~(state_violation | local_tax_violation)
+
+
+def side_sums(frame: pd.DataFrame) -> pd.Series:
+    sides = frame.category.map(side)
+    return frame.groupby([frame.entity_type, frame.entity, frame.fiscal_year,
+                          sides], sort=False).amount.sum()
 
 
 def reconciles(frame: pd.DataFrame, expected_totals: dict[tuple, float],
                relative_tolerance: float, absolute_tolerance: float) -> bool:
-    sides = frame.category.map(side)
-    sums = frame.groupby([frame.entity, frame.fiscal_year, sides],
-                         sort=False).amount.sum()
+    sums = side_sums(frame)
     for key, expected in expected_totals.items():
         actual = sums.get(key, 0.0)
         allowed = max(absolute_tolerance, relative_tolerance * abs(expected))
@@ -102,9 +138,7 @@ def reconciles(frame: pd.DataFrame, expected_totals: dict[tuple, float],
 
 def reconciliation_report(frame: pd.DataFrame,
                           expected_totals: dict[tuple, float]) -> dict:
-    sides = frame.category.map(side)
-    sums = frame.groupby([frame.entity, frame.fiscal_year, sides],
-                         sort=False).amount.sum()
+    sums = side_sums(frame)
     deviations = [abs(sums.get(key, 0.0) - expected)
                   for key, expected in expected_totals.items()]
     relative = [dev / abs(expected) if expected else 0.0
@@ -127,6 +161,8 @@ def build_schema(expected_totals: dict[tuple, float] | None = None,
     checks = [
         pa.Check(counties_covered, name="all_counties_present_or_flagged",
                  error="counties missing without a KNOWN_MISSING_COUNTIES entry"),
+        pa.Check(consolidated_covered, name="all_consolidated_present",
+                 error="consolidated rows present but not all 8 governments"),
         pa.Check(fips_consistent, name="fips_matches_roster",
                  error="fips does not match the Census roster for the entity"),
         pa.Check(no_impossible_negatives, name="no_impossible_negatives",
@@ -141,7 +177,8 @@ def build_schema(expected_totals: dict[tuple, float] | None = None,
     return pa.DataFrameSchema(
         columns={
             "entity": pa.Column(str, pa.Check.str_length(min_value=1)),
-            "entity_type": pa.Column(str, pa.Check.isin(["state", "county"])),
+            "entity_type": pa.Column(str, pa.Check.isin(
+                ["state", *LOCAL_ENTITY_TYPES])),
             "fips": pa.Column(str, pa.Check.str_matches(r"^13(\d{3})?$")),
             "fiscal_year": pa.Column(int, pa.Check.in_range(1990, 2100)),
             "category": pa.Column(str, pa.Check.isin(sorted(ALL_CATEGORIES))),

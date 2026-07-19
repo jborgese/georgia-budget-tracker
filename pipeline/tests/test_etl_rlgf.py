@@ -44,6 +44,32 @@ def test_every_record_carries_county_and_category(county_sheet):
     assert {record["category"] for record in records} == {"revenue", "expenditure"}
 
 
-def test_county_slug():
-    assert etl_rlgf.county_slug("BEN HILL") == "ben-hill"
-    assert etl_rlgf.county_slug("DEKALB") == "dekalb"
+def test_entity_column_is_parameterized(county_sheet):
+    header, rows = county_sheet
+    records = etl_rlgf.sheet_records("ATLANTA", header, rows,
+                                     entity_column="entity")
+    assert records
+    assert all(record["entity"] == "ATLANTA" for record in records)
+    assert all("county" not in record for record in records)
+
+
+def test_entity_slug():
+    assert etl_rlgf.entity_slug("BEN HILL") == "ben-hill"
+    assert etl_rlgf.entity_slug("DEKALB") == "dekalb"
+    assert etl_rlgf.entity_slug("MACON-BIBB") == "macon-bibb"
+    assert etl_rlgf.entity_slug("McRAE-HELENA") == "mcrae-helena"
+
+
+def test_canonical_entity_strips_consolidated_suffix():
+    assert etl_rlgf.canonical_entity("Macon-Bibb County") == "MACON-BIBB"
+    assert etl_rlgf.canonical_entity("ATHENS-CLARKE") == "ATHENS-CLARKE"
+    assert etl_rlgf.canonical_entity(" STATESBORO ") == "STATESBORO"
+
+
+def test_parse_args_selects_type_and_keeps_path_compatibility():
+    county = etl_rlgf.GOVERNMENT_TYPES["county"]
+    city = etl_rlgf.GOVERNMENT_TYPES["city"]
+    assert etl_rlgf.parse_args([]) == (county, None)
+    assert etl_rlgf.parse_args(["workbook.xlsx"]) == (county, "workbook.xlsx")
+    assert etl_rlgf.parse_args(["city"]) == (city, None)
+    assert etl_rlgf.parse_args(["city", "workbook.xlsx"]) == (city, "workbook.xlsx")

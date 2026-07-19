@@ -26,10 +26,10 @@ def test_merge_vintages_prefers_newer():
 
 def test_county_metrics_document_explicit_missing_years():
     expected = {
-        ("APPLING", 2022, "revenue"): 1000.0,
-        ("APPLING", 2022, "expenditure"): 800.0,
-        ("APPLING", 2023, "revenue"): 1100.0,
-        ("BACON", 2022, "revenue"): 500.0,
+        ("county", "APPLING", 2022, "revenue"): 1000.0,
+        ("county", "APPLING", 2022, "expenditure"): 800.0,
+        ("county", "APPLING", 2023, "revenue"): 1100.0,
+        ("county", "BACON", 2022, "revenue"): 500.0,
     }
     populations = {"13001": {"2022": 100, "2023": 110}, "13005": {"2022": 50}}
     document = normalize.county_metrics_document(expected, populations)
@@ -52,9 +52,9 @@ def test_county_metrics_document_explicit_missing_years():
 
 def test_all_zero_year_is_treated_as_missing():
     expected = {
-        ("APPLING", 2022, "revenue"): 0.0,
-        ("APPLING", 2022, "expenditure"): 0.0,
-        ("APPLING", 2023, "revenue"): 1100.0,
+        ("county", "APPLING", 2022, "revenue"): 0.0,
+        ("county", "APPLING", 2022, "expenditure"): 0.0,
+        ("county", "APPLING", 2023, "revenue"): 1100.0,
     }
     document = normalize.county_metrics_document(expected, {"13001": {}})
     appling = next(c for c in document["counties"] if c["county"] == "APPLING")

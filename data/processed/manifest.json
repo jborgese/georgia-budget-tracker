@@ -31,6 +31,53 @@
     "WEBSTER": "Webster County unified government; separate TED government type"
    }
   },
+  "ted_rlgf_city_workbook": {
+   "vintage": {
+    "fingerprint": null,
+    "checked_at": null
+   },
+   "fiscal_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "records": 2170680,
+   "cities_present": 522,
+   "note": "municipal RLGF filings; city fips carries the bare state prefix until the Census place roster lands"
+  },
+  "ted_rlgf_consolidated_workbook": {
+   "vintage": {
+    "fingerprint": null,
+    "checked_at": null
+   },
+   "fiscal_years": [
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+   ],
+   "records": 33272,
+   "governments": {
+    "ATHENS-CLARKE": "CLARKE",
+    "AUGUSTA-RICHMOND": "RICHMOND",
+    "COLUMBUS-MUSCOGEE": "MUSCOGEE",
+    "CUSSETA-CHATTAHOOCHEE": "CHATTAHOOCHEE",
+    "GEORGETOWN-QUITMAN": "QUITMAN",
+    "MACON-BIBB": "BIBB",
+    "PRESTON-WEBSTER": "WEBSTER",
+    "STATENVILLE-ECHOLS": "ECHOLS"
+   },
+   "note": "consolidated city-county governments mix county and municipal functions; not comparable to county-only filings"
+  },
   "open_georgia_poa": {
    "vintage": {
     "fingerprint": {
@@ -155,8 +202,8 @@
   }
  },
  "normalized": {
-  "records": 44279,
-  "entities": 152,
+  "records": 197313,
+  "entities": 682,
   "fiscal_years": [
    2016,
    2017,
@@ -195,11 +242,11 @@
    "absolute": 5.0
   },
   "reconciliation": {
-   "totals_checked": 2425,
+   "totals_checked": 10905,
    "max_absolute_deviation": 0.0,
    "max_relative_deviation": 0.0,
-   "synthetic_rows": 2661,
-   "synthetic_amount_absolute_sum": 10709482661.0
+   "synthetic_rows": 8735,
+   "synthetic_amount_absolute_sum": 16808192079.0
   }
  }
 }
