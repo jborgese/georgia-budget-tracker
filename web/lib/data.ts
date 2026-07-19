@@ -193,7 +193,7 @@ function categorySeries(
   };
 }
 
-function formatVintage(manifest: ManifestDocument, id: string): string {
+export function formatVintage(manifest: ManifestDocument, id: string): string {
   const vintage = manifest.sources[id]?.vintage;
   const lastModified = vintage?.fingerprint?.last_modified;
   if (lastModified) {
@@ -408,6 +408,11 @@ function entityMetricsFor(
 export function loadEntityIndex(kind: EntityKind): EntitiesIndexDocument {
   return readJsonCached<EntitiesIndexDocument>(
     ENTITY_LEVELS[kind].dir, "index.json");
+}
+
+export function loadEntityMetrics(kind: EntityKind): EntityMetricsDocument {
+  return readJsonCached<EntityMetricsDocument>(
+    ENTITY_LEVELS[kind].dir, "metrics.json");
 }
 
 const listingsCache = new Map<EntityKind, EntityListing[]>();

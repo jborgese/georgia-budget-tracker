@@ -78,6 +78,13 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
             Schools
           </Link>
           <Link
+            href="/stack/"
+            className="font-mono text-xs uppercase tracking-widest"
+            style={{ color: GOLD }}
+          >
+            Stack
+          </Link>
+          <Link
             href="/compare/"
             className="font-mono text-xs uppercase tracking-widest"
             style={{ color: GOLD }}

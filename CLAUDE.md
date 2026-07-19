@@ -10,7 +10,7 @@ A static-first civic data project tracking how the State of Georgia (down to the
 2. When a source changes, the Python ETL in `pipeline/` downloads and normalizes data into `data/processed/` (Parquet + pre-aggregated JSON per county/fiscal year).
 3. Data changes are **committed to git** — the revision history of the numbers is intentionally the public audit trail — and a commit triggers a rebuild of the static site in `web/`.
 
-Current status: change detection, the ETLs (`etl_rlgf.py` covering county, city, and consolidated-government workbooks, `etl_state.py`, `etl_population.py`), the statewide dashboard homepage, the county choropleth, per-county ledger pages (`/county/[slug]`), the comparison view (`/compare`), the methodology page (`/about`, which renders `pipeline/crosswalk.json` directly so the documented crosswalk can't drift from the code), and a site nav with county search are all live. City and consolidated data are normalized and committed but not yet surfaced in the web frontend.
+Current status: change detection, the ETLs (`etl_rlgf.py` covering county, city, and consolidated-government workbooks, `etl_state.py`, `etl_population.py`, `etl_schools.py`, `etl_digest.py`), the statewide dashboard homepage, the county choropleth, ledger pages for every level (`/county/[slug]`, `/city/[slug]`, `/consolidated/[slug]`, `/school/[slug]`), the resident-profile tax stack (`/stack` and `/stack/[county]` — digest millage rates stacked per address with a city picker), the comparison view (`/compare`), the methodology page (`/about`, which renders `pipeline/crosswalk.json` directly so the documented crosswalk can't drift from the code), and a site nav with search across all government types are all live.
 
 ## Commands
 
