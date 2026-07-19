@@ -71,14 +71,14 @@ DEFAULT_ABSOLUTE_TOLERANCE = 5.0
 SYNTHETIC_MARKERS = ("(unallocated)", "(reconciliation adjustment)")
 
 KNOWN_MISSING_COUNTIES = {
-    "BIBB": "Macon-Bibb consolidated government; separate TED government type",
-    "CHATTAHOOCHEE": "Cusseta-Chattahoochee consolidated government; separate TED government type",
-    "CLARKE": "Athens-Clarke unified government; separate TED government type",
-    "ECHOLS": "Statenville-Echols consolidated government; separate TED government type",
-    "MUSCOGEE": "Columbus-Muscogee consolidated government; separate TED government type",
-    "QUITMAN": "Georgetown-Quitman unified government; separate TED government type",
-    "RICHMOND": "Augusta-Richmond consolidated government; separate TED government type",
-    "WEBSTER": "Webster County unified government; separate TED government type",
+    "BIBB": "governed by the Macon-Bibb consolidated government, which files instead — see its consolidated ledger",
+    "CHATTAHOOCHEE": "governed by the Cusseta-Chattahoochee consolidated government, which files instead — see its consolidated ledger",
+    "CLARKE": "governed by the Athens-Clarke unified government, which files instead — see its consolidated ledger",
+    "ECHOLS": "governed by the Statenville-Echols consolidated government, which files instead — see its consolidated ledger",
+    "MUSCOGEE": "governed by the Columbus-Muscogee consolidated government, which files instead — see its consolidated ledger",
+    "QUITMAN": "governed by the Georgetown-Quitman unified government, which files instead — see its consolidated ledger",
+    "RICHMOND": "governed by the Augusta-Richmond consolidated government, which files instead — see its consolidated ledger",
+    "WEBSTER": "governed by the Preston-Webster unified government, which files instead — see its consolidated ledger",
 }
 
 CONSOLIDATED_GOVERNMENTS = {

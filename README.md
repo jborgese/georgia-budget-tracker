@@ -32,9 +32,13 @@ database or application server. Instead:
 | Source | What it provides | Cadence |
 | ------ | ---------------- | ------- |
 | [Open Georgia](https://open.ga.gov/) | State employee salaries & travel; payments, obligations, and professional-services expenditures of state organizations | Annual |
+| [OPB — Governor's Budget Reports](https://opb.georgia.gov/budget-information/budget-documents/governors-budget-reports) | State revenues by source and expenditures/appropriations by agency, parsed from the report PDFs | Annual |
 | [Georgia Data Analytics Center](https://gdac.georgia.gov/budget) | State of Georgia revenues and expenditures dashboards | Annual |
 | [DCA — Report of Local Government Finances](https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf) | County / municipal revenues, expenditures, debt, and assets (required annual filing) | Rolling — due 6 months after each government's fiscal year closes |
 | [Tax & Expenditure Data Center (UGA CVIOG)](https://ted.cviog.uga.edu/) | Downloadable RLGF datasets (county, city, and consolidated city-county workbooks) and local budget documents | Rolling / annual |
+| [US Census — Annual Survey of School System Finances (F-33)](https://www.census.gov/programs-surveys/school-finances.html) | Per-district school system revenues by source, expenditures by function, debt, and enrollment | Annual, ~18 months after fiscal year end |
+| [DOR — consolidated tax digest](https://georgiadata.org/depofrevdata) (via GeorgiaData.org) | Millage rates, assessed values, and levies per county and taxing district | Annual |
+| [US Census — population estimates](https://www.census.gov/programs-surveys/popest.html) | County and incorporated-place population denominators for per-resident metrics | Annual (new vintage each spring) |
 | [GeorgiaData.org Local Government Financial Portal](https://georgiadata.org/financialdata) | Searchable county, municipal, and school-system financial data | Annual |
 
 A machine-readable registry of these sources lives in `pipeline/sources.json`.

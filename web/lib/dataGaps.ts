@@ -15,9 +15,9 @@ export const LEDGER_DATA_GAPS: DataGap[] = [
   },
   {
     id: "authorities",
-    title: "Special-purpose authorities",
+    title: "Special-purpose authority budgets",
     explanation:
-      "Water and sewer, housing, hospital, airport, development, and transit authorities (including MARTA) are separate legal entities with their own budgets. Georgia collects their finances through DCA's Annual Authority Registration and Financial report, but publishes the results only as a display dashboard — no machine-readable statewide data exists to include here.",
+      "Water and sewer, housing, hospital, airport, development, and transit authorities (including MARTA) are separate legal entities with their own budgets. Where an authority levies a property tax, its rate appears in the county's property-tax rates table — but the budgets behind those levies are collected by DCA's Annual Authority Registration and Financial report and published only as a display dashboard, so no machine-readable statewide spending data exists to include here.",
   },
   {
     id: "tads",
