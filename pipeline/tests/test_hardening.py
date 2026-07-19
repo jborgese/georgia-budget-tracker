@@ -222,6 +222,15 @@ def census_csv(fips_codes):
     return "\n".join(lines) + "\n"
 
 
+def place_csv() -> str:
+    return "\n".join([
+        "SUMLEV,STATE,NAME,POPESTIMATE2020,POPESTIMATE2021",
+        "162,13,Abbeville city,2500,2510",
+        "162,13,Pine Lake city,700,705",
+        "050,13,Appling County,18000,18100",
+    ]) + "\n"
+
+
 def test_etl_population_falls_back_to_committed_raw(tmp_path, monkeypatch):
     import schema as contract
 
@@ -230,13 +239,18 @@ def test_etl_population_falls_back_to_committed_raw(tmp_path, monkeypatch):
     text = census_csv(sorted(contract.COUNTY_FIPS.values()))
     for source_id in etl_population.SOURCE_IDS:
         (raw_dir / f"{source_id}.csv").write_text(text, encoding="latin-1")
+    (raw_dir / f"{etl_population.PLACE_SOURCE_ID}.csv").write_text(
+        place_csv(), encoding="latin-1")
 
+    all_ids = [*etl_population.SOURCE_IDS, etl_population.PLACE_SOURCE_ID]
     monkeypatch.setattr(etl_population, "RAW_DIR", raw_dir)
     monkeypatch.setattr(etl_population, "OUTPUT_FILE", tmp_path / "pop.json")
+    monkeypatch.setattr(etl_population, "CITY_OUTPUT_FILE",
+                        tmp_path / "citypop.json")
     monkeypatch.setattr(runlog, "STATE_FILE", tmp_path / ".source-state.json")
     monkeypatch.setattr(etl_population.sys, "argv", ["etl_population.py"])
     monkeypatch.setattr(etl_population, "source_urls",
-                        lambda: {sid: "http://x" for sid in etl_population.SOURCE_IDS})
+                        lambda: {sid: "http://x" for sid in all_ids})
 
     def broken_download(*args, **kwargs):
         raise OSError("census unreachable")
@@ -245,9 +259,10 @@ def test_etl_population_falls_back_to_committed_raw(tmp_path, monkeypatch):
 
     assert etl_population.main() == 1
     assert (tmp_path / "pop.json").exists()
+    city_doc = json.loads((tmp_path / "citypop.json").read_text())
+    assert city_doc["populations"]["PINE LAKE"]["2021"] == 705
     state = json.loads((tmp_path / ".source-state.json").read_text())
-    assert all(state[sid]["consecutive_failures"] == 1
-               for sid in etl_population.SOURCE_IDS)
+    assert all(state[sid]["consecutive_failures"] == 1 for sid in all_ids)
 
 
 @pytest.fixture

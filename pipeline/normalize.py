@@ -70,6 +70,7 @@ MANIFEST_FILE = ROOT / "data" / "processed" / "manifest.json"
 SOURCE_STATE_FILE = ROOT / "data" / ".source-state.json"
 SOURCES_FILE = PIPELINE_DIR / "sources.json"
 POPULATION_FILE = ROOT / "data" / "processed" / "county_population.json"
+CITY_POPULATION_FILE = ROOT / "data" / "processed" / "city_population.json"
 METRICS_FILE = ROOT / "data" / "processed" / "counties" / "metrics.json"
 COUNTY_SOURCE = "ted_rlgf_county_workbook"
 CITY_SOURCE = "ted_rlgf_city_workbook"
@@ -77,6 +78,16 @@ CONSOLIDATED_SOURCE = "ted_rlgf_consolidated_workbook"
 OPENGA_SOURCE = "open_georgia_poa"
 OPB_SOURCE = "opb_governors_budget_report_fy2026"
 POPULATION_SOURCES = ["census_county_pop_2010s", "census_county_pop_2020s"]
+PLACE_POPULATION_SOURCE = "census_place_pop_2020s"
+PLACE_NAME_ALIASES = {
+    "DESOTO": "DE SOTO",
+    "DUPONT": "DU PONT",
+    "EDGEHILL": "EDGE HILL",
+    "PINELAKE": "PINE LAKE",
+    "SOUTH FULTON CITY": "SOUTH FULTON",
+    "STONECREST CITY": "STONECREST",
+    "VIDETTE TOWN": "VIDETTE",
+}
 RLGF_SIDES = {"revenues": "revenue", "operating": "expenditure",
               "capital": "expenditure"}
 RLGF_LEVELS = {
@@ -313,14 +324,14 @@ def entity_slug(entity: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", entity.lower()).strip("-")
 
 
-def county_year_metrics(county: str, fiscal_year: int,
+def entity_year_metrics(entity_type: str, entity: str, fiscal_year: int,
                         expected: dict[tuple, float],
-                        populations: dict[str, dict[str, int]]) -> dict | None:
-    revenue = expected.get(("county", county, fiscal_year, "revenue"))
-    expenditure = expected.get(("county", county, fiscal_year, "expenditure"))
+                        population: int | None) -> dict | None:
+    revenue = expected.get((entity_type, entity, fiscal_year, "revenue"))
+    expenditure = expected.get((entity_type, entity, fiscal_year,
+                                "expenditure"))
     if not revenue and not expenditure:
         return None
-    population = populations.get(contract.COUNTY_FIPS[county], {}).get(str(fiscal_year))
     return {
         "revenue": revenue,
         "expenditure": expenditure,
@@ -332,6 +343,15 @@ def county_year_metrics(county: str, fiscal_year: int,
             round(expenditure / population, 2)
             if expenditure is not None and population else None),
     }
+
+
+def county_year_metrics(county: str, fiscal_year: int,
+                        expected: dict[tuple, float],
+                        populations: dict[str, dict[str, int]]) -> dict | None:
+    population = populations.get(contract.COUNTY_FIPS[county],
+                                 {}).get(str(fiscal_year))
+    return entity_year_metrics("county", county, fiscal_year, expected,
+                               population)
 
 
 def county_metrics_document(county_expected: dict[tuple, float],
@@ -364,6 +384,34 @@ def county_metrics_document(county_expected: dict[tuple, float],
         "sources": [COUNTY_SOURCE, *POPULATION_SOURCES],
         "fiscal_years": [int(year) for year in fiscal_years],
         "counties": counties,
+    }
+
+
+def city_population_lookup(entity: str,
+                           places: dict[str, dict[str, int]],
+                           fiscal_year: int) -> int | None:
+    key = PLACE_NAME_ALIASES.get(entity, entity)
+    return places.get(key, {}).get(str(fiscal_year))
+
+
+def entity_metrics_document(entity_type: str, expected: dict[tuple, float],
+                            population_for, sources: list[str]) -> dict:
+    keys = [key for key in expected if key[0] == entity_type]
+    fiscal_years = sorted({key[2] for key in keys})
+    entities = sorted({key[1] for key in keys})
+    return {
+        "sources": sources,
+        "fiscal_years": [int(year) for year in fiscal_years],
+        "entities": {
+            entity_slug(entity): {
+                "entity": entity,
+                "years": {str(year): entity_year_metrics(
+                    entity_type, entity, year, expected,
+                    population_for(entity, year))
+                    for year in fiscal_years},
+            }
+            for entity in entities
+        },
     }
 
 
@@ -432,7 +480,8 @@ def debt_identity(county: pd.DataFrame, city: pd.DataFrame,
 
 def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                    city: pd.DataFrame, consolidated: pd.DataFrame,
-                   state: pd.DataFrame, expected: dict[tuple, float]) -> dict:
+                   state: pd.DataFrame, expected: dict[tuple, float],
+                   cities_with_population: int | None = None) -> dict:
     source_state = json.loads(SOURCE_STATE_FILE.read_text()) \
         if SOURCE_STATE_FILE.exists() else {}
     openga = state[state.source == OPENGA_SOURCE]
@@ -487,6 +536,13 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                 "vintage": vintage(source_state, POPULATION_SOURCES[1]),
                 "note": "county population denominators 2020 onward (latest vintage)",
             },
+            **({PLACE_POPULATION_SOURCE: {
+                "vintage": vintage(source_state, PLACE_POPULATION_SOURCE),
+                "cities_with_population": cities_with_population,
+                "note": ("incorporated-place denominators 2020 onward, "
+                         "matched to RLGF city names; cities missing from "
+                         "the Census place file carry null population"),
+            }} if cities_with_population is not None else {}),
             OPB_SOURCE: {
                 "vintage": vintage(source_state, OPB_SOURCE),
                 "fiscal_years_by_basis": {
@@ -542,8 +598,16 @@ def main() -> int:
         TO '{NORMALIZED_PARQUET}' (FORMAT PARQUET, COMPRESSION ZSTD)
         """
     )
+    cities_with_population = None
+    if CITY_POPULATION_FILE.exists():
+        place_lookup = json.loads(
+            CITY_POPULATION_FILE.read_text())["populations"]
+        city_names = {key[1] for key in city_expected if key[0] == "city"}
+        cities_with_population = sum(
+            1 for name in city_names
+            if PLACE_NAME_ALIASES.get(name, name) in place_lookup)
     manifest = build_manifest(normalized, county, city, consolidated, state,
-                              expected)
+                              expected, cities_with_population)
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=1) + "\n")
     categories = state_categories_document(normalized, state)
     categories_file = ROOT / "data" / "processed" / "state" / "categories.json"
@@ -563,6 +627,21 @@ def main() -> int:
         target = ROOT / "data" / "processed" / directory / "categories.json"
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(document, indent=1) + "\n")
+    if CITY_POPULATION_FILE.exists():
+        places = json.loads(CITY_POPULATION_FILE.read_text())["populations"]
+        city_metrics = entity_metrics_document(
+            "city", city_expected,
+            lambda entity, year: city_population_lookup(entity, places, year),
+            [CITY_SOURCE, PLACE_POPULATION_SOURCE])
+        (ROOT / "data" / "processed" / "cities" / "metrics.json").write_text(
+            json.dumps(city_metrics, indent=1) + "\n")
+    consolidated_metrics = entity_metrics_document(
+        "consolidated", consolidated_expected,
+        lambda entity, year: populations.get(
+            contract.CONSOLIDATED_COUNTY_FIPS[entity], {}).get(str(year)),
+        [CONSOLIDATED_SOURCE, *POPULATION_SOURCES])
+    (ROOT / "data" / "processed" / "consolidated" / "metrics.json").write_text(
+        json.dumps(consolidated_metrics, indent=1) + "\n")
 
     report = manifest["normalized"]["reconciliation"]
     print(f"Wrote {len(normalized):,} normalized records "

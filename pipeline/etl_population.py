@@ -1,4 +1,4 @@
-"""Transform Census county population estimates into a Georgia lookup.
+"""Transform Census population estimates into Georgia lookups.
 
 Downloads the two vintage files registered in pipeline/sources.json
 (``census_county_pop_2010s`` for 2010-2020 and ``census_county_pop_2020s``
@@ -10,7 +10,13 @@ Populations are July 1 estimates for the named calendar year; per-capita
 metrics elsewhere in the pipeline pair fiscal year FY20NN with the year-20NN
 estimate.
 
-Usage: etl_population.py [path-2010s-csv path-2020s-csv]
+Incorporated places: downloads ``census_place_pop_2020s`` (SUB-EST vintage
+file, 2020 onward), filters to whole-place rows (SUMLEV 162), and writes
+data/processed/city_population.json keyed by the place name normalized to
+the TED convention (uppercase, "city"/"town" suffix stripped) so city
+per-capita metrics can join on the RLGF entity name.
+
+Usage: etl_population.py [path-2010s-csv path-2020s-csv [path-places-csv]]
 With local paths the download is skipped (the files are still copied into
 data/raw/).
 """
@@ -31,21 +37,26 @@ ROOT = Path(__file__).resolve().parent.parent
 SOURCES_FILE = ROOT / "pipeline" / "sources.json"
 RAW_DIR = ROOT / "data" / "raw"
 OUTPUT_FILE = ROOT / "data" / "processed" / "county_population.json"
+CITY_OUTPUT_FILE = ROOT / "data" / "processed" / "city_population.json"
 SOURCE_IDS = ["census_county_pop_2010s", "census_county_pop_2020s"]
+PLACE_SOURCE_ID = "census_place_pop_2020s"
 USER_AGENT = (
     "georgia-budget-tracker/0.1 (+https://github.com/<owner>/georgia-budget-tracker; "
     "civic data project)"
 )
 GEORGIA_STATE_FIPS = "13"
 COUNTY_SUMLEV = "050"
+PLACE_SUMLEV = "162"
+PLACE_SUFFIXES = (" city", " town")
 
 
 def source_urls() -> dict[str, str]:
     sources = {s["id"]: s["url"] for s in json.loads(SOURCES_FILE.read_text())["sources"]}
-    missing = [sid for sid in SOURCE_IDS if sid not in sources]
+    wanted = [*SOURCE_IDS, PLACE_SOURCE_ID]
+    missing = [sid for sid in wanted if sid not in sources]
     if missing:
         raise SystemExit(f"Sources {missing} not found in {SOURCES_FILE}")
-    return {sid: sources[sid] for sid in SOURCE_IDS}
+    return {sid: sources[sid] for sid in wanted}
 
 
 def georgia_populations(csv_text: str) -> dict[str, dict[str, int]]:
@@ -65,6 +76,35 @@ def georgia_populations(csv_text: str) -> dict[str, dict[str, int]]:
     return populations
 
 
+def place_entity_name(census_name: str) -> str:
+    name = census_name.strip()
+    for suffix in PLACE_SUFFIXES:
+        if name.lower().endswith(suffix):
+            name = name[: -len(suffix)]
+            break
+    return name.upper()
+
+
+def georgia_place_populations(csv_text: str) -> dict[str, dict[str, int]]:
+    reader = csv.DictReader(io.StringIO(csv_text))
+    populations: dict[str, dict[str, int]] = {}
+    for row in reader:
+        if (row.get("SUMLEV") != PLACE_SUMLEV
+                or row.get("STATE") != GEORGIA_STATE_FIPS):
+            continue
+        name = place_entity_name(row["NAME"])
+        estimates = {
+            column.removeprefix("POPESTIMATE"): int(value)
+            for column, value in row.items()
+            if column.startswith("POPESTIMATE") and value
+        }
+        if name in populations and populations[name] != estimates:
+            raise SystemExit(
+                f"Distinct place rows normalize to the same name {name!r}.")
+        populations[name] = estimates
+    return populations
+
+
 def merge_vintages(older: dict[str, dict[str, int]],
                    newer: dict[str, dict[str, int]]) -> dict[str, dict[str, int]]:
     merged: dict[str, dict[str, int]] = {}
@@ -75,10 +115,11 @@ def merge_vintages(older: dict[str, dict[str, int]],
 
 def main() -> int:
     urls = source_urls()
-    local_paths = dict(zip(SOURCE_IDS, sys.argv[1:3])) if len(sys.argv) > 2 else {}
+    all_ids = [*SOURCE_IDS, PLACE_SOURCE_ID]
+    local_paths = dict(zip(all_ids, sys.argv[1:4])) if len(sys.argv) > 2 else {}
     texts: dict[str, str] = {}
     any_failed = False
-    for source_id in SOURCE_IDS:
+    for source_id in all_ids:
         raw_file = RAW_DIR / f"{source_id}.csv"
         if source_id in local_paths:
             RAW_DIR.mkdir(parents=True, exist_ok=True)
@@ -124,6 +165,21 @@ def main() -> int:
     runlog.log_event("transformed", "county_population", counties=len(merged))
     print(f"Wrote populations for {len(merged)} counties "
           f"({years[0]}-{years[-1]}) to {runlog.display_path(OUTPUT_FILE)}")
+
+    places = georgia_place_populations(texts[PLACE_SOURCE_ID])
+    if not places:
+        raise SystemExit("No Georgia incorporated places parsed — "
+                         "layout may have changed.")
+    place_years = sorted({year for place in places.values() for year in place})
+    CITY_OUTPUT_FILE.write_text(json.dumps({
+        "sources": [PLACE_SOURCE_ID],
+        "years": [int(year) for year in place_years],
+        "populations": places,
+    }, indent=1, sort_keys=True) + "\n")
+    runlog.log_event("transformed", "city_population", places=len(places))
+    print(f"Wrote populations for {len(places)} incorporated places "
+          f"({place_years[0]}-{place_years[-1]}) to "
+          f"{runlog.display_path(CITY_OUTPUT_FILE)}")
     return 1 if any_failed else 0
 
 

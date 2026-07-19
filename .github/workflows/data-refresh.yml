@@ -37,6 +37,7 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
+          contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: pip install -r pipeline/requirements.txt
 
@@ -69,7 +70,9 @@ jobs:
       - name: Run census population ETL
         id: population
         continue-on-error: true
-        if: contains(steps.detect.outputs.changed_sources, 'census_county_pop')
+        if: |
+          contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
+          contains(steps.detect.outputs.changed_sources, 'census_place_pop')
         run: python pipeline/etl_population.py
 
       - name: Run school finances ETL
@@ -85,6 +88,7 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'open_georgia_poa') ||
           contains(steps.detect.outputs.changed_sources, 'opb_governors_budget_report') ||
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
+          contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: python pipeline/normalize.py
 
