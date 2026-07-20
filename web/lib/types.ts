@@ -256,6 +256,34 @@ export interface SchoolIndexDocument {
   }[];
 }
 
+export interface GadoeYear {
+  fte: number;
+  revenue: { local: number; state: number; federal: number; total: number };
+  per_fte: {
+    local: number | null;
+    state: number | null;
+    federal: number | null;
+    total: number | null;
+  };
+}
+
+export interface GadoeDistrict {
+  system_code: string;
+  system_name: string;
+  slug: string;
+  years: Record<string, GadoeYear>;
+}
+
+export interface GadoeOverlayDocument {
+  source: string;
+  report: string;
+  basis: string;
+  f33_latest_fiscal_year: number;
+  fiscal_years: number[];
+  statewide: Record<string, GadoeYear>;
+  districts: Record<string, GadoeDistrict>;
+}
+
 export interface SchoolPageData {
   document: SchoolDocument;
   displayName: string;
@@ -264,6 +292,7 @@ export interface SchoolPageData {
   latestYear: number;
   filedYears: number[];
   provenance: string;
+  gadoe: { fiscalYear: number; year: GadoeYear; note: string } | null;
 }
 
 export interface MillageDistrictYear {

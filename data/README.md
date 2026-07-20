@@ -11,6 +11,9 @@ Versioned datasets with provenance.
   nationwide coverage) are not committed; `.source-state.json` records each
   file's fingerprint, and the extracted Georgia records live in
   `processed/school_finances.parquet`.
+  Note: `raw/gadoe_revenues_<year>.xlsx` are session-bound SSRS exports with
+  no stable upstream URL; the committed copies double as the offline fallback
+  for `pipeline/etl_gadoe.py`.
 - `processed/` — cleaned, normalized Parquet + pre-aggregated JSON per county and fiscal year.
 - `.source-state.json` — fingerprints written by `pipeline/check_sources.py`.
 

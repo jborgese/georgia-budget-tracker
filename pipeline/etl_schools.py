@@ -53,6 +53,7 @@ RAW_DIR = ROOT / "data" / "raw"
 PARQUET_FILE = ROOT / "data" / "processed" / "school_finances.parquet"
 SCHOOLS_DIR = ROOT / "data" / "processed" / "schools"
 SOURCE_PREFIX = "census_f33_"
+GADOE_OVERLAY = "gadoe.json"
 GEORGIA_FIPS = "13"
 GEORGIA_CENSUS_STATE = "11"
 REGULAR_SCHOOL_LEVEL = "3"
@@ -252,7 +253,8 @@ def write_school_json(frame: pd.DataFrame) -> int:
     fiscal_years = sorted(int(y) for y in frame.fiscal_year.unique())
     SCHOOLS_DIR.mkdir(parents=True, exist_ok=True)
     for stale in SCHOOLS_DIR.glob("*.json"):
-        stale.unlink()
+        if stale.name != GADOE_OVERLAY:
+            stale.unlink()
     for _, rows in frame.groupby("ncesid"):
         document = district_document(rows, fiscal_years)
         (SCHOOLS_DIR / f"{document['slug']}.json").write_text(

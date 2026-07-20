@@ -39,6 +39,7 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_f33') ||
+          contains(steps.detect.outputs.changed_sources, 'gadoe_revenues') ||
           contains(steps.detect.outputs.changed_sources, 'dor_digest')
         run: pip install -r pipeline/requirements.txt
 
@@ -82,6 +83,12 @@ jobs:
         if: contains(steps.detect.outputs.changed_sources, 'census_f33')
         run: python pipeline/etl_schools.py ${{ steps.detect.outputs.changed_sources }}
 
+      - name: Run GaDOE school revenues ETL
+        id: gadoe
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'gadoe_revenues')
+        run: python pipeline/etl_gadoe.py
+
       - name: Run tax digest ETL
         id: digest
         continue-on-error: true
@@ -97,6 +104,7 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'census_county_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_f33') ||
+          contains(steps.detect.outputs.changed_sources, 'gadoe_revenues') ||
           contains(steps.detect.outputs.changed_sources, 'dor_digest')
         run: python pipeline/normalize.py
 
@@ -132,6 +140,7 @@ jobs:
           steps.state.outcome == 'failure' ||
           steps.population.outcome == 'failure' ||
           steps.schools.outcome == 'failure' ||
+          steps.gadoe.outcome == 'failure' ||
           steps.digest.outcome == 'failure'
         run: |
           echo "One or more transforms failed; see the steps above and the source-failure issue."

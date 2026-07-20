@@ -61,6 +61,7 @@ import schema as contract  # noqa: E402
 ROOT = PIPELINE_DIR.parent
 DIGEST_PARQUET = ROOT / "data" / "processed" / "digest.parquet"
 SCHOOL_PARQUET = ROOT / "data" / "processed" / "school_finances.parquet"
+GADOE_PARQUET = ROOT / "data" / "processed" / "gadoe_revenues.parquet"
 COUNTY_PARQUET = ROOT / "data" / "processed" / "rlgf_county_finances.parquet"
 CITY_PARQUET = ROOT / "data" / "processed" / "rlgf_city_finances.parquet"
 CONSOLIDATED_PARQUET = (ROOT / "data" / "processed"
@@ -472,6 +473,24 @@ def school_manifest_entry(source_state: dict) -> dict | None:
     }
 
 
+def gadoe_manifest_entry(source_state: dict) -> dict | None:
+    if not GADOE_PARQUET.exists():
+        return None
+    revenues = duckdb.sql(f"FROM '{GADOE_PARQUET}'").df()
+    return {
+        "vintage": vintage(source_state, "gadoe_revenues"),
+        "fiscal_years": sorted(int(y) for y in revenues.fiscal_year.unique()),
+        "records": int(len(revenues)),
+        "systems": int(revenues.system_code.nunique()),
+        "districts_mapped": int(revenues.ncesid.nunique()),
+        "in_normalized_table": False,
+        "note": ("current-year School System Revenues from GaDOE's Financial "
+                 "Data Collection System, supplementing the lagged F-33 "
+                 "series on the school pages; excluded from the normalized "
+                 "table for the same QBE double-count reason as census_f33"),
+    }
+
+
 def digest_manifest_entry(source_state: dict) -> dict | None:
     if not DIGEST_PARQUET.exists():
         return None
@@ -510,10 +529,12 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
     opb = state[state.source == OPB_SOURCE]
     counties_present = sorted(county.county.unique())
     schools = school_manifest_entry(source_state)
+    gadoe = gadoe_manifest_entry(source_state)
     digest = digest_manifest_entry(source_state)
     return {
         "sources": {
             **({"census_f33": schools} if schools else {}),
+            **({"gadoe_revenues": gadoe} if gadoe else {}),
             **({"dor_digest": digest} if digest else {}),
             COUNTY_SOURCE: {
                 "vintage": vintage(source_state, COUNTY_SOURCE),

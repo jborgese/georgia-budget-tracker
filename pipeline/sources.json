@@ -339,6 +339,15 @@
       "level": "school_district"
     },
     {
+      "id": "gadoe_revenues",
+      "name": "GaDOE — Financial Data Collection System, School System Revenues",
+      "url": "https://financeweb.doe.k12.ga.us/FinancialPublicWeb/ReportsMenuPublic.aspx",
+      "provides": "Current-year per-system Local/State/Federal operating revenues and QBE FTE counts (FY2012+), exported from the session-bound SSRS Financial Review portal; supplements the lagged Census F-33 detail with the newest year's headline figures",
+      "cadence": "annual publication, revised as systems file through the year",
+      "level": "school_district",
+      "check": "gadoe_revenues"
+    },
+    {
       "id": "dca_rlgf",
       "name": "DCA \u2014 Report of Local Government Finances",
       "url": "https://dca.georgia.gov/community-assistance/government-authority-reporting/report-local-government-finance-rlgf",

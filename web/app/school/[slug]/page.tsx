@@ -269,6 +269,47 @@ export default async function SchoolPage({
           />
         </section>
 
+        {data.gadoe ? (
+          <section
+            aria-label={`Current-year figures, ${fiscalYearLabel(data.gadoe.fiscalYear)}, from GaDOE`}
+            className="mt-14"
+          >
+            <SectionHeading>
+              Ahead of the survey — {fiscalYearLabel(data.gadoe.fiscalYear)}
+            </SectionHeading>
+            <p className="mt-3 max-w-prose text-sm leading-relaxed">
+              The Census survey behind the rest of this page runs about 18
+              months behind, but the state&apos;s own collection already
+              covers {fiscalYearLabel(data.gadoe.fiscalYear)}: the district
+              reported {data.gadoe.year.fte.toLocaleString("en-US")} students
+              (QBE full-time equivalents) and{" "}
+              {formatCompactDollars(data.gadoe.year.revenue.total)} in
+              operating revenue
+              {data.gadoe.year.per_fte.total != null
+                ? ` — ${formatDollars(data.gadoe.year.per_fte.total)} per student`
+                : ""}
+              . These figures exclude capital-projects and debt-service
+              funds, so they run below the all-funds Census totals above.
+            </p>
+            <ShareTable
+              caption={`${data.displayName} ${fiscalYearLabel(data.gadoe.fiscalYear)} operating revenue by source, from GaDOE's current-year collection`}
+              rows={[
+                { label: "Local revenue", amount: data.gadoe.year.revenue.local },
+                { label: "State aid", amount: data.gadoe.year.revenue.state },
+                { label: "Federal aid", amount: data.gadoe.year.revenue.federal },
+              ]}
+              total={data.gadoe.year.revenue.total}
+              totalLabel="Total operating revenue"
+            />
+            <p
+              className="mt-2 max-w-prose text-xs leading-relaxed"
+              style={{ color: MUTED }}
+            >
+              {data.gadoe.note}
+            </p>
+          </section>
+        ) : null}
+
         <section aria-label={`Where ${fy} money came from`} className="mt-14">
           <SectionHeading>Where the money came from</SectionHeading>
           <ShareTable

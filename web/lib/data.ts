@@ -19,6 +19,7 @@ import type {
   EntityYearMetrics,
   EntityYearTotals,
   FiscalYearTotals,
+  GadoeOverlayDocument,
   ManifestDocument,
   MedianYear,
   MillageDocument,
@@ -67,6 +68,8 @@ const SOURCE_NAMES: Record<string, string> = {
     "OPB — Governor's Budget Report, AFY 2025 & FY 2026",
   census_county_pop_2020s: "US Census — county population estimates",
   census_f33: "US Census — Annual Survey of School System Finances (F-33)",
+  gadoe_revenues:
+    "GaDOE — Financial Data Collection System (current-year school revenues)",
   dor_digest: "DOR — consolidated tax digest (millage rates), via GeorgiaData.org",
 };
 
@@ -213,7 +216,9 @@ function sourceNotes(manifest: ManifestDocument): SourceNote[] {
       entry?.fiscal_years ??
       [...new Set(Object.values(entry?.fiscal_years_by_basis ?? {}).flat())].sort();
     const span = years.length
-      ? `FY${Math.min(...years)}–FY${Math.max(...years)}`
+      ? Math.min(...years) === Math.max(...years)
+        ? `FY${years[0]}`
+        : `FY${Math.min(...years)}–FY${Math.max(...years)}`
       : "";
     const counties =
       entry?.counties_present != null
@@ -554,6 +559,23 @@ export function schoolsByCountyFips(): Record<
   return grouped;
 }
 
+export function loadGadoeOverlay(): GadoeOverlayDocument | null {
+  const file = path.join(PROCESSED_DIR, "schools", "gadoe.json");
+  if (!fs.existsSync(file)) return null;
+  const overlay = readJsonCached<GadoeOverlayDocument>("schools", "gadoe.json");
+  return overlay.fiscal_years.length ? overlay : null;
+}
+
+function gadoeNote(overlay: GadoeOverlayDocument, fiscalYear: number): string {
+  return (
+    `Source: Georgia Department of Education Financial Data Collection ` +
+    `System, School System Revenues report, fiscal year ${fiscalYear}. ` +
+    `${overlay.basis} Figures may be revised as systems file through the ` +
+    `year; the Census survey covers this year in full detail roughly 18 ` +
+    `months after it closes.`
+  );
+}
+
 function schoolProvenance(manifest: ManifestDocument): string {
   const entry = manifest.sources["census_f33"];
   const years = entry?.fiscal_years ?? [];
@@ -584,6 +606,12 @@ export function loadSchoolPage(slug: string): SchoolPageData | null {
     (candidate) => candidate.fips === document.county_fips,
   );
   const filedYears = Object.keys(document.years).map(Number).sort();
+  const overlay = loadGadoeOverlay();
+  const gadoeDistrict = overlay?.districts[document.ncesid];
+  const gadoeYears = gadoeDistrict
+    ? Object.keys(gadoeDistrict.years).map(Number)
+    : [];
+  const gadoeFiscalYear = gadoeYears.length ? Math.max(...gadoeYears) : null;
   return {
     document,
     displayName: document.display_name,
@@ -592,6 +620,14 @@ export function loadSchoolPage(slug: string): SchoolPageData | null {
     latestYear: filedYears.at(-1) as number,
     filedYears,
     provenance: schoolProvenance(manifest),
+    gadoe:
+      overlay && gadoeDistrict && gadoeFiscalYear != null
+        ? {
+            fiscalYear: gadoeFiscalYear,
+            year: gadoeDistrict.years[String(gadoeFiscalYear)],
+            note: gadoeNote(overlay, gadoeFiscalYear),
+          }
+        : null,
   };
 }
 

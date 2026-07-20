@@ -26,6 +26,7 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+import gadoe
 from runlog import log_event
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -90,6 +91,8 @@ def fingerprint(url: str, check: str = "http") -> dict:
     """Return a fingerprint for the resource at ``url``."""
     if check == "openga_years":
         return openga_years_fingerprint()
+    if check == "gadoe_revenues":
+        return gadoe.revenues_fingerprint()
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=TIMEOUT_SECONDS) as response:
         headers = response.headers
