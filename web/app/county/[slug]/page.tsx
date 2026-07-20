@@ -14,6 +14,7 @@ import { ChartLegend } from "@/components/ChartLegend";
 import { DataGapsSection } from "@/components/DataGapsSection";
 import { DebtSection } from "@/components/DebtSection";
 import { MillageSection } from "@/components/MillageSection";
+import { MillageHistorySection } from "@/components/MillageHistorySection";
 import { SalesTaxSection } from "@/components/SalesTaxSection";
 import { CountyMedianChart, type MedianRow } from "@/components/CountyMedianChart";
 import { SpendingPie } from "@/components/SpendingPie";
@@ -408,6 +409,15 @@ export default async function CountyPage({
         <MillageSection
           millage={data.millage}
           taxYears={data.millageTaxYears}
+          countyName={data.displayName}
+        />
+
+        <MillageHistorySection
+          history={data.millageHistory}
+          millage={data.millage}
+          historyTaxYears={data.millageHistoryTaxYears}
+          millageTaxYears={data.millageTaxYears}
+          missingYears={data.millageMissingYears}
           countyName={data.displayName}
         />
 

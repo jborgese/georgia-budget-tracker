@@ -40,8 +40,12 @@ Outputs:
 - data/processed/counties/millage.json   per-county districts with rates and
   levies per tax year, plus the county aggregate assessed values — windowed
   to the most recent MILLAGE_WEB_YEARS tax years so county-page payloads
-  stay small (the site renders only the latest year; the parquet keeps the
-  full series)
+  stay small (the detailed rates table renders the latest year; the parquet
+  keeps the full series)
+- data/processed/counties/millage_history.json   rates-only [M&O, bond]
+  pairs per district and tax year across the full span, plus KNOWN_MISSING
+  inverted per county slug, so the county pages' rate-history view and its
+  gap disclosure derive from the same registry the parser enforces
 
 Usage: etl_digest.py [dor_digest_YYYY ...]
 With no arguments every year is refreshed; with source-id arguments only
@@ -70,6 +74,8 @@ COUNTY_ROSTER = set(json.loads(
 RAW_DIR = ROOT / "data" / "raw"
 PARQUET_FILE = ROOT / "data" / "processed" / "digest.parquet"
 MILLAGE_FILE = ROOT / "data" / "processed" / "counties" / "millage.json"
+MILLAGE_HISTORY_FILE = (ROOT / "data" / "processed" / "counties"
+                        / "millage_history.json")
 SOURCE_PREFIX = "dor_digest_"
 REQUEST_HEADERS = {
     "User-Agent": ("Mozilla/5.0 (compatible; georgia-budget-tracker/0.1; "
@@ -287,6 +293,53 @@ def write_millage_json(frame: pd.DataFrame, source_ids: list[str]) -> int:
     return len(counties)
 
 
+def district_rates(rows: pd.DataFrame) -> dict:
+    return {
+        str(int(row.tax_year)): [number(row.millage_mo),
+                                 number(row.millage_bond)]
+        for row in rows.sort_values("tax_year").itertuples(index=False)
+    }
+
+
+def county_history_entry(rows: pd.DataFrame) -> dict:
+    districts = rows[rows.district_code != COUNTY_TOTAL_CODE]
+    return {
+        "county": rows.county.iloc[0],
+        "districts": [
+            {
+                "district": district,
+                "code": int(code),
+                "rates": district_rates(district_rows),
+            }
+            for (code, district), district_rows in sorted(
+                districts.groupby(["district_code", "district"]),
+                key=lambda item: item[0])
+        ],
+    }
+
+
+def missing_by_county() -> dict[str, list[int]]:
+    missing: dict[str, list[int]] = {}
+    for year, counties in sorted(KNOWN_MISSING.items()):
+        for county in sorted(counties):
+            missing.setdefault(county_slug(county), []).append(year)
+    return dict(sorted(missing.items()))
+
+
+def write_millage_history_json(frame: pd.DataFrame,
+                               source_ids: list[str]) -> None:
+    document = {
+        "sources": source_ids,
+        "tax_years": sorted(int(y) for y in frame.tax_year.unique()),
+        "known_missing": missing_by_county(),
+        "counties": dict(sorted(
+            (county_slug(county), county_history_entry(rows))
+            for county, rows in frame.groupby("county"))),
+    }
+    MILLAGE_HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+    MILLAGE_HISTORY_FILE.write_text(json.dumps(document, indent=1) + "\n")
+
+
 def ensure_raw(source: dict, refresh: bool) -> Path:
     target = raw_file(source["id"])
     if refresh or not target.exists():
@@ -337,14 +390,16 @@ def main() -> int:
     combined = pd.concat(frames, ignore_index=True)
     write_parquet(combined)
     county_count = write_millage_json(combined, sorted(sources))
+    write_millage_history_json(combined, sorted(sources))
     runlog.log_event("transformed", "dor_digest", records=len(combined),
                      counties=county_count)
     print(
         f"Wrote {len(combined):,} district-year rows for "
         f"{county_count} counties "
         f"({combined.tax_year.min()}-{combined.tax_year.max()}) to "
-        f"{PARQUET_FILE.relative_to(ROOT)} and "
-        f"{MILLAGE_FILE.relative_to(ROOT)}"
+        f"{PARQUET_FILE.relative_to(ROOT)}, "
+        f"{MILLAGE_FILE.relative_to(ROOT)}, and "
+        f"{MILLAGE_HISTORY_FILE.relative_to(ROOT)}"
     )
     return 1 if any_failed else 0
 

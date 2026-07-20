@@ -116,6 +116,29 @@ def test_parse_year_enforces_documented_county_gaps(tmp_path):
         etl_digest.parse_year(incomplete_2024, 2024)
 
 
+def test_county_history_entry_excludes_aggregate_and_keeps_null_rates():
+    frame = pd.DataFrame.from_records([
+        {"county": "APPLING", "district": "APPLING COUNTY", "district_code": 0,
+         "tax_year": 2024, "millage_mo": None, "millage_bond": None},
+        {"county": "APPLING", "district": "SCHOOL", "district_code": 2,
+         "tax_year": 1990, "millage_mo": 9.12, "millage_bond": None},
+        {"county": "APPLING", "district": "SCHOOL", "district_code": 2,
+         "tax_year": 2024, "millage_mo": 12.203, "millage_bond": 0},
+    ])
+    entry = etl_digest.county_history_entry(frame)
+    assert len(entry["districts"]) == 1
+    school = entry["districts"][0]
+    assert school["rates"]["1990"] == [9.12, None]
+    assert school["rates"]["2024"] == [12.203, 0]
+
+
+def test_missing_by_county_inverts_known_missing_registry():
+    assert etl_digest.missing_by_county() == {
+        "fulton": [2017, 2018],
+        "wayne": [2014, 2015],
+    }
+
+
 def test_county_entry_splits_aggregate_from_districts():
     frame = pd.DataFrame.from_records([
         {"county": "APPLING", "district": "APPLING COUNTY", "district_code": 0,

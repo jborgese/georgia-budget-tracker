@@ -23,6 +23,7 @@ import type {
   ManifestDocument,
   MedianYear,
   MillageDocument,
+  MillageHistoryDocument,
   SalesTaxDocument,
   SalesTaxLine,
   SchoolDocument,
@@ -248,6 +249,13 @@ export function loadMillage(): MillageDocument {
   return readJsonCached<MillageDocument>("counties", "millage.json");
 }
 
+export function loadMillageHistory(): MillageHistoryDocument {
+  return readJsonCached<MillageHistoryDocument>(
+    "counties",
+    "millage_history.json",
+  );
+}
+
 export function loadCountyMetrics(): CountyMetricsDocument {
   return readJson<CountyMetricsDocument>("counties", "metrics.json");
 }
@@ -382,6 +390,9 @@ export function loadCountyPage(slug: string): CountyPageData | null {
     salesTaxLines: salesTaxLinesFor("counties", slug),
     millage: loadMillage().counties[slug] ?? null,
     millageTaxYears: loadMillage().tax_years,
+    millageHistory: loadMillageHistory().counties[slug] ?? null,
+    millageHistoryTaxYears: loadMillageHistory().tax_years,
+    millageMissingYears: loadMillageHistory().known_missing[slug] ?? [],
   };
 }
 

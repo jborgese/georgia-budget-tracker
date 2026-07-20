@@ -321,6 +321,24 @@ export interface MillageDocument {
   counties: Record<string, MillageCountyEntry>;
 }
 
+export interface MillageHistoryDistrict {
+  district: string;
+  code: number;
+  rates: Record<string, [number | null, number | null]>;
+}
+
+export interface MillageHistoryCountyEntry {
+  county: string;
+  districts: MillageHistoryDistrict[];
+}
+
+export interface MillageHistoryDocument {
+  sources: string[];
+  tax_years: number[];
+  known_missing: Record<string, number[]>;
+  counties: Record<string, MillageHistoryCountyEntry>;
+}
+
 export interface MedianYear {
   revenue: number | null;
   expenditure: number | null;
@@ -362,6 +380,9 @@ export interface CountyPageData {
   salesTaxLines: SalesTaxLine[];
   millage: MillageCountyEntry | null;
   millageTaxYears: number[];
+  millageHistory: MillageHistoryCountyEntry | null;
+  millageHistoryTaxYears: number[];
+  millageMissingYears: number[];
 }
 
 export interface SourceVintage {

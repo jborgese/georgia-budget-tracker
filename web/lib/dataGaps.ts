@@ -5,6 +5,22 @@ export interface DataGap {
   href?: string;
 }
 
+export function digestGapExplanation(
+  countyName: string,
+  years: number[],
+): string {
+  const yearList =
+    years.length > 1
+      ? `${years.slice(0, -1).join(", ")} and ${years.at(-1)}`
+      : String(years[0]);
+  return (
+    `The state's compiled digest export carries no rows for ${countyName} ` +
+    `County in tax year${years.length > 1 ? "s" : ""} ${yearList} — the ` +
+    `county is absent from the DOR file upstream, not withheld here. Those ` +
+    `years appear as breaks in the series, never as zeros.`
+  );
+}
+
 export const LEDGER_DATA_GAPS: DataGap[] = [
   {
     id: "school-taxes",
