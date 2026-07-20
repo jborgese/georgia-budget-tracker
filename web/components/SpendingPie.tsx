@@ -24,6 +24,7 @@ function PieTooltip({
       title={slice.label}
       subtitle={`${(slice.share * 100).toFixed(1)}% of spending`}
       rows={[{ label: "", value: slice.amount, color: slice.fill ?? INK }]}
+      format={formatCompactDollars}
     />
   );
 }

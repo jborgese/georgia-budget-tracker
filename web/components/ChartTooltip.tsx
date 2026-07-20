@@ -12,10 +12,12 @@ export function ChartTooltipFrame({
   title,
   subtitle,
   rows,
+  format = formatBillions,
 }: {
   title: string;
   subtitle?: string;
   rows: TooltipRow[];
+  format?: (value: number) => string;
 }) {
   return (
     <div
@@ -41,7 +43,7 @@ export function ChartTooltipFrame({
               />
             </svg>
             <span className="font-mono text-sm font-semibold tabular-nums">
-              {formatBillions(row.value)}
+              {format(row.value)}
             </span>
             <span className="text-xs" style={{ color: MUTED }}>
               {row.label}

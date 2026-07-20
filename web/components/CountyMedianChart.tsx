@@ -48,6 +48,7 @@ function MedianTooltip({
       title={fiscalYearLabel(label)}
       subtitle={row.county == null ? "no filing" : undefined}
       rows={rows}
+      format={formatDollars}
     />
   );
 }

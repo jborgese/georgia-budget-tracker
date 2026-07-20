@@ -45,7 +45,13 @@ function TrendTooltip({
   if (row.expenditure != null) {
     rows.push({ label: "expenditures", value: row.expenditure, color: SERIES.gold });
   }
-  return <ChartTooltipFrame title={fiscalYearLabel(label)} rows={rows} />;
+  return (
+    <ChartTooltipFrame
+      title={fiscalYearLabel(label)}
+      rows={rows}
+      format={formatCompactDollars}
+    />
+  );
 }
 
 export function CountyTrendChart({
