@@ -570,11 +570,15 @@ function schoolProvenance(manifest: ManifestDocument): string {
   );
 }
 
+export function loadSchoolDocument(slug: string): SchoolDocument {
+  return readJson<SchoolDocument>("schools", `${slug}.json`);
+}
+
 export function loadSchoolPage(slug: string): SchoolPageData | null {
   const index = loadSchoolIndex();
   const entry = index.districts.find((candidate) => candidate.slug === slug);
   if (!entry) return null;
-  const document = readJson<SchoolDocument>("schools", `${slug}.json`);
+  const document = loadSchoolDocument(slug);
   const manifest = readJsonCached<ManifestDocument>("manifest.json");
   const county = loadCountyMetrics().counties.find(
     (candidate) => candidate.fips === document.county_fips,

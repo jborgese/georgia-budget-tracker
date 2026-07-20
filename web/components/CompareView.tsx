@@ -11,45 +11,51 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { CountyMetricsDocument, CountyYearMetrics } from "@/lib/types";
+import type {
+  CompareDataset,
+  CompareEntityRow,
+  CompareFormat,
+  CompareMetricSpec,
+} from "@/lib/compare";
 import { INK, MUTED, PAPER, RULE, SLOTS, SPRUCE } from "@/lib/theme";
-import { fiscalYearLabel, formatCompactDollars, formatDollars } from "@/lib/format";
+import {
+  fiscalYearLabel,
+  formatCompactCount,
+  formatCompactDollars,
+  formatCount,
+  formatDollars,
+} from "@/lib/format";
 import { ChartTooltipFrame, type TooltipRow } from "./ChartTooltip";
 import { ChartLegend } from "./ChartLegend";
 import { DataTable } from "./DataTable";
 
-const MAX_COUNTIES = 4;
-const METRIC_CHARTS = [
-  { key: "revenue_per_capita", title: "Revenue per resident", perCapita: true },
-  { key: "expenditure_per_capita", title: "Expenditure per resident", perCapita: true },
-] as const;
+const MAX_SELECTIONS = 4;
 
-type IncludedEntry = Extract<
-  CountyMetricsDocument["counties"][number],
-  { included: true }
->;
+const FORMATTERS: Record<
+  CompareFormat,
+  { axis: (value: number) => string; cell: (value: number) => string }
+> = {
+  dollars: { axis: formatDollars, cell: formatDollars },
+  compact: { axis: formatCompactDollars, cell: formatDollars },
+  count: { axis: formatCompactCount, cell: formatCount },
+};
 
 interface Series {
   slug: string;
-  name: string;
+  label: string;
   color: string;
-  entry: IncludedEntry;
+  entity: CompareEntityRow;
 }
 
-function displayName(county: string): string {
-  const exceptions: Record<string, string> = {
-    DEKALB: "DeKalb",
-    MCDUFFIE: "McDuffie",
-    MCINTOSH: "McIntosh",
-  };
-  return (
-    exceptions[county] ??
-    county
-      .toLowerCase()
-      .split(" ")
-      .map((word) => word[0].toUpperCase() + word.slice(1))
-      .join(" ")
-  );
+function cellText(
+  entity: CompareEntityRow,
+  key: string,
+  yearIndex: number,
+  format: CompareFormat,
+): string {
+  const value = entity.values[key]?.[yearIndex];
+  if (value != null) return FORMATTERS[format].cell(value);
+  return entity.filed[yearIndex] ? "—" : "no filing";
 }
 
 function CompareTooltip({
@@ -57,20 +63,20 @@ function CompareTooltip({
   payload,
   label,
   series,
-  perCapita,
+  spec,
 }: {
   active?: boolean;
   payload?: { dataKey?: string | number; value?: number }[];
   label?: number;
   series: Series[];
-  perCapita: boolean;
+  spec: CompareMetricSpec;
 }) {
   if (!active || !payload?.length || label == null) return null;
   const bySlug = Object.fromEntries(series.map((s) => [s.slug, s]));
   const rows: TooltipRow[] = payload
     .filter((entry) => typeof entry.value === "number")
     .map((entry) => ({
-      label: bySlug[String(entry.dataKey)]?.name ?? String(entry.dataKey),
+      label: bySlug[String(entry.dataKey)]?.label ?? String(entry.dataKey),
       value: entry.value as number,
       color: bySlug[String(entry.dataKey)]?.color ?? INK,
     }));
@@ -78,8 +84,9 @@ function CompareTooltip({
   return (
     <ChartTooltipFrame
       title={fiscalYearLabel(label)}
-      subtitle={perCapita ? "per resident" : undefined}
+      subtitle={spec.perUnit}
       rows={rows}
+      format={FORMATTERS[spec.format].cell}
     />
   );
 }
@@ -87,27 +94,28 @@ function CompareTooltip({
 function CompareLines({
   series,
   fiscalYears,
-  metric,
-  perCapita,
-  title,
+  spec,
+  nounPlural,
 }: {
   series: Series[];
   fiscalYears: number[];
-  metric: keyof CountyYearMetrics;
-  perCapita: boolean;
-  title: string;
+  spec: CompareMetricSpec;
+  nounPlural: string;
 }) {
-  const rows = fiscalYears.map((year) => {
+  const rows = fiscalYears.map((year, index) => {
     const row: Record<string, number | null> & { fiscalYear: number } = {
       fiscalYear: year,
     };
     for (const s of series) {
-      row[s.slug] = s.entry.years[String(year)]?.[metric] ?? null;
+      row[s.slug] = s.entity.values[spec.key]?.[index] ?? null;
     }
     return row;
   });
   return (
-    <div role="img" aria-label={`Line chart of ${title.toLowerCase()} for the selected counties`}>
+    <div
+      role="img"
+      aria-label={`Line chart of ${spec.title.toLowerCase()} for the selected ${nounPlural}`}
+    >
       <ResponsiveContainer
         width="100%"
         height={280}
@@ -123,9 +131,7 @@ function CompareLines({
             tickLine={false}
           />
           <YAxis
-            tickFormatter={(value: number) =>
-              perCapita ? formatDollars(value) : formatCompactDollars(value)
-            }
+            tickFormatter={FORMATTERS[spec.format].axis}
             tick={{ fill: MUTED, fontSize: 11, fontFamily: "var(--font-geist-mono)" }}
             axisLine={false}
             tickLine={false}
@@ -133,7 +139,7 @@ function CompareLines({
             domain={[0, "auto"]}
           />
           <Tooltip
-            content={<CompareTooltip series={series} perCapita={perCapita} />}
+            content={<CompareTooltip series={series} spec={spec} />}
             cursor={{ stroke: RULE, strokeWidth: 1 }}
           />
           {series.map((s) => (
@@ -146,7 +152,7 @@ function CompareLines({
               activeDot={{ r: 5, stroke: PAPER, strokeWidth: 2 }}
               isAnimationActive={false}
               connectNulls={false}
-              name={s.name}
+              name={s.label}
             />
           ))}
         </LineChart>
@@ -155,27 +161,25 @@ function CompareLines({
   );
 }
 
-export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
+export function CompareView({ data }: { data: CompareDataset }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const included = useMemo(
-    () =>
-      metrics.counties.filter((entry): entry is IncludedEntry => entry.included),
-    [metrics],
-  );
   const bySlug = useMemo(
-    () => new Map(included.map((entry) => [entry.slug, entry])),
-    [included],
+    () => new Map(data.entities.map((entity) => [entity.slug, entity])),
+    [data],
   );
 
   const [slugs, setSlugs] = useState<(string | null)[]>(() => {
     const fromUrl = (searchParams.get("c") ?? "")
       .split(",")
       .filter((slug) => bySlug.has(slug))
-      .slice(0, MAX_COUNTIES);
-    const initial = fromUrl.length >= 2 ? fromUrl : ["fulton", "chatham"];
-    return [...initial, ...Array(MAX_COUNTIES).fill(null)].slice(0, MAX_COUNTIES);
+      .slice(0, MAX_SELECTIONS);
+    const initial = fromUrl.length >= 2 ? fromUrl : data.defaults;
+    return [...initial, ...Array(MAX_SELECTIONS).fill(null)].slice(
+      0,
+      MAX_SELECTIONS,
+    );
   });
 
   useEffect(() => {
@@ -186,19 +190,20 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
 
   const series: Series[] = slugs.flatMap((slug, index) => {
     if (!slug) return [];
-    const entry = bySlug.get(slug);
-    return entry
-      ? [{ slug, name: displayName(entry.county), color: SLOTS[index], entry }]
+    const entity = bySlug.get(slug);
+    return entity
+      ? [{ slug, label: entity.label, color: SLOTS[index], entity }]
       : [];
   });
 
   const legendEntries = series.map((s) => ({
-    label: `${s.name} County`,
+    label: s.label,
     color: s.color,
     kind: "line" as const,
   }));
 
-  const latestYear = metrics.fiscal_years.at(-1) ?? 0;
+  const latestYear = data.fiscalYears.at(-1) ?? 0;
+  const latestIndex = data.fiscalYears.length - 1;
 
   return (
     <div>
@@ -206,7 +211,7 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
         className="flex flex-wrap items-end gap-x-6 gap-y-3 border-t pt-4"
         style={{ borderColor: INK }}
       >
-        {Array.from({ length: MAX_COUNTIES }, (_, index) => (
+        {Array.from({ length: MAX_SELECTIONS }, (_, index) => (
           <label
             key={index}
             className="flex flex-col gap-1 font-mono text-xs uppercase tracking-widest"
@@ -220,7 +225,7 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
                   backgroundColor: slugs[index] ? SLOTS[index] : RULE,
                 }}
               />
-              County {index + 1}
+              {data.slotLabel} {index + 1}
               {index >= 2 ? " (optional)" : ""}
             </span>
             <select
@@ -235,13 +240,15 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
               style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
             >
               {index >= 2 ? <option value="">—</option> : null}
-              {included.map((entry) => (
+              {data.entities.map((entity) => (
                 <option
-                  key={entry.slug}
-                  value={entry.slug}
-                  disabled={slugs.includes(entry.slug) && slugs[index] !== entry.slug}
+                  key={entity.slug}
+                  value={entity.slug}
+                  disabled={
+                    slugs.includes(entity.slug) && slugs[index] !== entity.slug
+                  }
                 >
-                  {displayName(entry.county)}
+                  {entity.label}
                 </option>
               ))}
             </select>
@@ -255,37 +262,38 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
             <ChartLegend entries={legendEntries} />
           </div>
           <div className="mt-4 grid gap-12 lg:grid-cols-2 lg:gap-8">
-            {METRIC_CHARTS.map((chart) => (
-              <section key={chart.key} aria-label={chart.title}>
+            {data.charts.map((spec) => (
+              <section key={spec.key} aria-label={spec.title}>
                 <h2
                   className="border-t pb-2 pt-3 font-mono text-xs uppercase tracking-widest"
                   style={{ borderColor: INK, color: SPRUCE }}
                 >
-                  {chart.title}
+                  {spec.title}
                 </h2>
                 <CompareLines
                   series={series}
-                  fiscalYears={metrics.fiscal_years}
-                  metric={chart.key}
-                  perCapita={chart.perCapita}
-                  title={chart.title}
+                  fiscalYears={data.fiscalYears}
+                  spec={spec}
+                  nounPlural={data.nounPlural}
                 />
                 <DataTable
-                  caption={`${chart.title} by fiscal year for the selected counties`}
-                  columns={["Fiscal year", ...series.map((s) => `${s.name}`)]}
-                  rows={metrics.fiscal_years.map((year) => [
+                  caption={`${spec.title} by fiscal year for the selected ${data.nounPlural}`}
+                  columns={["Fiscal year", ...series.map((s) => s.label)]}
+                  rows={data.fiscalYears.map((year, index) => [
                     fiscalYearLabel(year),
-                    ...series.map((s) => {
-                      const value = s.entry.years[String(year)]?.[chart.key];
-                      return value != null ? formatDollars(value) : "no filing";
-                    }),
+                    ...series.map((s) =>
+                      cellText(s.entity, spec.key, index, spec.format),
+                    ),
                   ])}
                 />
               </section>
             ))}
           </div>
 
-          <section aria-label={`Latest figures, ${fiscalYearLabel(latestYear)}`} className="mt-12">
+          <section
+            aria-label={`Latest figures, ${fiscalYearLabel(latestYear)}`}
+            className="mt-12"
+          >
             <div
               className="border-t pb-2 pt-3 font-mono text-xs uppercase tracking-widest"
               style={{ borderColor: INK, color: SPRUCE }}
@@ -300,61 +308,49 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
                     style={{ borderColor: RULE, color: MUTED }}
                   >
                     <th scope="col" className="py-2 pr-4 text-left font-normal">
-                      County
+                      {data.slotLabel}
                     </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-normal">
-                      Revenues
-                    </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-normal">
-                      Expenditures
-                    </th>
-                    <th scope="col" className="py-2 pr-4 text-right font-normal">
-                      Rev / resident
-                    </th>
-                    <th scope="col" className="py-2 text-right font-normal">
-                      Population
-                    </th>
+                    {data.latestColumns.map((column) => (
+                      <th
+                        key={column.key}
+                        scope="col"
+                        className="py-2 pr-4 text-right font-normal"
+                      >
+                        {column.label}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {series.map((s) => {
-                    const m = s.entry.years[String(latestYear)];
-                    return (
-                      <tr key={s.slug} className="border-t" style={{ borderColor: RULE }}>
-                        <td className="py-2 pr-4">
-                          <span
-                            aria-hidden="true"
-                            className="mr-2 inline-block h-2.5 w-2.5 rounded-[2px] align-middle"
-                            style={{ backgroundColor: s.color }}
-                          />
-                          <a
-                            href={`/county/${s.slug}/`}
-                            className="underline underline-offset-4"
-                          >
-                            {s.name} County
-                          </a>
+                  {series.map((s) => (
+                    <tr
+                      key={s.slug}
+                      className="border-t"
+                      style={{ borderColor: RULE }}
+                    >
+                      <td className="py-2 pr-4">
+                        <span
+                          aria-hidden="true"
+                          className="mr-2 inline-block h-2.5 w-2.5 rounded-[2px] align-middle"
+                          style={{ backgroundColor: s.color }}
+                        />
+                        <a
+                          href={`${data.route}/${s.slug}/`}
+                          className="underline underline-offset-4"
+                        >
+                          {s.label}
+                        </a>
+                      </td>
+                      {data.latestColumns.map((column) => (
+                        <td
+                          key={column.key}
+                          className="py-2 pr-4 text-right font-mono tabular-nums"
+                        >
+                          {cellText(s.entity, column.key, latestIndex, column.format)}
                         </td>
-                        <td className="py-2 pr-4 text-right font-mono tabular-nums">
-                          {m?.revenue != null ? formatDollars(m.revenue) : "no filing"}
-                        </td>
-                        <td className="py-2 pr-4 text-right font-mono tabular-nums">
-                          {m?.expenditure != null
-                            ? formatDollars(m.expenditure)
-                            : "no filing"}
-                        </td>
-                        <td className="py-2 pr-4 text-right font-mono tabular-nums">
-                          {m?.revenue_per_capita != null
-                            ? formatDollars(m.revenue_per_capita)
-                            : "—"}
-                        </td>
-                        <td className="py-2 text-right font-mono tabular-nums">
-                          {m?.population != null
-                            ? m.population.toLocaleString("en-US")
-                            : "—"}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                      ))}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               <div className="border-t" style={{ borderColor: INK }} />
@@ -362,13 +358,12 @@ export function CompareView({ metrics }: { metrics: CountyMetricsDocument }) {
           </section>
 
           <p className="mt-4 text-xs" style={{ color: MUTED }}>
-            Gaps in a line are fiscal years the county did not file an RLGF
-            report — never zeros.
+            {data.gapNote}
           </p>
         </>
       ) : (
         <p className="mt-8 text-sm" style={{ color: MUTED }}>
-          Pick at least two counties to compare.
+          Pick at least two {data.nounPlural} to compare.
         </p>
       )}
     </div>
