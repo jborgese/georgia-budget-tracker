@@ -39,33 +39,103 @@
     "CXUFOODHOMELB0104M",
     "CXUFOODHOMELB0105M",
     "CXUFOODHOMELB0106M"
+   ],
+   "food away from home": [
+    "CXUFOODAWAYLB0102M",
+    "CXUFOODAWAYLB0103M",
+    "CXUFOODAWAYLB0104M",
+    "CXUFOODAWAYLB0105M",
+    "CXUFOODAWAYLB0106M"
+   ],
+   "alcoholic beverages": [
+    "CXUALCBEVGLB0102M",
+    "CXUALCBEVGLB0103M",
+    "CXUALCBEVGLB0104M",
+    "CXUALCBEVGLB0105M",
+    "CXUALCBEVGLB0106M"
+   ],
+   "housekeeping supplies": [
+    "CXUHKPGSUPPLB0102M",
+    "CXUHKPGSUPPLB0103M",
+    "CXUHKPGSUPPLB0104M",
+    "CXUHKPGSUPPLB0105M",
+    "CXUHKPGSUPPLB0106M"
+   ],
+   "household furnishings and equipment": [
+    "CXUHHFURNSHLB0102M",
+    "CXUHHFURNSHLB0103M",
+    "CXUHHFURNSHLB0104M",
+    "CXUHHFURNSHLB0105M",
+    "CXUHHFURNSHLB0106M"
+   ],
+   "apparel and services": [
+    "CXUAPPARELLB0102M",
+    "CXUAPPARELLB0103M",
+    "CXUAPPARELLB0104M",
+    "CXUAPPARELLB0105M",
+    "CXUAPPARELLB0106M"
+   ],
+   "pets, toys, hobbies, and playground equipment": [
+    "CXUPETSPLAYLB0102M",
+    "CXUPETSPLAYLB0103M",
+    "CXUPETSPLAYLB0104M",
+    "CXUPETSPLAYLB0105M",
+    "CXUPETSPLAYLB0106M"
+   ],
+   "audio and visual equipment and services": [
+    "CXUTVAUDIOLB0102M",
+    "CXUTVAUDIOLB0103M",
+    "CXUTVAUDIOLB0104M",
+    "CXUTVAUDIOLB0105M",
+    "CXUTVAUDIOLB0106M"
+   ],
+   "personal care products and services": [
+    "CXUPERSCARELB0102M",
+    "CXUPERSCARELB0103M",
+    "CXUPERSCARELB0104M",
+    "CXUPERSCARELB0105M",
+    "CXUPERSCARELB0106M"
+   ],
+   "reading": [
+    "CXUREADINGLB0102M",
+    "CXUREADINGLB0103M",
+    "CXUREADINGLB0104M",
+    "CXUREADINGLB0105M",
+    "CXUREADINGLB0106M"
+   ],
+   "tobacco products and smoking supplies": [
+    "CXUTOBACCOLB0102M",
+    "CXUTOBACCOLB0103M",
+    "CXUTOBACCOLB0104M",
+    "CXUTOBACCOLB0105M",
+    "CXUTOBACCOLB0106M"
    ]
   },
   "quintiles": [
    {
     "income_pretax": 16658,
-    "taxable_nonfood_share": 0.498,
-    "food_at_home_share": 0.258
+    "taxable_nonfood_share": 0.385,
+    "food_at_home_share": 0.231
    },
    {
     "income_pretax": 42925,
-    "taxable_nonfood_share": 0.256,
-    "food_at_home_share": 0.119
+    "taxable_nonfood_share": 0.205,
+    "food_at_home_share": 0.115
    },
    {
     "income_pretax": 74474,
-    "taxable_nonfood_share": 0.186,
-    "food_at_home_share": 0.077
+    "taxable_nonfood_share": 0.151,
+    "food_at_home_share": 0.078
    },
    {
     "income_pretax": 121548,
-    "taxable_nonfood_share": 0.149,
-    "food_at_home_share": 0.054
+    "taxable_nonfood_share": 0.127,
+    "food_at_home_share": 0.059
    },
    {
     "income_pretax": 264510,
-    "taxable_nonfood_share": 0.115,
-    "food_at_home_share": 0.032
+    "taxable_nonfood_share": 0.094,
+    "food_at_home_share": 0.035
    }
   ],
   "taxable_nonfood_categories": [
@@ -74,11 +144,11 @@
    "housekeeping supplies",
    "household furnishings and equipment",
    "apparel and services",
-   "entertainment commodities (pets, toys, hobbies, audio/visual equipment)",
-   "personal care products",
+   "pets, toys, hobbies, and playground equipment",
+   "audio and visual equipment and services",
+   "personal care products and services",
    "reading",
-   "tobacco products and smoking supplies",
-   "miscellaneous"
+   "tobacco products and smoking supplies"
   ],
   "excluded_categories": [
    "shelter (not subject to sales tax)",
@@ -89,13 +159,15 @@
    "education",
    "insurance and pensions",
    "cash contributions",
-   "public transportation and travel services"
+   "public transportation and travel services",
+   "miscellaneous (predominantly nontaxable services: legal, funeral, banking fees)"
   ],
   "caveats": [
-   "Shares are hand-derived from the CES 2024 quintile tables: the taxable-nonfood categories above summed per quintile, divided by that quintile's mean pre-tax income. They are national consumer-unit averages, not Georgia-specific.",
+   "Shares are the listed taxable-nonfood FRED series summed per quintile (2024 annual values), divided by that quintile's mean pre-tax income (CXUINCBEFTXLB0102M-0106M). They are national consumer-unit averages, not Georgia-specific.",
    "A CES consumer unit is a household, not an individual filer; a single salary entered here stands in for household income.",
    "Groceries (food at home) are exempt from Georgia's 4% state sales tax but pay the local cents; the calculator applies only the local rate to the food-at-home base.",
    "Between the quintile mean incomes the shares are interpolated linearly; below the first and above the fifth they are clamped."
-  ]
+  ],
+  "verified": "2026-07-20"
  }
 }

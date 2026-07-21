@@ -11,16 +11,20 @@ Rate arithmetic the parser enforces:
 - The state levies 4 cents everywhere.
 - Standard letters are one cent each: M (MARTA), L (LOST), E (ESPLOST),
   S (SPLOST), H (HOST), T and T2 (TSPLOST), P.
-- Fractional letters: Tf is 0.75, Ta is 0.4, and O and m are each either
-  0.5 or 1 — solved from the residual after the state's 4 cents and the
-  fixed letters are removed. A residual that no assignment matches, or that
-  more than one assignment matches, fails loudly.
+- Fractional letters: Tf is 0.75, Ta is 0.4, m (Atlanta's "More MARTA"
+  half-penny) is 0.5, and O is either 0.5 or 1 — solved from the residual
+  after the state's 4 cents and the fixed letters are removed. A residual
+  that no assignment matches, or that more than one assignment matches,
+  fails loudly.
 - Letters are matched longest-first and case-sensitively (T2/Tf/Ta before
   T; m and M are different levies). An unknown letter fails loudly.
+- Central Yards (803) is the one row whose printed rate excludes the
+  state's 4 cents (the chart's header note); its registry entry carries
+  ``state_included: False`` and its state cents are recorded as 0.
 
 Each cent is classified for the receipt view: E is education (school
-district ESPLOST), M and the T-family are transit/transportation, and
-L/S/H/O/P/m are county-and-city shared cents. LOST distribution
+district ESPLOST), M/m and the T-family are transit/transportation, and
+L/S/H/O/P are county-and-city shared cents. LOST distribution
 certificates (the county/city split) are not machine-readable, so the
 shared cents stay one bucket.
 
@@ -79,35 +83,38 @@ REQUEST_HEADERS = {
 STATE_TWENTIETHS = 80  # 4 cents, in twentieths of a cent
 # One-cent letters. T2 sorts before T in the tokenizer (longest match).
 STANDARD_LETTERS = ("M", "L", "E", "S", "H", "T", "T2", "P")
-FIXED_FRACTIONAL = {"Tf": 15, "Ta": 8}  # twentieths: 0.75 and 0.4 cents
-VARIABLE_FRACTIONAL = {"O": (10, 20), "m": (10, 20)}  # 0.5 or 1 cent
+FIXED_FRACTIONAL = {"Tf": 15, "Ta": 8, "m": 10}  # twentieths: 0.75, 0.4, 0.5
+VARIABLE_FRACTIONAL = {"O": (10, 20)}  # 0.5 or 1 cent
 LETTER_TOKENS = sorted(
     [*STANDARD_LETTERS, *FIXED_FRACTIONAL, *VARIABLE_FRACTIONAL],
     key=len, reverse=True)
 CLASSIFY = {
     "E": "education",
-    "M": "transit", "T": "transit", "T2": "transit",
+    "M": "transit", "m": "transit", "T": "transit", "T2": "transit",
     "Tf": "transit", "Ta": "transit",
     "L": "local_shared", "S": "local_shared", "H": "local_shared",
-    "O": "local_shared", "P": "local_shared", "m": "local_shared",
+    "O": "local_shared", "P": "local_shared",
 }
 CENT_GROUPS = ("education", "transit", "local_shared")
 
 # City-level jurisdictions: every parsed code that is not a county row must
 # be here, and every code here must be parsed — validated both directions.
-# resolve=False keeps a jurisdiction in the data but out of the per-county
+# city=None keeps a jurisdiction in the data but out of the per-county
 # city resolution map.
 SPECIAL_JURISDICTIONS = {
-    "060A": {"name": "ATLANTA (FULTON)", "county": "FULTON",
+    "060A": {"name": "FULTON (ATLANTA)", "county": "FULTON",
              "city": "ATLANTA"},
-    "044A": {"name": "ATLANTA (DEKALB)", "county": "DEKALB",
+    "044A": {"name": "DEKALB (ATLANTA)", "county": "DEKALB",
              "city": "ATLANTA"},
-    "800": {"name": "HAPEVILLE", "county": "FULTON", "city": "HAPEVILLE"},
-    "801": {"name": "COLLEGE PARK (FULTON)", "county": "FULTON",
+    "800": {"name": "FULTON (HAPEVILLE)", "county": "FULTON",
+            "city": "HAPEVILLE"},
+    "801": {"name": "FULTON (COLLEGE PRK)", "county": "FULTON",
             "city": "COLLEGE PARK"},
-    "802": {"name": "EAST POINT", "county": "FULTON", "city": "EAST POINT"},
-    "803": {"name": "CENTRAL YARDS", "county": "FULTON", "city": None},
-    "804": {"name": "COLLEGE PARK (CLAYTON)", "county": "CLAYTON",
+    "802": {"name": "FULTON (EAST POINT)", "county": "FULTON",
+            "city": "EAST POINT"},
+    "803": {"name": "FULTON (CENT. YARDS)", "county": "FULTON", "city": None,
+            "state_included": False},
+    "804": {"name": "CLAYTON (COLLEGE PRK)", "county": "CLAYTON",
             "city": "COLLEGE PARK"},
 }
 
@@ -134,14 +141,14 @@ def tokenize_types(letters: str) -> list[str]:
     return tokens
 
 
-def decompose(total: float, tokens: list[str],
-              label: str) -> list[tuple[str, int]]:
+def decompose(total: float, tokens: list[str], label: str,
+              state_twentieths: int = STATE_TWENTIETHS) -> list[tuple[str, int]]:
     """Assign twentieths-of-a-cent to each letter; fail on any mismatch."""
     total_twentieths = round(total * 20)
     if abs(total * 20 - total_twentieths) > 1e-6:
         raise SystemExit(f"{label}: rate {total} is not a whole number of "
                          "twentieths of a cent.")
-    residual = total_twentieths - STATE_TWENTIETHS
+    residual = total_twentieths - state_twentieths
     fixed: list[tuple[str, int]] = []
     variables: list[str] = []
     for token in tokens:
@@ -217,6 +224,45 @@ def parse_entry(tokens: list[str], label: str) -> dict:
     return {"code": code, "name": name, "total": total, "letters": letters}
 
 
+GLUED_CODE_RE = re.compile(r"^(\d{3}[A-Z]?)([A-Z(].*)$")
+GLUED_RATE_RE = re.compile(r"^(.+\))(\d+(?:\.\d+)?)$")
+
+
+def split_glued_tokens(tokens: list[str]) -> list[str]:
+    """Split words the extractor merged across cell boundaries.
+
+    Tight spacing can fuse a jurisdiction code with the next column's
+    name into one word (``060AFulton``), or a parenthesised name with
+    its rate (``Prk)8``); the pieces must be restored as separate
+    tokens or the row split and rate scan miss them.
+    """
+    split: list[str] = []
+    for token in tokens:
+        glued = (None if CODE_RE.fullmatch(token)
+                 else GLUED_CODE_RE.fullmatch(token)
+                 or GLUED_RATE_RE.fullmatch(token))
+        split.extend(glued.groups() if glued else (token,))
+    return split
+
+
+def group_lines(words: list[dict]) -> list[list[dict]]:
+    """Cluster words into visual lines by vertical proximity.
+
+    Fixed-width bucketing tears rows apart when a cell's baseline sits a
+    point or two off its neighbours (the chart renders some rate digits
+    that way), so lines grow greedily while tops stay within tolerance
+    of the line's first word.
+    """
+    lines: list[list[dict]] = []
+    for word in sorted(words, key=lambda w: (w["page"], w["top"], w["x0"])):
+        if (lines and lines[-1][0]["page"] == word["page"]
+                and abs(word["top"] - lines[-1][0]["top"]) <= 3):
+            lines[-1].append(word)
+        else:
+            lines.append([word])
+    return lines
+
+
 def extract_entries(path: Path) -> list[dict]:
     """Read the chart PDF into entries by splitting rows at code tokens.
 
@@ -230,13 +276,10 @@ def extract_entries(path: Path) -> list[dict]:
             for word in page.extract_words():
                 words.append({"page": page_number, "top": word["top"],
                               "x0": word["x0"], "text": word["text"]})
-    lines: dict[tuple[int, int], list[dict]] = {}
-    for word in words:
-        key = (word["page"], round(word["top"] / 3))
-        lines.setdefault(key, []).append(word)
     entries: list[dict] = []
-    for key in sorted(lines):
-        tokens = [w["text"] for w in sorted(lines[key], key=lambda w: w["x0"])]
+    for line in group_lines(words):
+        tokens = split_glued_tokens(
+            [w["text"] for w in sorted(line, key=lambda w: w["x0"])])
         starts = [index for index, token in enumerate(tokens)
                   if CODE_RE.fullmatch(token)]
         for position, start in enumerate(starts):
@@ -254,26 +297,34 @@ def enrich(entries: list[dict], source_id: str) -> list[dict]:
     enriched = []
     for entry in entries:
         label = f"{source_id} {entry['code']} {entry['name']}"
-        if not 4 <= entry["total"] <= 10:
-            raise SystemExit(f"{label}: rate {entry['total']} outside the "
-                             "plausible 4-10 range.")
-        county = (canonical_county_name(entry["name"])
-                  if re.fullmatch(r"\d{3}", entry["code"]) else None)
         special = SPECIAL_JURISDICTIONS.get(entry["code"])
+        county = (canonical_county_name(entry["name"])
+                  if special is None and re.fullmatch(r"\d{3}", entry["code"])
+                  else None)
         if county is None and special is None:
             raise SystemExit(
                 f"{label}: neither a roster county nor a registered "
                 "special jurisdiction — extend SPECIAL_JURISDICTIONS "
                 "deliberately if the chart added a jurisdiction.")
-        if county is not None and special is not None:
-            raise SystemExit(f"{label}: code registered as special but the "
-                             "name resolves to a county.")
+        if special is not None and special["county"] not in entry["name"].upper():
+            raise SystemExit(
+                f"{label}: registered county {special['county']} does not "
+                "appear in the chart row name — re-check "
+                "SPECIAL_JURISDICTIONS against the chart.")
+        state_included = special.get("state_included", True) if special else True
+        floor = 4 if state_included else 0
+        if not floor <= entry["total"] <= 10:
+            raise SystemExit(f"{label}: rate {entry['total']} outside the "
+                             f"plausible {floor}-10 range.")
         pairs = decompose(entry["total"], tokenize_types(entry["letters"]),
-                          label)
+                          label,
+                          state_twentieths=STATE_TWENTIETHS
+                          if state_included else 0)
         enriched.append({
             **entry,
             "county": county if county else special["county"],
             "is_county_default": county is not None,
+            "state_cents": 4.0 if state_included else 0.0,
             "cents": classify(pairs),
         })
     return enriched
@@ -393,7 +444,7 @@ def parquet_rows(entries: list[dict], source_id: str) -> list[dict]:
             "is_county_default": entry["is_county_default"],
             "total": entry["total"],
             "letters": entry["letters"],
-            "cents_state": 4.0,
+            "cents_state": entry["state_cents"],
             **{f"cents_{group}": entry["cents"][group]
                for group in CENT_GROUPS},
         }
@@ -414,6 +465,7 @@ def write_json(entries: list[dict], source_id: str) -> None:
                 "county": entry["county"],
                 "total": entry["total"],
                 "letters": entry["letters"],
+                "state_cents": entry["state_cents"],
                 "cents": {group: entry["cents"][group]
                           for group in CENT_GROUPS},
             }

@@ -19,7 +19,8 @@ def enriched_roster(overrides=None):
                             **overrides.get(county, {}))
                for index, county in enumerate(counties)]
     entries += [
-        {"code": code, "name": special["name"].title(), "total": 8.0,
+        {"code": code, "name": special["name"].title(),
+         "total": 8.0 if special.get("state_included", True) else 4.0,
          "letters": "ELST"}
         for code, special in etl.SPECIAL_JURISDICTIONS.items()
     ]
@@ -65,16 +66,55 @@ def test_decompose_rejects_mismatch():
         etl.decompose(9.0, ["E", "L", "S", "O"], "t")
 
 
-def test_decompose_rejects_ambiguous_split():
-    # residual 1.5 across O and m: (0.5, 1) and (1, 0.5) both fit.
+def test_decompose_fixed_half_penny_m():
+    pairs = etl.decompose(8.9, ["M", "L", "E", "O", "m", "Ta"], "t")
+    assert ("m", 10) in pairs
+    assert ("O", 20) in pairs
+
+
+def test_decompose_without_state_cents():
+    pairs = etl.decompose(3.9, ["M", "E", "O", "m", "Ta"], "t",
+                          state_twentieths=0)
+    assert ("O", 20) in pairs
+    assert sum(amount for _, amount in pairs) == 78
+
+
+def test_decompose_rejects_ambiguous_split(monkeypatch):
+    monkeypatch.setitem(etl.VARIABLE_FRACTIONAL, "X", (10, 20))
     with pytest.raises(SystemExit, match="ambiguous"):
-        etl.decompose(7.5, ["E", "L", "O", "m"], "t")
+        etl.decompose(7.5, ["E", "L", "O", "X"], "t")
 
 
 def test_classify_groups_cents():
     pairs = etl.decompose(8.15, ["E", "L", "M", "Tf", "Ta"], "t")
     cents = etl.classify(pairs)
     assert cents == {"education": 1.0, "transit": 2.15, "local_shared": 1.0}
+
+
+def test_classify_counts_local_marta_as_transit():
+    pairs = etl.decompose(8.9, ["M", "L", "E", "O", "m", "Ta"], "t")
+    cents = etl.classify(pairs)
+    assert cents == {"education": 1.0, "transit": 1.9, "local_shared": 2.0}
+
+
+def test_split_glued_tokens():
+    assert etl.split_glued_tokens(
+        ["T2P", "060AFulton", "(Atlanta)"]) == ["T2P", "060A", "Fulton",
+                                                "(Atlanta)"]
+    assert etl.split_glued_tokens(["Prk)8", "MLE"]) == ["Prk)", "8", "MLE"]
+    assert etl.split_glued_tokens(["060A", "804", "8.9"]) == ["060A", "804",
+                                                              "8.9"]
+
+
+def test_group_lines_tolerates_baseline_offsets():
+    words = [{"page": 0, "top": 100.0, "x0": 10, "text": "030"},
+             {"page": 0, "top": 102.5, "x0": 40, "text": "9"},
+             {"page": 0, "top": 100.5, "x0": 20, "text": "Clay"},
+             {"page": 0, "top": 110.0, "x0": 10, "text": "031"},
+             {"page": 1, "top": 110.0, "x0": 10, "text": "032"}]
+    lines = etl.group_lines(words)
+    assert [[w["text"] for w in line] for line in lines] == [
+        ["030", "Clay", "9"], ["031"], ["032"]]
 
 
 def test_canonical_county_name_variants():
@@ -120,6 +160,20 @@ def test_enrich_rejects_unknown_jurisdiction():
 def test_enrich_rejects_implausible_rate():
     with pytest.raises(SystemExit, match="plausible"):
         etl.enrich([county_entry("APPLING", "001", total=12.0)], "test")
+
+
+def test_enrich_special_name_must_match_registered_county():
+    with pytest.raises(SystemExit, match="does not appear"):
+        etl.enrich([{"code": "800", "name": "Cobb (Hapeville)",
+                     "total": 8.0, "letters": "ELST"}], "test")
+
+
+def test_enrich_state_exclusion_for_central_yards():
+    entries = etl.enrich([{"code": "803", "name": "Fulton (Cent. Yards)",
+                           "total": 3.9, "letters": "MEOmTa"}], "test")
+    assert entries[0]["state_cents"] == 0.0
+    assert entries[0]["cents"] == {"education": 1.0, "transit": 1.9,
+                                   "local_shared": 1.0}
 
 
 def test_validate_accepts_full_roster():

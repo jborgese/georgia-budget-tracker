@@ -344,6 +344,9 @@ export interface SalesJurisdiction {
   county: string;
   total: number;
   letters: string;
+  // 4 everywhere except Central Yards (803), whose printed rate excludes
+  // the state's cents; 803 never appears in the resolution map.
+  state_cents: number;
   cents: { education: number; transit: number; local_shared: number };
 }
 
