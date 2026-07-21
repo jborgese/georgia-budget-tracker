@@ -24,6 +24,7 @@ import type {
   MedianYear,
   MillageDocument,
   MillageHistoryDocument,
+  SalesRatesDocument,
   SalesTaxDocument,
   SalesTaxLine,
   SchoolDocument,
@@ -33,31 +34,14 @@ import type {
   SourceNote,
   StateCategoriesDocument,
   StateIndexDocument,
+  TaxParametersDocument,
 } from "./types";
 
 const PROCESSED_DIR = path.resolve(process.cwd(), "..", "data", "processed");
 const PIPELINE_DIR = path.resolve(process.cwd(), "..", "pipeline");
 
-export const CATEGORY_LABELS: Record<string, string> = {
-  taxes: "Taxes",
-  charges_and_fees: "Charges & fees",
-  other_revenue: "Other revenue",
-  intergovernmental_revenue: "Intergovernmental",
-  enterprise_revenue: "Enterprise",
-  education: "Education",
-  health_and_welfare: "Health & welfare",
-  public_safety: "Public safety",
-  public_works: "Public works & transportation",
-  general_government: "General government",
-  judicial: "Judicial",
-  community_and_economic_development: "Community & economic development",
-  natural_resources: "Natural resources & agriculture",
-  debt_service: "Debt service",
-  culture_and_recreation: "Culture & recreation",
-  enterprise_operations: "Enterprise operations",
-  intergovernmental_expenditure: "Intergovernmental",
-  other_expenditure: "Other",
-};
+export { CATEGORY_LABELS } from "./categories";
+import { CATEGORY_LABELS } from "./categories";
 
 const SOURCE_NAMES: Record<string, string> = {
   ted_rlgf_county_workbook: "UGA TED — Report of Local Government Finances",
@@ -114,7 +98,14 @@ export interface SourceRegistryEntry {
   url: string;
   provides: string;
   cadence: string;
-  level: "state" | "county";
+  level:
+    | "state"
+    | "county"
+    | "city"
+    | "consolidated"
+    | "school_district"
+    | "property_tax"
+    | "sales_tax";
   note?: string;
   check?: string;
 }
@@ -262,6 +253,29 @@ export function loadCountyMetrics(): CountyMetricsDocument {
 
 export function loadStateCategories(): StateCategoriesDocument {
   return readJson<StateCategoriesDocument>("state", "categories.json");
+}
+
+export function loadCountyCategories(): CountyCategoriesDocument {
+  return readJsonCached<CountyCategoriesDocument>(
+    "counties", "categories.json");
+}
+
+export function loadEntityCategories(
+  kind: EntityKind,
+): EntityCategoriesDocument {
+  return readJsonCached<EntityCategoriesDocument>(
+    ENTITY_LEVELS[kind].dir, "categories.json");
+}
+
+export function loadSalesRates(): SalesRatesDocument | null {
+  const file = path.join(PROCESSED_DIR, "sales_rates.json");
+  if (!fs.existsSync(file)) return null;
+  return readJsonCached<SalesRatesDocument>("sales_rates.json");
+}
+
+export function loadTaxParameters(): TaxParametersDocument {
+  const file = path.join(PIPELINE_DIR, "tax_parameters.json");
+  return JSON.parse(fs.readFileSync(file, "utf-8")) as TaxParametersDocument;
 }
 
 export interface CountyOption {

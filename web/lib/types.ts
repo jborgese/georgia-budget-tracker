@@ -339,6 +339,56 @@ export interface MillageHistoryDocument {
   counties: Record<string, MillageHistoryCountyEntry>;
 }
 
+export interface SalesJurisdiction {
+  name: string;
+  county: string;
+  total: number;
+  letters: string;
+  cents: { education: number; transit: number; local_shared: number };
+}
+
+export interface SalesRatesDocument {
+  source: string;
+  effective_from: string;
+  effective_through: string;
+  state_cents: number;
+  jurisdictions: Record<string, SalesJurisdiction>;
+  resolution: Record<
+    string,
+    {
+      county: string;
+      fips: string;
+      default: string;
+      cities: Record<string, string>;
+    }
+  >;
+}
+
+export interface TaxParametersDocument {
+  income_tax: {
+    tax_year: number;
+    rate: number;
+    standard_deduction: { single: number; married_filing_jointly: number };
+    statute: string;
+    provenance: string[];
+    verified: string;
+    omissions: string[];
+    note: string;
+  };
+  consumption_model: {
+    source: string;
+    fred_series: Record<string, string[]>;
+    quintiles: {
+      income_pretax: number;
+      taxable_nonfood_share: number;
+      food_at_home_share: number;
+    }[];
+    taxable_nonfood_categories: string[];
+    excluded_categories: string[];
+    caveats: string[];
+  };
+}
+
 export interface MedianYear {
   revenue: number | null;
   expenditure: number | null;
