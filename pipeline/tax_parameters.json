@@ -1,0 +1,101 @@
+{
+ "income_tax": {
+  "tax_year": 2026,
+  "rate": 0.0499,
+  "standard_deduction": {
+   "single": 12000,
+   "married_filing_jointly": 24000
+  },
+  "statute": "HB 463 (2026), signed May 11, 2026, retroactive to January 1, 2026: flat individual income tax rate of 4.99% for tax year 2026. The bill's larger standard deduction ($15,000 single / $30,000 joint) begins tax year 2027; for 2026 the deduction remains $12,000 single / $24,000 married filing jointly.",
+  "provenance": [
+   "https://dor.georgia.gov/individual-taxes",
+   "https://www.legis.ga.gov/",
+   "https://gbpi.org/"
+  ],
+  "verified": "2026-07-20",
+  "omissions": [
+   "dependent exemption ($4,000 per dependent)",
+   "retirement income exclusion",
+   "tax credits of every kind",
+   "2026-2028 exclusions for tips and overtime pay ($1,750 each)",
+   "itemized deductions",
+   "non-wage income (interest, dividends, capital gains, business income)"
+  ],
+  "note": "The receipt models a wage salary against the flat rate and standard deduction only. It is an apportionment illustration, not tax advice or a filing estimate."
+ },
+ "consumption_model": {
+  "source": "US Bureau of Labor Statistics, Consumer Expenditure Surveys, 2024, quintiles of income before taxes (interview + diary integrated tables).",
+  "fred_series": {
+   "income_before_taxes": [
+    "CXUINCBEFTXLB0102M",
+    "CXUINCBEFTXLB0103M",
+    "CXUINCBEFTXLB0104M",
+    "CXUINCBEFTXLB0105M",
+    "CXUINCBEFTXLB0106M"
+   ],
+   "food_at_home": [
+    "CXUFOODHOMELB0102M",
+    "CXUFOODHOMELB0103M",
+    "CXUFOODHOMELB0104M",
+    "CXUFOODHOMELB0105M",
+    "CXUFOODHOMELB0106M"
+   ]
+  },
+  "quintiles": [
+   {
+    "income_pretax": 16658,
+    "taxable_nonfood_share": 0.498,
+    "food_at_home_share": 0.258
+   },
+   {
+    "income_pretax": 42925,
+    "taxable_nonfood_share": 0.256,
+    "food_at_home_share": 0.119
+   },
+   {
+    "income_pretax": 74474,
+    "taxable_nonfood_share": 0.186,
+    "food_at_home_share": 0.077
+   },
+   {
+    "income_pretax": 121548,
+    "taxable_nonfood_share": 0.149,
+    "food_at_home_share": 0.054
+   },
+   {
+    "income_pretax": 264510,
+    "taxable_nonfood_share": 0.115,
+    "food_at_home_share": 0.032
+   }
+  ],
+  "taxable_nonfood_categories": [
+   "food away from home",
+   "alcoholic beverages",
+   "housekeeping supplies",
+   "household furnishings and equipment",
+   "apparel and services",
+   "entertainment commodities (pets, toys, hobbies, audio/visual equipment)",
+   "personal care products",
+   "reading",
+   "tobacco products and smoking supplies",
+   "miscellaneous"
+  ],
+  "excluded_categories": [
+   "shelter (not subject to sales tax)",
+   "utilities (separately taxed or exempt)",
+   "healthcare (largely exempt)",
+   "vehicle purchases (Georgia levies TAVT instead of sales tax)",
+   "motor fuel (excise-taxed, exempt from most local rates)",
+   "education",
+   "insurance and pensions",
+   "cash contributions",
+   "public transportation and travel services"
+  ],
+  "caveats": [
+   "Shares are hand-derived from the CES 2024 quintile tables: the taxable-nonfood categories above summed per quintile, divided by that quintile's mean pre-tax income. They are national consumer-unit averages, not Georgia-specific.",
+   "A CES consumer unit is a household, not an individual filer; a single salary entered here stands in for household income.",
+   "Groceries (food at home) are exempt from Georgia's 4% state sales tax but pay the local cents; the calculator applies only the local rate to the food-at-home base.",
+   "Between the quintile mean incomes the shares are interpolated linearly; below the first and above the fifth they are clamped."
+  ]
+ }
+}
