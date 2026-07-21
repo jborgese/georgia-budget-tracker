@@ -85,6 +85,13 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
             Stack
           </Link>
           <Link
+            href="/receipt/"
+            className="font-mono text-xs uppercase tracking-widest"
+            style={{ color: GOLD }}
+          >
+            Receipt
+          </Link>
+          <Link
             href="/compare/"
             className="font-mono text-xs uppercase tracking-widest"
             style={{ color: GOLD }}

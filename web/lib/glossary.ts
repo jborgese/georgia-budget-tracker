@@ -184,6 +184,39 @@ export function describeSalesTax(classification: string): string | null {
   return SALES_TAX_DESCRIPTIONS[classification] ?? null;
 }
 
+// The DOR rate chart's levy-type letters (pipeline/etl_sales_rates.py
+// enforces this vocabulary; an unknown letter fails the ETL loudly).
+const SALES_LETTER_DESCRIPTIONS: Record<string, string> = {
+  M: "MARTA — the 1% transit sales tax levied in Fulton, DeKalb, and Clayton counties and the City of Atlanta.",
+  L: "LOST — a 1% sales tax shared between a county and its cities; the proceeds must reduce property-tax rates.",
+  E: "ESPLOST — the school district's voter-approved 1% education sales tax for buildings, buses, and other capital projects.",
+  S: "SPLOST — a voter-approved 1% county sales tax for specific capital projects.",
+  H: "HOST — a 1% sales tax funding homestead property-tax exemptions.",
+  O: "An additional local option sales tax (0.5% or 1%), such as Columbus-Muscogee's O-LOST.",
+  T: "TSPLOST — a voter-approved sales tax for transportation projects.",
+  T2: "A second single-county TSPLOST levy for transportation projects.",
+  Tf: "A fractional 0.75% TSPLOST transportation levy.",
+  Ta: "Atlanta's 0.4% TSPLOST transportation levy.",
+  m: "A municipal sales tax (0.5% or 1%), such as Atlanta's water-and-sewer MOST.",
+  P: "A 1% local sales levy, as printed on the DOR rate chart.",
+};
+
+export function describeSalesLetter(letter: string): string | null {
+  return SALES_LETTER_DESCRIPTIONS[letter] ?? null;
+}
+
+export const RECEIPT_INCOME_NOTE =
+  "Computed from the flat rate and standard deduction only — no dependent exemption, retirement exclusion, credits, tips/overtime exclusions, itemizing, or non-wage income. An apportionment illustration, not tax advice.";
+
+export const RECEIPT_SALES_NOTE =
+  "An estimate from national consumer-spending patterns for your income level, not your actual purchases. Big exclusions: housing, utilities, healthcare, vehicles (TAVT), and motor fuel (excise) are not in the base. Groceries pay only the local cents — Georgia exempts food at home from the state 4%.";
+
+export const RECEIPT_PROPERTY_NOTE =
+  "Your home's market value × the 40% assessment ratio × the digest rates, before homestead and other exemptions. Rates missing from the state compilation are excluded, not counted as zero.";
+
+export const RECEIPT_LOST_SPLIT_NOTE =
+  "LOST and other shared cents split between the county and its cities under distribution certificates that are not machine-readable, so these dollars are apportioned by the county government's spending mix as a stand-in.";
+
 export function describeDebtType(debtType: string): string | null {
   return DEBT_TYPE_DESCRIPTIONS[debtType] ?? null;
 }

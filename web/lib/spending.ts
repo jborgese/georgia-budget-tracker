@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS } from "./data";
+import { CATEGORY_LABELS } from "./categories";
 import type { CategoryNode, StateCategoriesDocument } from "./types";
 
 export interface SpendingSlice {

@@ -43,7 +43,16 @@ export default function StackIndexPage() {
         <p className="mt-3 max-w-prose text-xs leading-relaxed" style={{ color: MUTED }}>
           Rates come from the state&apos;s consolidated tax digest as
           compiled by the Department of Revenue. School districts are
-          usually the largest line on the bill.
+          usually the largest line on the bill. To turn rates into an
+          estimate of what you pay — and what it buys — see{" "}
+          <Link
+            href="/receipt/"
+            className="underline underline-offset-4"
+            style={{ color: SPRUCE }}
+          >
+            the receipt
+          </Link>
+          .
         </p>
 
         <nav aria-label="Counties" className="mt-10">

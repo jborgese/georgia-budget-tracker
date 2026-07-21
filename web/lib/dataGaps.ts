@@ -21,6 +21,34 @@ export function digestGapExplanation(
   );
 }
 
+// What the taxpayer receipt deliberately leaves out, each with the reason.
+export const RECEIPT_DATA_GAPS: DataGap[] = [
+  {
+    id: "receipt-income-detail",
+    title: "Income-tax detail beyond the standard deduction",
+    explanation:
+      "The receipt applies Georgia's flat rate to salary minus the standard deduction. Dependent exemptions, the retirement income exclusion, credits, the 2026–2028 tips and overtime exclusions, itemized deductions, and non-wage income all change a real return and are not modeled.",
+  },
+  {
+    id: "receipt-lost-split",
+    title: "The county/city split of shared sales cents",
+    explanation:
+      "LOST and similar shared cents divide between a county and its cities under negotiated distribution certificates that Georgia publishes only as documents, not data. The receipt apportions those dollars by the county government's spending mix as a stand-in.",
+  },
+  {
+    id: "receipt-consumption",
+    title: "Spending the consumption model excludes",
+    explanation:
+      "The sales-tax estimate covers taxable retail categories from national consumer-expenditure patterns. Housing, utilities, healthcare, vehicle purchases (Georgia levies TAVT instead), motor fuel (excise-taxed), education, insurance, and contributions are excluded, so the estimate is conservative.",
+  },
+  {
+    id: "receipt-other-taxes",
+    title: "Every other tax and fee",
+    explanation:
+      "Vehicle TAVT and registration, motor-fuel excise, alcohol and tobacco excises, insurance premium taxes, utility franchise fees, and service charges all fund the same governments but have no per-resident data source here.",
+  },
+];
+
 export const LEDGER_DATA_GAPS: DataGap[] = [
   {
     id: "school-taxes",

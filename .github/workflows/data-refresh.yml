@@ -40,7 +40,8 @@ jobs:
           contains(steps.detect.outputs.changed_sources, 'census_place_pop') ||
           contains(steps.detect.outputs.changed_sources, 'census_f33') ||
           contains(steps.detect.outputs.changed_sources, 'gadoe_revenues') ||
-          contains(steps.detect.outputs.changed_sources, 'dor_digest')
+          contains(steps.detect.outputs.changed_sources, 'dor_digest') ||
+          contains(steps.detect.outputs.changed_sources, 'dor_sales_rates')
         run: pip install -r pipeline/requirements.txt
 
       - name: Run RLGF county ETL
@@ -95,6 +96,14 @@ jobs:
         if: contains(steps.detect.outputs.changed_sources, 'dor_digest')
         run: python pipeline/etl_digest.py ${{ steps.detect.outputs.changed_sources }}
 
+      # Not part of the normalize gate below: rate charts carry rates, not
+      # dollars, and stay out of normalized.parquet.
+      - name: Run sales rate chart ETL
+        id: sales_rates
+        continue-on-error: true
+        if: contains(steps.detect.outputs.changed_sources, 'dor_sales_rates')
+        run: python pipeline/etl_sales_rates.py ${{ steps.detect.outputs.changed_sources }}
+
       - name: Validate contract and normalize
         id: normalize
         if: |
@@ -141,7 +150,8 @@ jobs:
           steps.population.outcome == 'failure' ||
           steps.schools.outcome == 'failure' ||
           steps.gadoe.outcome == 'failure' ||
-          steps.digest.outcome == 'failure'
+          steps.digest.outcome == 'failure' ||
+          steps.sales_rates.outcome == 'failure'
         run: |
           echo "One or more transforms failed; see the steps above and the source-failure issue."
           exit 1

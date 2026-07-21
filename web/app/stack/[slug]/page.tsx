@@ -76,13 +76,20 @@ export default async function StackCountyPage({
               {data.provenance}
             </p>
           </div>
-          <p className="mt-8">
+          <p className="mt-8 flex flex-wrap gap-x-6 gap-y-2">
             <Link
               href="/stack/"
               className="font-mono text-xs uppercase tracking-widest underline underline-offset-4"
               style={{ color: SPRUCE }}
             >
               ← All counties
+            </Link>
+            <Link
+              href={`/receipt/${data.slug}/`}
+              className="font-mono text-xs uppercase tracking-widest underline underline-offset-4"
+              style={{ color: SPRUCE }}
+            >
+              Your taxpayer receipt for this county →
             </Link>
           </p>
         </footer>
