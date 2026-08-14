@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "georgia-budget-tracker",
+  "account_id": "6296ad7448e41cfa14bd718c7acf3420",
+  "compatibility_date": "2026-08-14",
+  "assets": {
+    "directory": "./out",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "routes": [
+    {
+      "pattern": "georgia.frootsnoops.com",
+      "custom_domain": true
+    }
+  ]
+}
