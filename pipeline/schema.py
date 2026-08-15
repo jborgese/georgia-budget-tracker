@@ -169,7 +169,7 @@ def reconciliation_report(frame: pd.DataFrame,
         "totals_checked": len(expected_totals),
         "max_absolute_deviation": round(max(deviations), 2) if deviations else 0.0,
         "max_relative_deviation": round(max(relative), 8) if relative else 0.0,
-        "synthetic_rows": int(len(synthetic)),
+        "synthetic_rows": len(synthetic),
         "synthetic_amount_absolute_sum": round(float(synthetic.amount.abs().sum()), 2),
     }
 
@@ -212,7 +212,7 @@ def debt_identity_report(debt_frame: pd.DataFrame,
                   .any(axis=1)]
     filed_deviation = deviation.loc[filed.index]
     return {
-        "identities_checked": int(len(filed)),
+        "identities_checked": len(filed),
         "violations": int((filed_deviation > absolute_tolerance).sum()),
         "max_absolute_deviation": round(float(filed_deviation.max()), 2)
         if len(filed_deviation) else 0.0,

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import openpyxl
-import pytest
-
 import etl_gadoe
 import gadoe
+import openpyxl
+import pytest
 
 MENU_HTML = """
 <form method="post" action="./ReportsMenuPublic.aspx" id="form1">
@@ -83,7 +82,7 @@ def test_csv_digest_tracks_system_values_only():
 
 def test_csv_digest_without_system_rows_raises_layout_error():
     with pytest.raises(gadoe.PortalLayoutError):
-        gadoe.csv_digest("\n".join([CSV_HEADER, "100,General Fund"]))
+        gadoe.csv_digest(f"{CSV_HEADER}\n100,General Fund")
 
 
 @pytest.mark.parametrize(("gadoe_name", "f33_name"), [
@@ -155,9 +154,9 @@ def workbook_path(tmp_path, fiscal_year=2025):
     workbook = openpyxl.Workbook()
     sheet = workbook.active
     sheet.append([None, "Georgia Department of Education"])
-    sheet.append([None, "School System Revenues\n"
-                        f"Fiscal Year {fiscal_year} Financial Data Collection "
-                        "System"])
+    sheet.append([None, ("School System Revenues\n"
+                         f"Fiscal Year {fiscal_year} Financial Data Collection "
+                         "System")])
     sheet.append([None, "Please note: Systems marked with * ..."])
     sheet.append([None, "System ID", "System Name",
                   f"FTE Reported on {fiscal_year} QBE Allotments",

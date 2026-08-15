@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pytest
-
 import etl_sales_rates as etl
+import pytest
 
 
 def county_entry(county, code, total=7.0, letters="ELS"):

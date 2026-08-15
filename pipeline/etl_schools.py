@@ -43,7 +43,6 @@ from pathlib import Path
 
 import duckdb
 import pandas as pd
-
 import runlog
 from fetching import download_file
 
@@ -167,7 +166,7 @@ def parse_year(path: Path, fiscal_year: int) -> pd.DataFrame:
 
 
 def canonical_name(names: pd.Series) -> str:
-    return sorted(names, key=lambda name: (-len(name), name))[0]
+    return min(names, key=lambda name: (-len(name), name))
 
 
 def combine(frames: list[pd.DataFrame]) -> pd.DataFrame:

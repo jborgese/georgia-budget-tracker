@@ -62,7 +62,6 @@ from pathlib import Path
 import duckdb
 import pandas as pd
 import pdfplumber
-
 import runlog
 from fetching import download_file_stdlib
 

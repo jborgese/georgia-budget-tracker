@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import pytest
-
 import etl_state
+import pytest
 
 
 def word(text, x0, x1, top, fontname="Arial"):

@@ -3,7 +3,6 @@ from __future__ import annotations
 import pandas as pd
 import pandera.errors
 import pytest
-
 import schema as contract
 
 

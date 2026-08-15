@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import etl_digest
 import openpyxl
 import pandas as pd
 import pytest
-
-import etl_digest
 
 
 def test_canonical_county_variants():

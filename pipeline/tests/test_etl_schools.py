@@ -1,10 +1,9 @@
 from __future__ import annotations
 
+import etl_schools
 import openpyxl
 import pandas as pd
 import pytest
-
-import etl_schools
 
 
 def test_display_name_expands_and_cases():

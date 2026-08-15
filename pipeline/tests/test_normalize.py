@@ -1,9 +1,8 @@
 from __future__ import annotations
 
+import normalize
 import pandas as pd
 import pytest
-
-import normalize
 import schema as contract
 
 
@@ -77,7 +76,7 @@ def test_normalize_consolidated_maps_county_fips():
 
 
 def test_normalized_county_rows_validate(county_frame):
-    records, expected = normalize.normalize_rlgf(county_frame, "county")
+    records, _expected = normalize.normalize_rlgf(county_frame, "county")
     all_counties = [
         {"entity": name, "entity_type": "county",
          "fips": contract.COUNTY_FIPS[name], "fiscal_year": 2023,

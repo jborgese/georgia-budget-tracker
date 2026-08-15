@@ -13,11 +13,11 @@ from __future__ import annotations
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, TypeVar
+from typing import TypeVar
 
 import httpx
-
 from runlog import log_event
 
 USER_AGENT = (
@@ -73,10 +73,10 @@ def download_file_stdlib(url: str, destination: Path, *, source: str,
     def fetch() -> None:
         request = urllib.request.Request(
             url, headers=headers or {"User-Agent": USER_AGENT})
-        with urllib.request.urlopen(request, timeout=timeout) as response:
-            with partial.open("wb") as handle:
-                while chunk := response.read(1 << 16):
-                    handle.write(chunk)
+        with (urllib.request.urlopen(request, timeout=timeout) as response,
+              partial.open("wb") as handle):
+            while chunk := response.read(1 << 16):
+                handle.write(chunk)
 
     try:
         call_with_retries(fetch, source=source, description=url,
