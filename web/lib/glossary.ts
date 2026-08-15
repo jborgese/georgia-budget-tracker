@@ -1,3 +1,5 @@
+import { DISTRICT_NOTES } from "./districtNotes";
+
 const CATEGORY_DESCRIPTIONS: Record<string, string> = {
   education: "Public schools, universities, technical colleges, pre-K, and student aid.",
   health_and_welfare: "Health care, public health, and assistance programs.",
@@ -168,7 +170,14 @@ const TAXING_DISTRICT_PATTERNS: [RegExp, string][] = [
   [/BOND/, "A levy dedicated to repaying voter-approved bond debt."],
 ];
 
-export function describeTaxingDistrict(district: string): string | null {
+export function describeTaxingDistrict(
+  district: string,
+  countySlug?: string,
+): string | null {
+  const curated = countySlug
+    ? DISTRICT_NOTES[countySlug]?.[district]
+    : undefined;
+  if (curated) return curated;
   const exact = TAXING_DISTRICT_DESCRIPTIONS[district];
   if (exact) return exact;
   const pattern = TAXING_DISTRICT_PATTERNS.find(([regex]) =>
