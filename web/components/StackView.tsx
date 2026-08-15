@@ -307,7 +307,7 @@ export function StackView({ data }: { data: StackData }) {
               </thead>
               <tbody>
                 {data.specials.map((special, index) => {
-                  const note = describeTaxingDistrict(special.district);
+                  const note = describeTaxingDistrict(special.district, data.slug);
                   return (
                     <tr
                       key={`${special.district}-${index}`}

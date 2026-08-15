@@ -23,7 +23,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import gadoe
@@ -66,7 +66,7 @@ def openga_years_fingerprint() -> dict:
     years = {}
     for index in OPENGA_INDEXES:
         page = fetch(opener, f"{OPENGA_BASE}/{index}")
-        select = re.search(r'name="selectedYear".*?</select>', page, re.S)
+        select = re.search(r'name="selectedYear".*?</select>', page, re.DOTALL)
         found = re.findall(r'<option value="(\d{4})"', select.group(0)) if select else []
         years[index.split("/")[0]] = sorted(found)
     return {"years": years}
@@ -133,7 +133,7 @@ def main() -> int:
             changed.append(source_id)
         log_event("changed" if previous != current else "unchanged", source_id)
         entry["fingerprint"] = current
-        entry["checked_at"] = datetime.now(timezone.utc).isoformat(
+        entry["checked_at"] = datetime.now(UTC).isoformat(
             timespec="seconds")
 
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)

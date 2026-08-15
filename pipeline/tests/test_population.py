@@ -3,7 +3,6 @@ from __future__ import annotations
 import etl_population
 import normalize
 
-
 CSV_TEXT = (
     "SUMLEV,STATE,COUNTY,STNAME,CTYNAME,POPESTIMATE2020,POPESTIMATE2021\n"
     "040,13,000,Georgia,Georgia,10711908,10788029\n"

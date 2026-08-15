@@ -12,10 +12,12 @@ export function MillageSection({
   millage,
   taxYears,
   countyName,
+  countySlug,
 }: {
   millage: MillageCountyEntry | null;
   taxYears: number[];
   countyName: string;
+  countySlug: string;
 }) {
   if (!millage) return null;
   const latestYear = String(taxYears.at(-1));
@@ -75,6 +77,7 @@ export function MillageSection({
             {rows.map((district) => {
               const year = district.years[latestYear];
               const levy = (year.tax_mo ?? 0) + (year.tax_bond ?? 0);
+              const note = describeTaxingDistrict(district.district, countySlug);
               return (
                 <tr
                   key={`${district.code}-${district.district}`}
@@ -83,11 +86,8 @@ export function MillageSection({
                 >
                   <td className="py-1.5 pr-4">
                     {district.district}
-                    {describeTaxingDistrict(district.district) ? (
-                      <InfoTip
-                        text={describeTaxingDistrict(district.district) as string}
-                        subject={district.district}
-                      />
+                    {note ? (
+                      <InfoTip text={note} subject={district.district} />
                     ) : null}
                   </td>
                   <td className="py-1.5 pr-4 text-right font-mono tabular-nums">

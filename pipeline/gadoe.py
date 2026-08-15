@@ -73,7 +73,7 @@ def hidden_fields(page: str) -> dict[str, str]:
 
 
 def select_options(page: str, name: str) -> dict[str, str]:
-    select = re.search(rf'<select name="{name}"[^>]*>(.*?)</select>', page, re.S)
+    select = re.search(rf'<select name="{name}"[^>]*>(.*?)</select>', page, re.DOTALL)
     if not select:
         raise PortalLayoutError(f"No <select name={name!r}> on the page.")
     return {label.strip(): value for value, label in re.findall(

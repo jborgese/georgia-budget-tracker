@@ -56,7 +56,7 @@ import pandera.errors
 PIPELINE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PIPELINE_DIR))
 
-import schema as contract  # noqa: E402
+import schema as contract
 
 ROOT = PIPELINE_DIR.parent
 DIGEST_PARQUET = ROOT / "data" / "processed" / "digest.parquet"
@@ -464,7 +464,7 @@ def school_manifest_entry(source_state: dict) -> dict | None:
             for source_id in sorted(source_state)
             if source_id.startswith("census_f33_")},
         "fiscal_years": sorted(int(y) for y in schools.fiscal_year.unique()),
-        "records": int(len(schools)),
+        "records": len(schools),
         "districts": int(schools.ncesid.nunique()),
         "in_normalized_table": False,
         "note": ("regular school systems (F-33 school level 03); excluded "
@@ -480,7 +480,7 @@ def gadoe_manifest_entry(source_state: dict) -> dict | None:
     return {
         "vintage": vintage(source_state, "gadoe_revenues"),
         "fiscal_years": sorted(int(y) for y in revenues.fiscal_year.unique()),
-        "records": int(len(revenues)),
+        "records": len(revenues),
         "systems": int(revenues.system_code.nunique()),
         "districts_mapped": int(revenues.ncesid.nunique()),
         "in_normalized_table": False,
@@ -501,7 +501,7 @@ def digest_manifest_entry(source_state: dict) -> dict | None:
             for source_id in sorted(source_state)
             if source_id.startswith("dor_digest_")},
         "tax_years": sorted(int(y) for y in digest.tax_year.unique()),
-        "records": int(len(digest)),
+        "records": len(digest),
         "counties": int(digest.county.nunique()),
         "in_normalized_table": False,
         "note": ("millage rates and digest values per taxing district; the "
@@ -539,14 +539,14 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
             COUNTY_SOURCE: {
                 "vintage": vintage(source_state, COUNTY_SOURCE),
                 "fiscal_years": sorted(int(y) for y in county.fiscal_year.unique()),
-                "records": int(len(county)),
+                "records": len(county),
                 "counties_present": len(counties_present),
                 "counties_missing": contract.KNOWN_MISSING_COUNTIES,
             },
             CITY_SOURCE: {
                 "vintage": vintage(source_state, CITY_SOURCE),
                 "fiscal_years": sorted(int(y) for y in city.fiscal_year.unique()),
-                "records": int(len(city)),
+                "records": len(city),
                 "cities_present": int(city.entity.nunique()),
                 "note": ("municipal RLGF filings; city fips carries the bare "
                          "state prefix until the Census place roster lands"),
@@ -555,7 +555,7 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                 "vintage": vintage(source_state, CONSOLIDATED_SOURCE),
                 "fiscal_years": sorted(
                     int(y) for y in consolidated.fiscal_year.unique()),
-                "records": int(len(consolidated)),
+                "records": len(consolidated),
                 "governments": contract.CONSOLIDATED_GOVERNMENTS,
                 "note": ("consolidated city-county governments mix county and "
                          "municipal functions; not comparable to county-only "
@@ -564,7 +564,7 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
             OPENGA_SOURCE: {
                 "vintage": vintage(source_state, OPENGA_SOURCE),
                 "fiscal_years": sorted(int(y) for y in openga.fiscal_year.unique()),
-                "records": int(len(openga)),
+                "records": len(openga),
                 "sections": sorted(openga.section.unique()),
                 "organizations": int(openga[openga.depth == 0]
                                      .classification.nunique()),
@@ -603,7 +603,7 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
                 "fiscal_years_by_basis": {
                     basis: sorted(int(y) for y in group.fiscal_year.unique())
                     for basis, group in opb.groupby("basis")},
-                "records": int(len(opb)),
+                "records": len(opb),
                 "note": ("the published PDF prints 'Other DOR Interest, Fees, "
                          "and Sales' twice with different amounts; the copy "
                          "excluded from the report's own subtotals surfaces in "
@@ -611,7 +611,7 @@ def build_manifest(normalized: pd.DataFrame, county: pd.DataFrame,
             },
         },
         "normalized": {
-            "records": int(len(normalized)),
+            "records": len(normalized),
             "entities": int(normalized.groupby(["entity_type", "entity"]).ngroups),
             "fiscal_years": sorted(int(y) for y in normalized.fiscal_year.unique()),
             "categories": sorted(normalized.category.unique()),

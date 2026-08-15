@@ -3,6 +3,13 @@ line-length = 100
 target-version = "py312"
 extend-exclude = ["pipeline/.venv"]
 
+[tool.ruff.lint]
+# BLE001: the hardening layer deliberately catches Exception so one bad
+# source can't block the other ETL steps (see runlog/fetching in CLAUDE.md).
+# UP047: PEP 695 generics need Python 3.12+, but the pipeline still runs
+# on local Python 3.10 toolchains; CI's 3.12 is not the floor.
+ignore = ["BLE001", "UP047"]
+
 [tool.pytest.ini_options]
 testpaths = ["pipeline/tests"]
 addopts = "-q"

@@ -3,12 +3,11 @@ from __future__ import annotations
 import json
 import urllib.error
 
-import pytest
-
 import check_sources
 import etl_population
 import etl_state
 import fetching
+import pytest
 import report_failures
 import runlog
 
@@ -191,7 +190,7 @@ def test_etl_state_isolates_dataset_failures(tmp_path, monkeypatch):
     monkeypatch.setattr(etl_state, "refresh_openga", broken_openga)
     monkeypatch.setattr(etl_state, "refresh_opb_report",
                         lambda sources, sid: [fake_opb_record(sid)])
-    monkeypatch.setattr(etl_state, "load_sources", lambda: {})
+    monkeypatch.setattr(etl_state, "load_sources", dict)
 
     assert etl_state.main() == 1
     assert (tmp_path / "state.parquet").exists()
@@ -210,7 +209,7 @@ def test_etl_state_all_failures_leaves_outputs_untouched(tmp_path, monkeypatch):
 
     monkeypatch.setattr(etl_state, "refresh_openga", broken)
     monkeypatch.setattr(etl_state, "refresh_opb_report", broken)
-    monkeypatch.setattr(etl_state, "load_sources", lambda: {})
+    monkeypatch.setattr(etl_state, "load_sources", dict)
 
     assert etl_state.main() == 1
     assert not (tmp_path / "state.parquet").exists()
@@ -223,12 +222,12 @@ def census_csv(fips_codes):
 
 
 def place_csv() -> str:
-    return "\n".join([
-        "SUMLEV,STATE,NAME,POPESTIMATE2020,POPESTIMATE2021",
-        "162,13,Abbeville city,2500,2510",
-        "162,13,Pine Lake city,700,705",
-        "050,13,Appling County,18000,18100",
-    ]) + "\n"
+    return (
+        "SUMLEV,STATE,NAME,POPESTIMATE2020,POPESTIMATE2021\n"
+        "162,13,Abbeville city,2500,2510\n"
+        "162,13,Pine Lake city,700,705\n"
+        "050,13,Appling County,18000,18100\n"
+    )
 
 
 def test_etl_population_falls_back_to_committed_raw(tmp_path, monkeypatch):
@@ -283,7 +282,7 @@ def gh_recorder(monkeypatch):
 
 
 def test_report_creates_issue_at_threshold(tmp_path, monkeypatch, gh_recorder):
-    calls, responses = gh_recorder
+    calls, _responses = gh_recorder
     state_file = tmp_path / "state.json"
     for _ in range(3):
         runlog.record_outcome("ted_rlgf_county_workbook", ok=False,
@@ -324,7 +323,7 @@ def test_report_closes_issue_after_recovery(tmp_path, monkeypatch, gh_recorder):
 
 
 def test_report_noop_below_threshold(tmp_path, monkeypatch, gh_recorder):
-    calls, responses = gh_recorder
+    calls, _responses = gh_recorder
     state_file = tmp_path / "state.json"
     runlog.record_outcome("open_georgia_poa", ok=False, error="x",
                           state_file=state_file)

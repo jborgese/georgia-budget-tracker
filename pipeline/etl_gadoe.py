@@ -41,10 +41,9 @@ import sys
 from pathlib import Path
 
 import duckdb
+import gadoe
 import openpyxl
 import pandas as pd
-
-import gadoe
 import runlog
 from fetching import call_with_retries
 
@@ -110,7 +109,7 @@ def clean_system_name(raw: str) -> str:
 def numeric_fields(cells: tuple, columns: dict[str, int]) -> dict:
     values = {field: round(to_number(cells[columns[field]]), 2)
               for field in MONEY_FIELDS}
-    values["fte"] = int(round(to_number(cells[columns["fte"]])))
+    values["fte"] = round(to_number(cells[columns["fte"]]))
     return values
 
 

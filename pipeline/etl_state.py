@@ -55,7 +55,6 @@ import duckdb
 import httpx
 import pandas as pd
 import pdfplumber
-
 import runlog
 from fetching import TransientDataError, call_with_retries, download_file
 
@@ -132,7 +131,7 @@ def openga_client() -> httpx.Client:
 
 def openga_years(client: httpx.Client, app: dict) -> list[int]:
     page = client.get(f"/{app['index']}").text
-    select = re.search(r'name="selectedYear".*?</select>', page, re.S)
+    select = re.search(r'name="selectedYear".*?</select>', page, re.DOTALL)
     if not select:
         raise SystemExit(f"No year list on {app['index']} — layout may have changed.")
     return sorted(int(y) for y in re.findall(r'<option value="(\d{4})"', select.group(0)))
@@ -291,9 +290,9 @@ def find_pages(pdf: pdfplumber.PDF, title: str, subtitle: str | None = None,
     matches = []
     for page in pdf.pages[:scan_limit]:
         lines = (page.extract_text() or "").split("\n")
-        if any(line.strip().startswith(title) for line in lines[:2]):
-            if subtitle is None or any(subtitle in line for line in lines[:3]):
-                matches.append(page)
+        if any(line.strip().startswith(title) for line in lines[:2]) and (
+                subtitle is None or any(subtitle in line for line in lines[:3])):
+            matches.append(page)
     if not matches:
         raise SystemExit(f"No pages titled {title!r} — layout may have changed.")
     return matches
@@ -558,7 +557,7 @@ def main() -> int:
         MANIFEST_FILE.parent.mkdir(parents=True, exist_ok=True)
         MANIFEST_FILE.write_text(json.dumps(manifest, indent=1, sort_keys=True) + "\n")
 
-    runlog.log_event("transformed", "state_finances", records=int(len(frame)))
+    runlog.log_event("transformed", "state_finances", records=len(frame))
     print(f"Wrote {len(frame):,} records "
           f"({frame.fiscal_year.min()}-{frame.fiscal_year.max()}) to "
           f"{runlog.display_path(PARQUET_FILE)} and {runlog.display_path(STATE_DIR)}/")

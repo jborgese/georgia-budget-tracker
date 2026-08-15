@@ -410,6 +410,7 @@ export default async function CountyPage({
           millage={data.millage}
           taxYears={data.millageTaxYears}
           countyName={data.displayName}
+          countySlug={slug}
         />
 
         <MillageHistorySection

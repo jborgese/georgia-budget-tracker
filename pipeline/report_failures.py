@@ -42,8 +42,8 @@ def open_issue_number() -> int | None:
 
 def issue_body(failing: dict[str, dict]) -> str:
     lines = [
-        f"The daily data refresh has failed for the sources below on "
-        f"{FAILURE_THRESHOLD} or more consecutive runs.",
+        (f"The daily data refresh has failed for the sources below on "
+         f"{FAILURE_THRESHOLD} or more consecutive runs."),
         "",
         "| Source | Consecutive failures | Last error |",
         "| --- | --- | --- |",
@@ -54,12 +54,12 @@ def issue_body(failing: dict[str, dict]) -> str:
                      f"| {error} |")
     lines += [
         "",
-        "Counters live in `data/.source-state.json`; a successful check or "
-        "transform for a source resets its counter, and this issue closes "
-        "automatically once every source recovers.",
+        ("Counters live in `data/.source-state.json`; a successful check or "
+         "transform for a source resets its counter, and this issue closes "
+         "automatically once every source recovers."),
         "",
-        "_Maintained by the data-refresh workflow — edits to this body will "
-        "be overwritten._",
+        ("_Maintained by the data-refresh workflow — edits to this body will "
+         "be overwritten._"),
     ]
     return "\n".join(lines)
 

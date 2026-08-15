@@ -63,7 +63,6 @@ from pathlib import Path
 import duckdb
 import openpyxl
 import pandas as pd
-
 import runlog
 from fetching import download_file_stdlib
 
