@@ -8,12 +8,29 @@ import { INK, MUTED, NEUTRAL_SERIES, PAPER, SLOTS, SPRUCE } from "@/lib/theme";
 import { formatCompactDollars } from "@/lib/format";
 import { ChartTooltipFrame } from "./ChartTooltip";
 
-const STRIPE_ANGLES: Partial<Record<LevelKey, number>> = {
-  county: 45,
-  city: 135,
-  shared: 90,
-  transit: 0,
+type TextureKind =
+  | "solid"
+  | "dots"
+  | "bands"
+  | "checker"
+  | "rings"
+  | "ringdash";
+
+// Levels differ by texture type, not stripe angle: solid state, dotted
+// schools, banded city, checkered shared cents, and concentric rings
+// (dashed for transit) that follow the donut's own curve — a radial
+// segment always crosses every ring, so rings cannot vanish on slivers.
+const LEVEL_TEXTURES: Record<LevelKey, TextureKind> = {
+  state: "solid",
+  schools: "dots",
+  county: "rings",
+  city: "bands",
+  shared: "checker",
+  transit: "ringdash",
 };
+
+const RING_TEXTURES = new Set<TextureKind>(["rings", "ringdash"]);
+const PATTERN_TEXTURES = new Set<TextureKind>(["dots", "bands", "checker"]);
 
 function sliceColor(slice: SpendingSlice, index: number): string {
   return slice.key === "__other" ? NEUTRAL_SERIES : SLOTS[index % SLOTS.length];
@@ -49,13 +66,13 @@ function toSegments(slices: SpendingSlice[]): Segment[] {
 function LevelPattern({
   id,
   color,
-  level,
+  kind,
 }: {
   id: string;
   color: string;
-  level: LevelKey;
+  kind: TextureKind;
 }) {
-  if (level === "schools") {
+  if (kind === "dots") {
     return (
       <pattern id={id} patternUnits="userSpaceOnUse" width="7" height="7">
         <rect width="7" height="7" fill={color} />
@@ -63,24 +80,33 @@ function LevelPattern({
       </pattern>
     );
   }
+  if (kind === "checker") {
+    return (
+      <pattern id={id} patternUnits="userSpaceOnUse" width="14" height="14">
+        <rect width="14" height="14" fill={color} />
+        <rect width="7" height="7" fill={PAPER} opacity="0.55" />
+        <rect x="7" y="7" width="7" height="7" fill={PAPER} opacity="0.55" />
+      </pattern>
+    );
+  }
   return (
     <pattern
       id={id}
       patternUnits="userSpaceOnUse"
-      width="7"
-      height="7"
-      patternTransform={`rotate(${STRIPE_ANGLES[level] ?? 45})`}
+      width="12"
+      height="12"
+      patternTransform="rotate(45)"
     >
-      <rect width="7" height="7" fill={color} />
-      <line x1="0" y1="0" x2="0" y2="7" stroke={PAPER} strokeWidth="2" />
+      <rect width="12" height="12" fill={color} />
+      <line x1="0" y1="0" x2="0" y2="12" stroke={PAPER} strokeWidth="3" />
     </pattern>
   );
 }
 
 function segmentFill(uid: string, segment: Segment): string {
-  return segment.level === "state"
-    ? segment.color
-    : `url(#${uid}-${segment.categoryIndex}-${segment.level})`;
+  return PATTERN_TEXTURES.has(LEVEL_TEXTURES[segment.level])
+    ? `url(#${uid}-${segment.categoryIndex}-${segment.level})`
+    : segment.color;
 }
 
 function PieTooltip({
@@ -210,6 +236,8 @@ interface LabelProps {
   innerRadius?: number;
   outerRadius?: number;
   midAngle?: number;
+  startAngle?: number;
+  endAngle?: number;
   percent?: number;
   name?: string | number;
   index?: number;
@@ -217,21 +245,77 @@ interface LabelProps {
 
 const SMALL_SEGMENT_SHARE = 0.04;
 
+function arcPoint(
+  cx: number,
+  cy: number,
+  radius: number,
+  angle: number,
+): [number, number] {
+  const radians = (-angle * Math.PI) / 180;
+  return [cx + radius * Math.cos(radians), cy + radius * Math.sin(radians)];
+}
+
+// Recharts sector angles run clockwise from startAngle down to endAngle;
+// the arcs shrink slightly at each end so they never touch the divider.
+function ringOverlay(
+  cx: number,
+  cy: number,
+  innerRadius: number,
+  outerRadius: number,
+  startAngle: number,
+  endAngle: number,
+  dashed: boolean,
+): React.ReactElement {
+  const pitch = (outerRadius - innerRadius) / 4;
+  const arcs = [1, 2, 3].map((step) => {
+    const radius = innerRadius + pitch * step;
+    const pad = Math.min(
+      (1.4 * 180) / (Math.PI * radius),
+      (startAngle - endAngle) / 4,
+    );
+    const from = startAngle - pad;
+    const to = endAngle + pad;
+    const large = from - to > 180 ? 1 : 0;
+    const [x0, y0] = arcPoint(cx, cy, radius, from);
+    const [x1, y1] = arcPoint(cx, cy, radius, to);
+    return `M${x0},${y0} A${radius},${radius} 0 ${large} 1 ${x1},${y1}`;
+  });
+  return (
+    <g>
+      {arcs.map((d) => (
+        <path
+          key={d}
+          d={d}
+          fill="none"
+          stroke={PAPER}
+          strokeWidth={1.8}
+          strokeLinecap="round"
+          strokeDasharray={dashed ? "5 4.5" : undefined}
+        />
+      ))}
+    </g>
+  );
+}
+
 // A sliver narrower than one pattern tile can catch zero PAPER marks and
 // read as solid — which the legend reserves for the state level — so small
-// non-state segments get one explicit mark at their mid-arc.
+// pattern-textured segments get one explicit mark at their mid-arc. Ring
+// textures need no mark: every segment crosses every ring.
 function smallSegmentMark(
   cx: number,
   cy: number,
   radius: number,
   midAngle: number,
-  level: LevelKey,
+  kind: TextureKind,
 ): React.ReactElement {
-  const radians = (-midAngle * Math.PI) / 180;
-  const x = cx + radius * Math.cos(radians);
-  const y = cy + radius * Math.sin(radians);
-  if (level === "schools") {
+  const [x, y] = arcPoint(cx, cy, radius, midAngle);
+  if (kind === "dots") {
     return <circle cx={x} cy={y} r={1.3} fill={PAPER} />;
+  }
+  if (kind === "checker") {
+    return (
+      <rect x={x - 1.7} y={y - 1.7} width={3.4} height={3.4} fill={PAPER} />
+    );
   }
   return (
     <line
@@ -241,7 +325,7 @@ function smallSegmentMark(
       y2={y + 2.2}
       stroke={PAPER}
       strokeWidth={1.8}
-      transform={`rotate(${STRIPE_ANGLES[level] ?? 45}, ${x}, ${y})`}
+      transform={`rotate(45, ${x}, ${y})`}
     />
   );
 }
@@ -265,14 +349,31 @@ function sliceLabel(amounts: number[]) {
 
 function segmentLabel(segments: Segment[], categoryAmounts: number[]) {
   return function renderSegmentLabel(props: LabelProps): React.ReactElement {
-    const { cx, cy, innerRadius, outerRadius, midAngle, index } = props;
+    const { cx, cy, innerRadius, outerRadius, midAngle, startAngle, endAngle,
+      index } = props;
     if (cx == null || cy == null || outerRadius == null || index == null) {
       return <g />;
     }
     const segment = segments[index];
     if (!segment) return <g />;
+    const texture = LEVEL_TEXTURES[segment.level];
+    const rings =
+      RING_TEXTURES.has(texture) &&
+      innerRadius != null &&
+      startAngle != null &&
+      endAngle != null
+        ? ringOverlay(
+            Number(cx),
+            Number(cy),
+            Number(innerRadius),
+            outerRadius,
+            startAngle,
+            endAngle,
+            texture === "ringdash",
+          )
+        : null;
     const mark =
-      segment.level !== "state" &&
+      PATTERN_TEXTURES.has(texture) &&
       segment.share < SMALL_SEGMENT_SHARE &&
       midAngle != null &&
       innerRadius != null
@@ -281,7 +382,7 @@ function segmentLabel(segments: Segment[], categoryAmounts: number[]) {
             Number(cy),
             (Number(innerRadius) + outerRadius) / 2,
             midAngle,
-            segment.level,
+            texture,
           )
         : null;
     const label = segment.firstOfCategory
@@ -298,6 +399,7 @@ function segmentLabel(segments: Segment[], categoryAmounts: number[]) {
       : null;
     return (
       <g>
+        {rings}
         {mark}
         {label}
       </g>
@@ -319,29 +421,49 @@ function PatternLegend({
       className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs"
       style={{ color: MUTED }}
     >
-      {levels.map((level) => (
-        <span key={level} className="inline-flex items-center gap-1.5">
-          <svg width="14" height="14" aria-hidden="true">
-            {level === "state" ? null : (
-              <LevelPattern
-                id={`${uid}-legend-${level}`}
-                color={NEUTRAL_SERIES}
-                level={level}
+      {levels.map((level) => {
+        const texture = LEVEL_TEXTURES[level];
+        return (
+          <span key={level} className="inline-flex items-center gap-1.5">
+            <svg width="14" height="14" aria-hidden="true">
+              {PATTERN_TEXTURES.has(texture) ? (
+                <LevelPattern
+                  id={`${uid}-legend-${level}`}
+                  color={NEUTRAL_SERIES}
+                  kind={texture}
+                />
+              ) : null}
+              <rect
+                width="14"
+                height="14"
+                fill={
+                  PATTERN_TEXTURES.has(texture)
+                    ? `url(#${uid}-legend-${level})`
+                    : NEUTRAL_SERIES
+                }
               />
-            )}
-            <rect
-              width="14"
-              height="14"
-              fill={
-                level === "state"
-                  ? NEUTRAL_SERIES
-                  : `url(#${uid}-legend-${level})`
-              }
-            />
-          </svg>
-          {levelLabels[level]}
-        </span>
-      ))}
+              {RING_TEXTURES.has(texture)
+                ? [3.5, 7, 10.5].map((y) => (
+                    <line
+                      key={y}
+                      x1={2}
+                      y1={y}
+                      x2={12}
+                      y2={y}
+                      stroke={PAPER}
+                      strokeWidth={1.6}
+                      strokeLinecap="round"
+                      strokeDasharray={
+                        texture === "ringdash" ? "2.5 2" : undefined
+                      }
+                    />
+                  ))
+                : null}
+            </svg>
+            {levelLabels[level]}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -382,13 +504,15 @@ export function SpendingPie({
             {segments ? (
               <defs>
                 {segments
-                  .filter((segment) => segment.level !== "state")
+                  .filter((segment) =>
+                    PATTERN_TEXTURES.has(LEVEL_TEXTURES[segment.level]),
+                  )
                   .map((segment) => (
                     <LevelPattern
                       key={`${segment.categoryIndex}-${segment.level}`}
                       id={`${uid}-${segment.categoryIndex}-${segment.level}`}
                       color={segment.color}
-                      level={segment.level}
+                      kind={LEVEL_TEXTURES[segment.level]}
                     />
                   ))}
               </defs>
