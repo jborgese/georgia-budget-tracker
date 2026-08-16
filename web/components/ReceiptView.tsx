@@ -4,6 +4,7 @@ import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { formatDollars } from "@/lib/format";
 import {
+  categoryLevels,
   categoryNodes,
   consumptionBases,
   incomeTax,
@@ -209,11 +210,14 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
     if (dollars == null || dollars <= 0) return;
     levels[level] = (levels[level] ?? 0) + dollars;
     if (mix) {
-      layers.push({ dollars, mix: mix.mix, prefix });
+      layers.push({ dollars, mix: mix.mix, prefix, level });
     } else {
       unapportioned.push({ label, amount: dollars, reason });
     }
   }
+
+  const countyLevelLabel =
+    stack.kind === "consolidated" ? "Consolidated government" : "County";
 
   if (income != null && income > 0) {
     addLayer(income, payload.stateMix, "State: ", "state",
@@ -229,13 +233,13 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
     addLayer(salesEstimate.groups.transit, { fiscalYear: 0,
       mix: TRANSIT_MIX }, "", "transit", "Transit sales taxes", "");
     addLayer(
-      salesEstimate.groups.local_shared, payload.localMix, "County: ",
+      salesEstimate.groups.local_shared, payload.localMix, "Shared cents: ",
       "shared", "Shared local sales cents",
       "this government has no filed ledger to apportion by");
   }
   if (propertyGovernment) {
-    addLayer(propertyGovernment.dollars, payload.localMix, "County: ",
-      "county", `${governmentLabel} property tax`,
+    addLayer(propertyGovernment.dollars, payload.localMix,
+      `${countyLevelLabel}: `, "county", `${governmentLabel} property tax`,
       "this government has no filed ledger to apportion by");
   }
   if (propertyCity && selectedCity) {
@@ -250,16 +254,17 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
   }
 
   const nodes = categoryNodes(layers);
-  const slices = spendingSlices(nodes);
+  const slices = spendingSlices(nodes, categoryLevels(layers));
   const apportionedTotal = layers.reduce(
     (sum, layer) => sum + layer.dollars, 0);
   const unapportionedTotal = unapportioned.reduce(
     (sum, entry) => sum + entry.amount, 0);
   const grandTotal = apportionedTotal + unapportionedTotal;
 
-  const countyLevelLabel =
-    stack.kind === "consolidated" ? "Consolidated government" : "County";
   const levelRows = levelSlices(levels, { county: countyLevelLabel });
+  const pieHasLevelSplit =
+    new Set(slices.flatMap((slice) => (slice.levels ?? []).map((l) => l.key)))
+      .size > 1;
 
   // --- receipt lines ------------------------------------------------------
   const lines: ReceiptLine[] = [];
@@ -624,12 +629,18 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 slices={slices}
                 total={apportionedTotal}
                 centerLabel="your receipt"
-                ariaLabel="Pie chart of your estimated taxes by spending category; exact values are in the table below."
+                ariaLabel={
+                  pieHasLevelSplit
+                    ? "Pie chart of your estimated taxes by spending category, each slice split by the level of government spending it; category and level values are in the table below."
+                    : "Pie chart of your estimated taxes by spending category; exact values are in the table below."
+                }
+                levelLabels={{ county: countyLevelLabel }}
               />
               <SpendingTable
                 caption="Your estimated taxes by spending category, expandable to line items"
                 slices={slices}
                 total={apportionedTotal}
+                levelLabels={{ county: countyLevelLabel }}
               />
               {unapportioned.length ? (
                 <div className="mt-4">

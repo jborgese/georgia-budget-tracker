@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { SpendingSlice } from "@/lib/spending";
+import { LEVEL_SHORT_LABELS, type LevelKey } from "@/lib/receipt";
 import { describeCategory, describeSubcategory } from "@/lib/glossary";
 import { INK, MUTED, RULE } from "@/lib/theme";
 import { formatDollars } from "@/lib/format";
@@ -26,12 +27,16 @@ export function SpendingTable({
   caption,
   slices,
   total,
+  levelLabels: levelLabelOverrides,
 }: {
   caption: string;
   slices: SpendingSlice[];
   total: number;
+  levelLabels?: Partial<Record<LevelKey, string>>;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const levelLabels = { ...LEVEL_SHORT_LABELS, ...levelLabelOverrides };
+  const showLevels = slices.some((slice) => (slice.levels?.length ?? 0) > 1);
 
   function toggle(key: string) {
     setExpanded((current) => {
@@ -96,6 +101,19 @@ export function SpendingTable({
                     )}
                     {categoryInfo ? (
                       <InfoTip text={categoryInfo} subject={slice.label} />
+                    ) : null}
+                    {showLevels && slice.levels?.length ? (
+                      <span
+                        className="mt-0.5 block pl-[18px] font-mono text-xs tabular-nums"
+                        style={{ color: MUTED }}
+                      >
+                        {slice.levels
+                          .map(
+                            (level) =>
+                              `${levelLabels[level.key]} ${formatDollars(level.amount)}`,
+                          )
+                          .join(" · ")}
+                      </span>
                     ) : null}
                   </td>
                   <td className="py-2 pr-4 text-right font-mono tabular-nums">

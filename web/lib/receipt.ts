@@ -133,6 +133,7 @@ export interface ApportionedLayer {
   // Prefixed onto subcategory labels so, e.g., state and county
   // "public safety" line items stay distinguishable in one merged table.
   prefix: string;
+  level: LevelKey;
 }
 
 export function categoryNodes(
@@ -173,6 +174,39 @@ export type LevelKey =
   | "city"
   | "shared"
   | "transit";
+
+export const LEVEL_ORDER: LevelKey[] = [
+  "state",
+  "schools",
+  "county",
+  "city",
+  "shared",
+  "transit",
+];
+
+export const LEVEL_SHORT_LABELS: Record<LevelKey, string> = {
+  state: "State",
+  schools: "Schools",
+  county: "County",
+  city: "City",
+  shared: "Shared local cents",
+  transit: "Transit",
+};
+
+export type CategoryLevels = Record<string, Partial<Record<LevelKey, number>>>;
+
+export function categoryLevels(layers: ApportionedLayer[]): CategoryLevels {
+  const byCategory: CategoryLevels = {};
+  for (const layer of layers) {
+    if (layer.dollars <= 0) continue;
+    for (const [key, mixNode] of Object.entries(layer.mix)) {
+      const node = (byCategory[key] ??= {});
+      node[layer.level] =
+        (node[layer.level] ?? 0) + layer.dollars * mixNode.share;
+    }
+  }
+  return byCategory;
+}
 
 export const LEVEL_COLORS: Record<LevelKey, string> = {
   state: SERIES.green,
