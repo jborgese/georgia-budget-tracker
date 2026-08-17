@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { geoConicEqualArea, geoPath } from "d3-geo";
 import type { CountyFeature } from "@/lib/geo";
@@ -37,6 +37,7 @@ interface HoverState {
   y: number;
   county: string;
   lines: string[];
+  href?: string;
 }
 
 function metricValue(
@@ -115,6 +116,29 @@ export function CountyChoropleth({
   const [year, setYear] = useState<number>(years.at(-1) ?? 0);
   const [hover, setHover] = useState<HoverState | null>(null);
 
+  // On touch, a first tap previews a county instead of navigating: 43 of the
+  // 159 counties are smaller than a fingertip at phone widths, so an
+  // immediate navigation would make mis-taps cost a page load. The preview
+  // card carries a real link as the reliable confirm target; a second tap on
+  // the same county also navigates. Mouse, pen, and keyboard activation pass
+  // straight through. pointerup is recorded because click.pointerType has
+  // shipped unevenly across engines.
+  const lastPointerType = useRef("");
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [previewFips, setPreviewFips] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!previewFips) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!mapRef.current?.contains(event.target as Node)) {
+        setPreviewFips(null);
+        setHover(null);
+      }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [previewFips]);
+
   const metricConfig = METRICS.find((m) => m.key === metric) ?? METRICS[0];
   const byFips = useMemo(
     () => new Map(metrics.counties.map((entry) => [entry.fips, entry])),
@@ -173,7 +197,7 @@ export function CountyChoropleth({
             id={`${selectId}-metric`}
             value={metric}
             onChange={(event) => setMetric(event.target.value as MetricKey)}
-            className="rounded-none border px-2 py-1 font-mono text-xs normal-case tracking-normal"
+            className="rounded-none border px-2 py-1.5 font-mono text-base normal-case tracking-normal pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
             style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
           >
             {METRICS.map((m) => (
@@ -193,7 +217,7 @@ export function CountyChoropleth({
             id={`${selectId}-year`}
             value={year}
             onChange={(event) => setYear(Number(event.target.value))}
-            className="rounded-none border px-2 py-1 font-mono text-xs normal-case tracking-normal"
+            className="rounded-none border px-2 py-1.5 font-mono text-base normal-case tracking-normal pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
             style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
           >
             {years.map((y) => (
@@ -205,14 +229,17 @@ export function CountyChoropleth({
         </label>
       </div>
 
-      <div className="relative mt-4">
+      <div className="relative mt-4" ref={mapRef}>
         <svg
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           aria-label={`Georgia county map colored by ${metricConfig.label.toLowerCase()}, ${fiscalYearLabel(year)}. Every value is also in the table below the map.`}
           className="w-full max-w-xl"
           onPointerLeave={() => setHover(null)}
           onKeyDown={(event) => {
-            if (event.key === "Escape") setHover(null);
+            if (event.key === "Escape") {
+              setHover(null);
+              setPreviewFips(null);
+            }
           }}
         >
           {features.map((feature) => {
@@ -231,13 +258,40 @@ export function CountyChoropleth({
             const consolidatedLink = entry.included
               ? undefined
               : consolidated[feature.fips];
+            const href = entry.included
+              ? `/county/${entry.slug}/`
+              : consolidatedLink
+                ? `/consolidated/${consolidatedLink.slug}/`
+                : null;
+            const previewOnFirstTouchTap = (
+              event: React.MouseEvent<HTMLAnchorElement>,
+            ) => {
+              const wasTouch = lastPointerType.current === "touch";
+              lastPointerType.current = "";
+              if (!wasTouch || !href || previewFips === feature.fips) return;
+              event.preventDefault();
+              const box = (event.currentTarget as unknown as SVGAElement)
+                .ownerSVGElement?.getBoundingClientRect();
+              setPreviewFips(feature.fips);
+              setHover({
+                x: box ? event.clientX - box.left : WIDTH / 2,
+                y: box ? event.clientY - box.top : 24,
+                county: entry.county,
+                lines: hoverLines(entry, year, consolidatedLink),
+                href,
+              });
+            };
             const shape = (
               <path
                 d={d}
                 fill={fill}
                 stroke={PAPER}
                 strokeWidth={hover?.county === entry.county ? 1.5 : 0.75}
+                onPointerUp={(event) => {
+                  lastPointerType.current = event.pointerType;
+                }}
                 onPointerMove={(event) => {
+                  if (event.pointerType === "touch") return;
                   const box = event.currentTarget.ownerSVGElement?.getBoundingClientRect();
                   if (!box) return;
                   setHover({
@@ -255,7 +309,9 @@ export function CountyChoropleth({
                     lines: hoverLines(entry, year, consolidatedLink),
                   });
                 }}
-                onBlur={() => setHover(null)}
+                onBlur={() => {
+                  if (!previewFips) setHover(null);
+                }}
               />
             );
             if (entry.included) {
@@ -264,6 +320,7 @@ export function CountyChoropleth({
                   key={feature.fips}
                   href={`/county/${entry.slug}/`}
                   aria-label={`${feature.name} County — open its ledger`}
+                  onClick={previewOnFirstTouchTap}
                 >
                   {shape}
                 </a>
@@ -275,6 +332,7 @@ export function CountyChoropleth({
                   key={feature.fips}
                   href={`/consolidated/${consolidatedLink.slug}/`}
                   aria-label={`${feature.name} County — consolidated government, open the ${consolidatedLink.name} ledger`}
+                  onClick={previewOnFirstTouchTap}
                 >
                   {shape}
                 </a>
@@ -295,9 +353,12 @@ export function CountyChoropleth({
 
         {hover ? (
           <div
-            className="pointer-events-none absolute z-10 rounded-sm border px-3 py-2 shadow-sm"
+            role="status"
+            className={`absolute z-10 rounded-sm border px-3 py-2 shadow-sm ${
+              hover.href ? "" : "pointer-events-none"
+            }`}
             style={{
-              left: Math.min(hover.x + 14, 340),
+              left: `min(${hover.x + 14}px, calc(100% - 248px))`,
               top: hover.y + 14,
               backgroundColor: PAPER,
               borderColor: RULE,
@@ -316,6 +377,15 @@ export function CountyChoropleth({
                 {line}
               </p>
             ))}
+            {hover.href ? (
+              <a
+                href={hover.href}
+                className="mt-1 inline-block py-1 font-mono text-xs uppercase tracking-widest underline underline-offset-4"
+                style={{ color: SPRUCE }}
+              >
+                Open the ledger →
+              </a>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -331,7 +401,7 @@ export function CountyChoropleth({
                   aria-hidden="true"
                 />
                 <span
-                  className="mt-1 font-mono text-[10px] tabular-nums"
+                  className="mt-1 font-mono text-[11px] tabular-nums"
                   style={{ color: MUTED }}
                 >
                   {index === 0
@@ -351,8 +421,15 @@ export function CountyChoropleth({
           No data ({missingCount} {missingCount === 1 ? "county" : "counties"})
         </span>
       </div>
-      <p className="mt-2 text-xs" style={{ color: MUTED }}>
-        Click a county for its full ledger. Gray counties either filed no RLGF
+      <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
+        <span className="pointer-coarse:hidden">
+          Click a county for its full ledger.
+        </span>
+        <span className="hidden pointer-coarse:inline">
+          Tap a county to preview it; tap it again — or tap &ldquo;Open the
+          ledger&rdquo; on the preview — to open it.
+        </span>{" "}
+        Gray counties either filed no RLGF
         report for {fiscalYearLabel(year)} or are consolidated city-county
         governments — those link to their own{" "}
         <Link

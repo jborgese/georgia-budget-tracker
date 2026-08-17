@@ -1,11 +1,12 @@
 "use client";
 
-import { useId } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import type { SpendingSlice } from "@/lib/spending";
 import { LEVEL_ORDER, LEVEL_SHORT_LABELS, type LevelKey } from "@/lib/receipt";
 import { INK, MUTED, NEUTRAL_SERIES, PAPER, SLOTS, SPRUCE } from "@/lib/theme";
 import { formatCompactDollars } from "@/lib/format";
+import { ChartLegend } from "./ChartLegend";
 import { ChartTooltipFrame } from "./ChartTooltip";
 
 type TextureKind =
@@ -347,7 +348,11 @@ function sliceLabel(amounts: number[]) {
   };
 }
 
-function segmentLabel(segments: Segment[], categoryAmounts: number[]) {
+function segmentLabel(
+  segments: Segment[],
+  categoryAmounts: number[],
+  showCategoryLabels: boolean,
+) {
   return function renderSegmentLabel(props: LabelProps): React.ReactElement {
     const { cx, cy, innerRadius, outerRadius, midAngle, startAngle, endAngle,
       index } = props;
@@ -385,7 +390,7 @@ function segmentLabel(segments: Segment[], categoryAmounts: number[]) {
             texture,
           )
         : null;
-    const label = segment.firstOfCategory
+    const label = showCategoryLabels && segment.firstOfCategory
       ? categoryLabelText(
           labelPlacements(
             categoryAmounts,
@@ -492,15 +497,35 @@ export function SpendingPie({
       )
     : [];
 
+  // Callout labels need ~96px of side margin plus their own text width, so
+  // below this container width they clip against the svg edge; the narrow
+  // layout drops them for a legend and lets the donut shrink instead.
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+    const observer = new ResizeObserver(([entry]) => {
+      setNarrow(entry.contentRect.width < 600);
+    });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+  const sideMargin = narrow ? 12 : 96;
+  const innerR = narrow ? 50 : 62;
+  const outerR = narrow ? 84 : 108;
+
   return (
-    <div>
+    <div ref={containerRef}>
       <div role="img" aria-label={ariaLabel}>
         <ResponsiveContainer
           width="100%"
-          height={340}
+          height={narrow ? 240 : 340}
           initialDimension={{ width: 640, height: 340 }}
           >
-          <PieChart margin={{ top: 8, right: 96, bottom: 8, left: 96 }}>
+          <PieChart
+            margin={{ top: 8, right: sideMargin, bottom: 8, left: sideMargin }}
+          >
             {segments ? (
               <defs>
                 {segments
@@ -525,15 +550,19 @@ export function SpendingPie({
                 nameKey="categoryLabel"
                 cx="50%"
                 cy="50%"
-                innerRadius={62}
-                outerRadius={108}
+                innerRadius={innerR}
+                outerRadius={outerR}
                 minAngle={3}
                 stroke={PAPER}
                 strokeWidth={2}
                 startAngle={90}
                 endAngle={-270}
                 isAnimationActive={false}
-                label={segmentLabel(segments, slices.map((slice) => slice.amount))}
+                label={segmentLabel(
+                  segments,
+                  slices.map((slice) => slice.amount),
+                  !narrow,
+                )}
                 labelLine={false}
               >
                 {segments.map((segment, index) => (
@@ -552,14 +581,18 @@ export function SpendingPie({
                 nameKey="label"
                 cx="50%"
                 cy="50%"
-                innerRadius={62}
-                outerRadius={108}
+                innerRadius={innerR}
+                outerRadius={outerR}
                 stroke={PAPER}
                 strokeWidth={2}
                 startAngle={90}
                 endAngle={-270}
                 isAnimationActive={false}
-                label={sliceLabel(slices.map((slice) => slice.amount))}
+                label={
+                  narrow
+                    ? undefined
+                    : sliceLabel(slices.map((slice) => slice.amount))
+                }
                 labelLine={false}
               >
                 {slices.map((slice, index) => (
@@ -572,18 +605,38 @@ export function SpendingPie({
               y="47%"
               textAnchor="middle"
               className="font-mono"
-              fontSize={22}
+              fontSize={narrow ? 17 : 22}
               fontWeight={600}
               fill={SPRUCE}
             >
               {formatCompactDollars(total)}
             </text>
-            <text x="50%" y="55%" textAnchor="middle" fontSize={11} fill={MUTED}>
+            <text
+              x="50%"
+              y="55%"
+              textAnchor="middle"
+              fontSize={narrow ? 10 : 11}
+              fill={MUTED}
+            >
               {centerLabel}
             </text>
           </PieChart>
         </ResponsiveContainer>
       </div>
+      {narrow ? (
+        <div className="mt-2">
+          <ChartLegend
+            entries={slices.map((slice, index) => {
+              const rounded = Math.round(slice.share * 100);
+              return {
+                label: `${slice.label} ${rounded === 0 ? "<1" : rounded}%`,
+                color: sliceColor(slice, index),
+                kind: "rect" as const,
+              };
+            })}
+          />
+        </div>
+      ) : null}
       {presentLevels.length > 1 ? (
         <PatternLegend
           uid={uid}

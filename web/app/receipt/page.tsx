@@ -53,7 +53,7 @@ export default function ReceiptIndexPage() {
           collect it, by their own filed spending.
         </p>
         <p
-          className="mt-3 max-w-prose text-xs leading-relaxed"
+          className="mt-3 max-w-prose text-sm/relaxed"
           style={{ color: MUTED }}
         >
           Every figure is computed in your browser from published data —

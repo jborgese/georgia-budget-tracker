@@ -371,7 +371,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
               placeholder="$65,000"
               value={salaryInput}
               onChange={(event) => setSalaryInput(event.target.value)}
-              className="mt-1 w-36 border px-2 py-1 font-mono text-sm"
+              className="mt-1 w-36 border px-2 py-1.5 font-mono text-base pointer-fine:sm:py-1 pointer-fine:sm:text-sm"
               style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
             />
           </div>
@@ -389,10 +389,11 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                   ["married_filing_jointly", "Married filing jointly"],
                 ] as const
               ).map(([value, label]) => (
-                <label key={value} className="flex items-center gap-1.5">
+                <label key={value} className="flex items-center gap-1.5 py-1">
                   <input
                     type="radio"
                     name={statusName}
+                    className="size-4"
                     checked={status === value}
                     onChange={() => setStatus(value)}
                     style={{ accentColor: SPRUCE }}
@@ -415,7 +416,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 id={cityId}
                 value={cityKey}
                 onChange={(event) => setCityKey(event.target.value)}
-                className="mt-1 border px-2 py-1 font-mono text-xs"
+                className="mt-1 max-w-full border px-2 py-1.5 font-mono text-base pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
                 style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
               >
                 <option value={UNINCORPORATED}>Unincorporated (no city)</option>
@@ -442,7 +443,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
               type="checkbox"
               checked={expanded}
               onChange={(event) => setExpanded(event.target.checked)}
-              className="mt-0.5"
+              className="mt-0.5 size-4"
               style={{ accentColor: SPRUCE }}
             />
             <span>
@@ -470,7 +471,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 placeholder="$300,000"
                 value={homeInput}
                 onChange={(event) => setHomeInput(event.target.value)}
-                className="mt-1 w-36 border px-2 py-1 font-mono text-sm"
+                className="mt-1 w-36 border px-2 py-1.5 font-mono text-base pointer-fine:sm:py-1 pointer-fine:sm:text-sm"
                 style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
               />
               <p className="mt-1 max-w-prose text-xs" style={{ color: MUTED }}>
@@ -587,7 +588,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
               <div className="border-t" style={{ borderColor: INK }} />
             </div>
             {letters.length && expanded && salesEstimate ? (
-              <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+              <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
                 Inside the {jurisdiction?.total}% sales rate:{" "}
                 {letters.map((letter, index) => (
                   <span key={`${letter}-${index}`}>
@@ -647,7 +648,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                   {unapportioned.map((entry) => (
                     <p
                       key={entry.label}
-                      className="text-xs leading-relaxed"
+                      className="text-sm/relaxed"
                       style={{ color: GOLD }}
                     >
                       Not apportioned: {entry.label},{" "}
@@ -661,7 +662,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 </div>
               ) : null}
               {salesEstimate && payload.localMix ? (
-                <p className="mt-3 max-w-prose text-xs leading-relaxed" style={{ color: MUTED }}>
+                <p className="mt-3 max-w-prose text-sm/relaxed" style={{ color: MUTED }}>
                   {RECEIPT_LOST_SPLIT_NOTE}
                 </p>
               ) : null}
@@ -694,7 +695,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 >
                   State of Georgia — 100%
                 </div>
-                <p className="mt-2 max-w-prose text-xs leading-relaxed" style={{ color: MUTED }}>
+                <p className="mt-2 max-w-prose text-sm/relaxed" style={{ color: MUTED }}>
                   The default estimate is income tax only, which is all
                   state. Expand the estimate above to see the local layers —
                   sales and property taxes are where counties, cities, and
@@ -730,7 +731,7 @@ export function ReceiptView({ payload }: { payload: ReceiptPayload }) {
                 Fiscal years, mixed deliberately
               </h2>
             </div>
-            <ul className="mt-3 max-w-prose space-y-1.5 text-xs leading-relaxed" style={{ color: MUTED }}>
+            <ul className="mt-3 max-w-prose space-y-1.5 text-sm/relaxed" style={{ color: MUTED }}>
               <li>
                 Income tax uses tax year{" "}
                 {taxParameters.income_tax.tax_year} law; its dollars are

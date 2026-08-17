@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { SpendingSlice } from "@/lib/spending";
 import { LEVEL_SHORT_LABELS, type LevelKey } from "@/lib/receipt";
 import { describeCategory, describeSubcategory } from "@/lib/glossary";
@@ -34,6 +34,7 @@ export function SpendingTable({
   total: number;
   levelLabels?: Partial<Record<LevelKey, string>>;
 }) {
+  const captionId = useId();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const levelLabels = { ...LEVEL_SHORT_LABELS, ...levelLabelOverrides };
   const showLevels = slices.some((slice) => (slice.levels?.length ?? 0) > 1);
@@ -53,14 +54,21 @@ export function SpendingTable({
   return (
     <details className="mt-3">
       <summary
-        className="cursor-pointer font-mono text-xs uppercase tracking-widest"
+        className="cursor-pointer py-2 font-mono text-xs uppercase tracking-widest"
         style={{ color: MUTED }}
       >
         View as table
       </summary>
-      <div className="mt-2 overflow-x-auto">
+      <div
+        className="mt-2 overflow-x-auto"
+        role="region"
+        aria-labelledby={captionId}
+        tabIndex={0}
+      >
         <table className="w-full text-sm" style={{ color: INK }}>
-          <caption className="sr-only">{caption}</caption>
+          <caption id={captionId} className="sr-only">
+            {caption}
+          </caption>
           <thead>
             <tr
               className="border-t font-mono text-xs uppercase tracking-widest"
@@ -90,7 +98,7 @@ export function SpendingTable({
                         type="button"
                         aria-expanded={open}
                         onClick={() => toggle(slice.key)}
-                        className="inline-flex items-center gap-2 text-left"
+                        className="-my-1 inline-flex items-center gap-2 py-1 text-left"
                         style={{ color: INK }}
                       >
                         <Chevron open={open} />

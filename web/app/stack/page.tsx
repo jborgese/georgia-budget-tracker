@@ -40,7 +40,7 @@ export default function StackIndexPage() {
           that apply to that address — each line linked to that
           government&apos;s own ledger.
         </p>
-        <p className="mt-3 max-w-prose text-xs leading-relaxed" style={{ color: MUTED }}>
+        <p className="mt-3 max-w-prose text-sm/relaxed" style={{ color: MUTED }}>
           Rates come from the state&apos;s consolidated tax digest as
           compiled by the Department of Revenue. School districts are
           usually the largest line on the bill. To turn rates into an

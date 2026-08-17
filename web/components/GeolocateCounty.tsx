@@ -77,7 +77,7 @@ export function GeolocateCounty({
           type="button"
           onClick={locate}
           disabled={status.state === "locating"}
-          className="border px-3 py-1.5 font-mono text-xs uppercase tracking-widest"
+          className="border px-3 py-2.5 font-mono text-xs uppercase tracking-widest pointer-fine:sm:py-1.5"
           style={{
             borderColor: SPRUCE,
             color: status.state === "locating" ? MUTED : SPRUCE,
@@ -91,7 +91,7 @@ export function GeolocateCounty({
       ) : null}
       <p
         aria-live="polite"
-        className="mt-2 text-xs leading-relaxed"
+        className="mt-2 text-sm/relaxed"
         style={{ color: status.state === "outside" ? INK : MUTED }}
       >
         {status.state !== "idle" && status.state !== "locating"

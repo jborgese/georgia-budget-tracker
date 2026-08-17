@@ -72,7 +72,7 @@ export default async function StackCountyPage({
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>
-            <p className="text-xs leading-relaxed" style={{ color: MUTED }}>
+            <p className="text-sm/relaxed" style={{ color: MUTED }}>
               {data.provenance}
             </p>
           </div>

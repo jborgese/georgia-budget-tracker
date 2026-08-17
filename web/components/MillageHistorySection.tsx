@@ -124,7 +124,7 @@ export function MillageHistorySection({
           countyName={countyName}
         />
       </div>
-      <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+      <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
         {missingYears.length ? (
           <>
             No digest rows for {countyName} County in{" "}

@@ -58,9 +58,14 @@ export default function SchoolsIndexPage() {
           ) : null}
         </p>
 
-        <div className="mt-10 overflow-x-auto">
+        <div
+          className="mt-10 overflow-x-auto"
+          role="region"
+          aria-labelledby="schools-index-caption"
+          tabIndex={0}
+        >
           <table className="w-full text-sm" style={{ color: INK }}>
-            <caption className="sr-only">
+            <caption id="schools-index-caption" className="sr-only">
               Georgia school districts: enrollment, revenues, expenditures,
               and per-pupil current spending from the Census F-33 survey
               {overlay && overlayYear != null
@@ -72,7 +77,14 @@ export default function SchoolsIndexPage() {
                 className="border-t font-mono text-xs uppercase tracking-widest"
                 style={{ borderColor: INK, color: MUTED }}
               >
-                <th scope="col" className="py-2 pr-4 text-left font-normal">
+                <th
+                  scope="col"
+                  className="sticky left-0 min-w-44 py-2 pr-4 text-left font-normal"
+                  style={{
+                    backgroundColor: PAPER,
+                    boxShadow: `inset -1px 0 0 ${RULE}`,
+                  }}
+                >
                   District
                 </th>
                 <th scope="col" className="py-2 pr-4 text-right font-normal">
@@ -104,33 +116,39 @@ export default function SchoolsIndexPage() {
                   className="border-t"
                   style={{ borderColor: RULE }}
                 >
-                  <td className="py-1.5 pr-4">
+                  <td
+                    className="sticky left-0 py-1.5 pr-4"
+                    style={{
+                      backgroundColor: PAPER,
+                      boxShadow: `inset -1px 0 0 ${RULE}`,
+                    }}
+                  >
                     <Link
                       href={`/school/${district.slug}/`}
-                      className="underline underline-offset-4"
+                      className="inline-block py-[3px] -my-[3px] underline underline-offset-4"
                       style={{ color: SPRUCE }}
                     >
                       {district.display_name}
                     </Link>
                   </td>
-                  <td className="py-1.5 pr-4 text-right font-mono tabular-nums">
+                  <td className="whitespace-nowrap py-1.5 pr-4 text-right font-mono tabular-nums">
                     {district.enrollment.toLocaleString("en-US")}
                   </td>
-                  <td className="py-1.5 pr-4 text-right font-mono tabular-nums">
+                  <td className="whitespace-nowrap py-1.5 pr-4 text-right font-mono tabular-nums">
                     {formatCompactDollars(district.revenue)}
                   </td>
-                  <td className="py-1.5 pr-4 text-right font-mono tabular-nums">
+                  <td className="whitespace-nowrap py-1.5 pr-4 text-right font-mono tabular-nums">
                     {formatCompactDollars(district.expenditure)}
                   </td>
                   <td
-                    className={`py-1.5 text-right font-mono tabular-nums ${overlay ? "pr-4" : ""}`}
+                    className={`whitespace-nowrap py-1.5 text-right font-mono tabular-nums ${overlay ? "pr-4" : ""}`}
                   >
                     {district.per_pupil_current_spending != null
                       ? formatDollars(district.per_pupil_current_spending)
                       : "—"}
                   </td>
                   {overlay ? (
-                    <td className="py-1.5 text-right font-mono tabular-nums">
+                    <td className="whitespace-nowrap py-1.5 text-right font-mono tabular-nums">
                       {overlayRevenue(district.ncesid) != null
                         ? formatCompactDollars(
                             overlayRevenue(district.ncesid) as number,
@@ -147,7 +165,7 @@ export default function SchoolsIndexPage() {
 
         {overlay && overlayYear != null ? (
           <p
-            className="mt-4 max-w-prose text-xs leading-relaxed"
+            className="mt-4 max-w-prose text-sm/relaxed"
             style={{ color: MUTED }}
           >
             {fiscalYearLabel(overlayYear)} revenues are from GaDOE&apos;s
