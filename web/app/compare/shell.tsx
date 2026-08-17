@@ -51,7 +51,7 @@ export function CompareShell({
                 key={mode.kind}
                 href={mode.href}
                 aria-current={active ? "page" : undefined}
-                className={`font-mono text-xs uppercase tracking-widest ${
+                className={`inline-block py-2 font-mono text-xs uppercase tracking-widest ${
                   active ? "underline underline-offset-4" : ""
                 }`}
                 style={{ color: active ? SPRUCE : GOLD }}
@@ -64,7 +64,7 @@ export function CompareShell({
         <p className="mt-6 max-w-prose text-base leading-relaxed">{intro}</p>
         {note ? (
           <p
-            className="mt-3 max-w-prose text-xs leading-relaxed"
+            className="mt-3 max-w-prose text-sm/relaxed"
             style={{ color: MUTED }}
           >
             {note}

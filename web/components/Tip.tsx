@@ -40,6 +40,7 @@ export function Tip({
 }) {
   const tooltipId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const openedByFocusRef = useRef(false);
   const [placement, setPlacement] = useState<TipPlacement | null>(null);
 
   const open = () => {
@@ -47,6 +48,15 @@ export function Tip({
     if (anchor) setPlacement(placeTip(anchor, maxWidth));
   };
   const close = () => setPlacement(null);
+  const toggle = () => {
+    if (openedByFocusRef.current) {
+      openedByFocusRef.current = false;
+      if (!placement) open();
+      return;
+    }
+    if (placement) close();
+    else open();
+  };
 
   useEffect(() => {
     if (!placement) return;
@@ -69,9 +79,15 @@ export function Tip({
         aria-expanded={placement != null}
         onMouseEnter={open}
         onMouseLeave={close}
-        onFocus={open}
-        onBlur={close}
-        onClick={() => (placement ? close() : open())}
+        onFocus={() => {
+          openedByFocusRef.current = true;
+          open();
+        }}
+        onBlur={() => {
+          openedByFocusRef.current = false;
+          close();
+        }}
+        onClick={toggle}
         onKeyDown={(event) => {
           if (event.key === "Escape") close();
         }}

@@ -214,7 +214,7 @@ export function CompareView({ data }: { data: CompareDataset }) {
         {Array.from({ length: MAX_SELECTIONS }, (_, index) => (
           <label
             key={index}
-            className="flex flex-col gap-1 font-mono text-xs uppercase tracking-widest"
+            className="flex max-w-full flex-col gap-1 font-mono text-xs uppercase tracking-widest"
             style={{ color: MUTED }}
           >
             <span className="flex items-center gap-2">
@@ -236,7 +236,7 @@ export function CompareView({ data }: { data: CompareDataset }) {
                   current.map((slug, i) => (i === index ? value : slug)),
                 );
               }}
-              className="border px-2 py-1 font-mono text-xs normal-case tracking-normal"
+              className="max-w-full border px-2 py-1.5 font-mono text-base normal-case tracking-normal pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
               style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
             >
               {index >= 2 ? <option value="">—</option> : null}
@@ -263,7 +263,7 @@ export function CompareView({ data }: { data: CompareDataset }) {
           </div>
           <div className="mt-4 grid gap-12 lg:grid-cols-2 lg:gap-8">
             {data.charts.map((spec) => (
-              <section key={spec.key} aria-label={spec.title}>
+              <section key={spec.key} aria-label={spec.title} className="min-w-0">
                 <h2
                   className="border-t pb-2 pt-3 font-mono text-xs uppercase tracking-widest"
                   style={{ borderColor: INK, color: SPRUCE }}

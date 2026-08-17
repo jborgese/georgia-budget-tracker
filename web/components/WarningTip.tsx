@@ -6,7 +6,7 @@ export function WarningTip({ text, subject }: { text: string; subject: string })
     <Tip
       ariaLabel={`Data availability: ${subject}`}
       text={text}
-      buttonClassName="ml-1.5 inline-flex h-4 w-4 items-center justify-center"
+      buttonClassName="relative ml-2 -my-1 inline-flex h-6 w-6 items-center justify-center align-middle before:absolute before:-inset-2"
       color={GOLD}
       maxWidth={280}
     >

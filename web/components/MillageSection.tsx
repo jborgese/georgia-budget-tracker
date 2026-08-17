@@ -106,7 +106,7 @@ export function MillageSection({
         </table>
         <div className="border-t" style={{ borderColor: INK }} />
       </div>
-      <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+      <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
         {total?.assessed_mo != null ? (
           <>
             Countywide taxable value (M&amp;O digest):{" "}

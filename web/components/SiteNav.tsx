@@ -20,6 +20,9 @@ const KIND_ROUTES: Record<SearchOption["kind"], string> = {
   school: "/school",
 };
 
+const NAV_LINK =
+  "inline-block py-2 pointer-coarse:-mx-2 pointer-coarse:px-2 pointer-coarse:py-3.5 font-mono text-xs uppercase tracking-widest";
+
 function optionLabel(option: SearchOption): string {
   if (option.kind === "county") return `${option.name} County`;
   if (option.kind === "city") return `City of ${option.name}`;
@@ -57,50 +60,53 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
       <div className="mx-auto flex w-full max-w-4xl flex-wrap items-center gap-x-6 gap-y-2">
         <Link
           href="/"
-          className="font-mono text-xs font-semibold uppercase tracking-[0.2em]"
+          className="inline-block py-2 pointer-coarse:-mx-2 pointer-coarse:px-2 pointer-coarse:py-3.5 font-mono text-xs font-semibold uppercase tracking-[0.2em]"
           style={{ color: SPRUCE }}
         >
           GA Budget Tracker
         </Link>
-        <nav aria-label="Site" className="flex items-center gap-4">
+        <nav
+          aria-label="Site"
+          className="flex flex-wrap items-center gap-x-4 gap-y-1 pointer-coarse:gap-y-2"
+        >
           <Link
             href="/city/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             Cities
           </Link>
           <Link
             href="/schools/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             Schools
           </Link>
           <Link
             href="/stack/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             Stack
           </Link>
           <Link
             href="/receipt/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             Receipt
           </Link>
           <Link
             href="/compare/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             Compare
           </Link>
           <Link
             href="/about/"
-            className="font-mono text-xs uppercase tracking-widest"
+            className={NAV_LINK}
             style={{ color: GOLD }}
           >
             About
@@ -145,7 +151,7 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
                 setOpen(false);
               }
             }}
-            className="w-44 border px-2 py-1 font-mono text-xs sm:w-52"
+            className="w-52 border px-2 py-1.5 font-mono text-base pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
             style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
           />
           {open && matches.length ? (
@@ -162,7 +168,7 @@ export function SiteNav({ options }: { options: SearchOption[] }) {
                   id={`${listId}-${option.kind}-${option.slug}`}
                   role="option"
                   aria-selected={index === active}
-                  className="flex cursor-pointer items-baseline justify-between gap-2 px-2 py-1.5 text-sm"
+                  className="flex cursor-pointer items-baseline justify-between gap-2 px-2 py-2.5 text-sm pointer-fine:sm:py-1.5"
                   style={{
                     backgroundColor: index === active ? RULE : PAPER,
                     color: INK,

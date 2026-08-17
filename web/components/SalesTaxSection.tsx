@@ -93,7 +93,7 @@ export function SalesTaxSection({
         </table>
         <div className="border-t" style={{ borderColor: INK }} />
       </div>
-      <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+      <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
         Receipts as filed in the RLGF revenue schedule. A tax that is not
         listed was not reported by this government in any year of the dataset.
         School districts&apos; education SPLOST is levied separately and does

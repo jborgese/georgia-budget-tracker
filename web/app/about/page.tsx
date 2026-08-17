@@ -122,13 +122,13 @@ export default function AboutPage() {
                   {source.name}
                 </a>
                 <span
-                  className="shrink-0 font-mono text-xs"
+                  className="font-mono text-xs sm:shrink-0"
                   style={{ color: GOLD }}
                 >
                   {source.cadence}
                 </span>
               </div>
-              <p className="mt-1 text-xs leading-relaxed" style={{ color: MUTED }}>
+              <p className="mt-1 text-sm/relaxed" style={{ color: MUTED }}>
                 {source.provides}
                 {source.note ? ` — ${source.note}` : ""}
               </p>

@@ -130,7 +130,7 @@ export function StackView({ data }: { data: StackData }) {
             id={selectId}
             value={selectedKey}
             onChange={(event) => setSelectedKey(event.target.value)}
-            className="mt-1 border px-2 py-1 font-mono text-xs"
+            className="mt-1 max-w-full border px-2 py-1.5 font-mono text-base pointer-fine:sm:py-1 pointer-fine:sm:text-xs"
             style={{ borderColor: RULE, backgroundColor: PAPER, color: INK }}
           >
             <option value={UNINCORPORATED}>Unincorporated (no city)</option>
@@ -244,20 +244,20 @@ export function StackView({ data }: { data: StackData }) {
       </div>
 
       {hasUnreported ? (
-        <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+        <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
           * A rate missing from the state compilation is shown as &ldquo;not
           reported&rdquo; and is left out of the combined rate — it is not
           necessarily zero.
         </p>
       ) : null}
       {ratioNote ? (
-        <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+        <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
           A percentage in a district&apos;s name is that digest&apos;s
           assessment ratio, as filed. Most Georgia digests assess at 40% of
           market value, which the ≈% figure assumes.
         </p>
       ) : null}
-      <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+      <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
         The State of Georgia levies no property tax — its statewide rate was
         phased out after 2015. The ≈% figure is before homestead and other
         exemptions.
@@ -315,21 +315,24 @@ export function StackView({ data }: { data: StackData }) {
                       style={{ borderColor: RULE }}
                     >
                       <td className="py-1.5 pr-3">
-                        <input
-                          type="checkbox"
-                          checked={added.has(special.district)}
-                          aria-label={`Add ${special.district} to the combined rate`}
-                          onChange={(event) =>
-                            setAdded((current) => {
-                              const next = new Set(current);
-                              if (event.target.checked) {
-                                next.add(special.district);
-                              } else next.delete(special.district);
-                              return next;
-                            })
-                          }
-                          style={{ accentColor: SPRUCE }}
-                        />
+                        <label className="-m-2 inline-flex p-2">
+                          <input
+                            type="checkbox"
+                            className="size-4"
+                            checked={added.has(special.district)}
+                            aria-label={`Add ${special.district} to the combined rate`}
+                            onChange={(event) =>
+                              setAdded((current) => {
+                                const next = new Set(current);
+                                if (event.target.checked) {
+                                  next.add(special.district);
+                                } else next.delete(special.district);
+                                return next;
+                              })
+                            }
+                            style={{ accentColor: SPRUCE }}
+                          />
+                        </label>
                       </td>
                       <td className="py-1.5 pr-4">
                         {special.href ? (

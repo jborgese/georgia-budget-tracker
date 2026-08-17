@@ -364,7 +364,7 @@ export default async function CountyPage({
         </section>
 
         <div className="mt-14 grid gap-12 lg:grid-cols-2 lg:gap-8">
-          <section aria-label={`Revenue breakdown, ${fy}`}>
+          <section aria-label={`Revenue breakdown, ${fy}`} className="min-w-0">
             <div className="border-t pb-2 pt-3" style={{ borderColor: INK }}>
               <h2
                 className="font-mono text-xs uppercase tracking-widest"
@@ -381,7 +381,7 @@ export default async function CountyPage({
             />
           </section>
 
-          <section aria-label={`Expenditure breakdown, ${fy}`}>
+          <section aria-label={`Expenditure breakdown, ${fy}`} className="min-w-0">
             <div className="border-t pb-2 pt-3" style={{ borderColor: INK }}>
               <h2
                 className="font-mono text-xs uppercase tracking-widest"
@@ -463,7 +463,7 @@ export default async function CountyPage({
 
         <footer className="mt-14">
           <div className="border-t pt-3" style={{ borderColor: INK }}>
-            <p className="text-xs leading-relaxed" style={{ color: MUTED }}>
+            <p className="text-sm/relaxed" style={{ color: MUTED }}>
               {data.provenance}
             </p>
           </div>

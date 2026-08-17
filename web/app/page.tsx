@@ -190,7 +190,7 @@ export default function Home() {
         </section>
 
         <div className="mt-16 grid gap-14 lg:grid-cols-2 lg:gap-10">
-          <section aria-label="Revenues by category">
+          <section aria-label="Revenues by category" className="min-w-0">
             <div
               className="border-t pb-1 pt-3"
               style={{ borderColor: INK }}
@@ -216,7 +216,7 @@ export default function Home() {
             />
           </section>
 
-          <section aria-label="Expenditures by category">
+          <section aria-label="Expenditures by category" className="min-w-0">
             <div
               className="border-t pb-1 pt-3"
               style={{ borderColor: INK }}
@@ -243,7 +243,7 @@ export default function Home() {
           </section>
         </div>
 
-        <p className="mt-4 text-xs leading-relaxed" style={{ color: MUTED }}>
+        <p className="mt-4 text-sm/relaxed" style={{ color: MUTED }}>
           Categories follow this project&apos;s crosswalk of the state&apos;s own
           classifications. {fiscalYearLabel(data.lastReportedYear + 1)} and later
           are budgeted, not actual, figures.
@@ -305,7 +305,7 @@ export default function Home() {
             ))}
           </ul>
           <div className="border-t" style={{ borderColor: INK }} />
-          <p className="mt-3 text-xs leading-relaxed" style={{ color: MUTED }}>
+          <p className="mt-3 text-sm/relaxed" style={{ color: MUTED }}>
             {data.reconciliationNote} Every refresh of the underlying data is a
             commit in the public repository, so any figure can be traced to the
             document it came from.
@@ -313,7 +313,7 @@ export default function Home() {
         </section>
 
         <footer
-          className="mt-12 font-mono text-xs leading-relaxed"
+          className="mt-12 font-mono text-sm/relaxed"
           style={{ color: MUTED }}
         >
           Sources: Open Georgia · Governor&apos;s Office of Planning and Budget ·

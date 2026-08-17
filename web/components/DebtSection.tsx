@@ -167,7 +167,7 @@ export function DebtSection({
             </table>
             <div className="border-t" style={{ borderColor: INK }} />
           </div>
-          <p className="mt-2 text-xs leading-relaxed" style={{ color: MUTED }}>
+          <p className="mt-2 text-sm/relaxed" style={{ color: MUTED }}>
             From RLGF Part XI, as filed. Outstanding balances are a snapshot at
             fiscal year end; borrowed, repaid, and interest are activity during
             the year. Filings occasionally contain inconsistencies, which are

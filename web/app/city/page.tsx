@@ -41,9 +41,14 @@ export default function CityIndexPage() {
           filed fiscal year.
         </p>
 
-        <div className="mt-10 overflow-x-auto">
+        <div
+          className="mt-10 overflow-x-auto"
+          role="region"
+          aria-labelledby="city-index-caption"
+          tabIndex={0}
+        >
           <table className="w-full text-sm" style={{ color: INK }}>
-            <caption className="sr-only">
+            <caption id="city-index-caption" className="sr-only">
               Georgia cities with RLGF filings: latest filed fiscal year,
               revenues, and expenditures
             </caption>
@@ -52,7 +57,14 @@ export default function CityIndexPage() {
                 className="border-t font-mono text-xs uppercase tracking-widest"
                 style={{ borderColor: INK, color: MUTED }}
               >
-                <th scope="col" className="py-2 pr-4 text-left font-normal">
+                <th
+                  scope="col"
+                  className="sticky left-0 py-2 pr-4 text-left font-normal"
+                  style={{
+                    backgroundColor: PAPER,
+                    boxShadow: `inset -1px 0 0 ${RULE}`,
+                  }}
+                >
                   City
                 </th>
                 <th scope="col" className="py-2 pr-4 text-left font-normal">
@@ -73,10 +85,16 @@ export default function CityIndexPage() {
                   className="border-t"
                   style={{ borderColor: RULE }}
                 >
-                  <td className="py-1.5 pr-4">
+                  <td
+                    className="sticky left-0 py-1.5 pr-4"
+                    style={{
+                      backgroundColor: PAPER,
+                      boxShadow: `inset -1px 0 0 ${RULE}`,
+                    }}
+                  >
                     <Link
                       href={`/city/${listing.slug}/`}
-                      className="underline underline-offset-4"
+                      className="inline-block py-[3px] -my-[3px] underline underline-offset-4"
                       style={{ color: SPRUCE }}
                     >
                       {listing.displayName}
@@ -105,7 +123,7 @@ export default function CityIndexPage() {
         </div>
 
         {unfiled ? (
-          <p className="mt-4 text-xs leading-relaxed" style={{ color: MUTED }}>
+          <p className="mt-4 text-sm/relaxed" style={{ color: MUTED }}>
             {unfiled} {unfiled === 1 ? "city appears" : "cities appear"} in the
             source workbook with no non-zero filing in any year and{" "}
             {unfiled === 1 ? "is" : "are"} not listed.
